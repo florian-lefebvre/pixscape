@@ -108,4 +108,33 @@
             <url>http://dev.umrthema.univ-fcomte.fr/repository/</url>
         </repository>
     </repositories>
+    <distributionManagement>
+        <site>
+            <id>local-thema</id>
+            <url>file:///var/www/projects/${project.artifactId}/</url>
+        </site>
+    </distributionManagement>
+    <reporting>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.7</version>
+                <reportSets>
+                    <reportSet>
+                        <reports>
+                            <report>summary</report>
+                            <!--<report>dependencies</report>-->
+                            <report>license</report>
+                        </reports>
+                    </reportSet>
+                </reportSets>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.7</version>
+            </plugin>
+        </plugins>
+    </reporting>
 </project>
