@@ -16,7 +16,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import jcuda.CudaException;
 import jcuda.Pointer;
 import jcuda.Sizeof;
 import jcuda.driver.CUcontext;
@@ -24,6 +23,7 @@ import jcuda.driver.CUdevice;
 import jcuda.driver.CUdeviceptr;
 import jcuda.driver.CUfunction;
 import jcuda.driver.CUmodule;
+import jcuda.driver.CUresult;
 import jcuda.driver.JCudaDriver;
 import static jcuda.driver.JCudaDriver.cuCtxCreate;
 import static jcuda.driver.JCudaDriver.cuCtxSynchronize;
@@ -536,6 +536,16 @@ public class ComputeViewCUDA implements ComputeView {
             queue.put(CUDARunnable.END);
         } catch (InterruptedException ex) {
             Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+    public static boolean isCUDAAvailable() {
+        try {
+            int res = cuInit(0);
+            return res == CUresult.CUDA_SUCCESS;
+        } catch(Exception e) {
+            Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.INFO, null, e);
+            return false;
         }
     }
 

@@ -6,10 +6,6 @@
 
 package org.thema.pixscape;
 
-import org.thema.pixscape.ComputeViewJava;
-import org.thema.pixscape.Bounds;
-import org.thema.pixscape.ComputeView;
-import org.thema.pixscape.ComputeViewCUDA;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -28,7 +24,6 @@ import org.geotools.coverage.grid.GridCoordinates2D;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,8 +61,10 @@ public class ComputeViewTest {
     
     @Test
     public void testCalcViewShedCUDA() throws IOException {
-        System.out.println("calcViewShedCUDA static mnt only");
-        testViewShed(true);
+        if(ComputeViewCUDA.isCUDAAvailable()) {
+            System.out.println("calcViewShedCUDA static mnt only");
+            testViewShed(true);
+        }
     }
     
     /**
@@ -83,14 +80,18 @@ public class ComputeViewTest {
      */
     @Test
     public void testCalcViewTanCUDA() throws IOException {
-        testViewTan(true);
+        if(ComputeViewCUDA.isCUDAAvailable())
+            testViewTan(true);
     }
     
     /**
      * Test of calcViewShed method, of class ComputeView.
      */
     @Test
-    public void testCalcViewShed() throws IOException {   
+    public void testCalcViewShed() throws IOException {  
+        if(!ComputeViewCUDA.isCUDAAvailable())
+            return;
+        
         int size = 5;
         System.out.println("calcViewShed random mnt + mne");
         WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
