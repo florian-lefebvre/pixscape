@@ -543,7 +543,7 @@ public class ComputeViewCUDA implements ComputeView {
         try {
             int res = cuInit(0);
             return res == CUresult.CUDA_SUCCESS;
-        } catch(Exception e) {
+        } catch(Throwable e) {
             Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.INFO, null, e);
             return false;
         }
