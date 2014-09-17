@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+
+<document>
+  <body>
+    <section name="Download">
+	<p>
+	Download last version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar">${project.version}</a>
+	</p>
+	<p>
+	View changelog : <a href="changelog">changelog</a>
+	</p>
+	<p>
+	Download previous version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/">Previous versions</a>
+	</p>
+    </section>
+  </body>
+</document>
