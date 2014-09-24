@@ -13,18 +13,29 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
 import org.thema.drawshape.SelectableShape;
+import org.thema.drawshape.image.RasterShape;
+import org.thema.drawshape.layer.DefaultGroupLayer;
+import org.thema.drawshape.layer.DefaultLayer;
+import org.thema.drawshape.layer.RasterLayer;
 import org.thema.drawshape.style.PointStyle;
+import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.ui.MapViewer;
 
 /**
@@ -42,13 +53,17 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     
     private MapViewer mapViewer;
     private PointShape centreShape;
+    private Project project;
+    private RasterLayer layer;
+    private DefaultLayer centreLayer;
     
     /** Creates new form ViewShedDialog */
-    public ViewShedDialog(Frame parent, MapViewer mapViewer) {
+    public ViewShedDialog(Frame parent, Project project, MapViewer mapViewer) {
         super(parent, false);
+        this.project = project;
         initComponents();
         setLocationRelativeTo(parent);
-        getRootPane().setDefaultButton(okButton);
+        getRootPane().setDefaultButton(updateButton);
         // Close the dialog when Esc is pressed
         String cancelName = "cancel";
         InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
@@ -68,7 +83,10 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         pointTextField.setText(x + ", " + y);
         centreShape = new PointShape(x, y);
         centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));
-        mapViewer.getMap().addShape(centreShape);
+        centreLayer = new DefaultLayer("Centre", centreShape);
+        centreLayer.setRemovable(true);
+        ((DefaultGroupLayer)mapViewer.getLayers()).addLayerFirst(centreLayer);
+//        mapViewer.getMap().addShape(centreShape);
     }
 
 
@@ -91,7 +109,9 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         boundsButton = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         zDestTextField = new javax.swing.JTextField();
+        updateButton = new javax.swing.JButton();
 
+        setTitle("Viewshed");
         setAlwaysOnTop(true);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
@@ -102,7 +122,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText("Close");
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
@@ -138,6 +158,13 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
 
         zDestTextField.setText("-1");
 
+        updateButton.setText("Update");
+        updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateButtonActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -146,7 +173,8 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 210, Short.MAX_VALUE)
+                        .add(updateButton)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(cancelButton))
@@ -167,7 +195,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                                 .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(18, 18, 18)
                                 .add(directCheckBox)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 68, Short.MAX_VALUE)
                                 .add(boundsButton)))))
                 .addContainerGap())
         );
@@ -194,7 +222,8 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cancelButton)
-                    .add(okButton))
+                    .add(okButton)
+                    .add(updateButton))
                 .addContainerGap())
         );
 
@@ -204,13 +233,13 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String[] coords = pointTextField.getText().split(",");
-        point = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-        startZ = Double.parseDouble(zEyeTextField.getText());
-        destZ = Double.parseDouble(zDestTextField.getText());
-        direct = directCheckBox.isSelected();
-        if(bounds == null)
-            bounds = new Bounds();
+//        String[] coords = pointTextField.getText().split(",");
+//        point = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+//        startZ = Double.parseDouble(zEyeTextField.getText());
+//        destZ = Double.parseDouble(zDestTextField.getText());
+//        direct = directCheckBox.isSelected();
+//        if(bounds == null)
+//            bounds = new Bounds();
         isOk = true;
         doClose();
     }//GEN-LAST:event_okButtonActionPerformed
@@ -226,7 +255,13 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
         mapViewer.removeShapeMouseListener(this);
-        mapViewer.getMap().removeShapes(Arrays.asList(centreShape));
+        //mapViewer.getMap().removeShapes(Arrays.asList(centreShape));
+        if(!isOk) {
+            mapViewer.getLayers().removeLayer(centreLayer);
+            if(layer != null) {
+                mapViewer.getLayers().removeLayer(layer);
+            }
+        }
     }//GEN-LAST:event_formWindowClosed
 
     private void boundsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_boundsButtonActionPerformed
@@ -236,14 +271,36 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
             bounds = dlg.bounds;
     }//GEN-LAST:event_boundsButtonActionPerformed
 
+    private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
+        String[] coords = pointTextField.getText().split(",");
+        Point2D p = new Point2D.Double(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+        mouseClicked(p, null, null, 0);
+    }//GEN-LAST:event_updateButtonActionPerformed
+
     @Override
     public void mouseClicked(Point2D p, List<SelectableShape> shapes, MouseEvent sourceEvent, int cursorMode) {
-        pointTextField.setText(p.getX() + "," + p.getY());
-        centreShape.setPoint2D(p);
-        mapViewer.getMap().fullRepaint();
+        try {
+            pointTextField.setText(p.getX() + "," + p.getY());
+            centreShape.setPoint2D(p);
+            //mapViewer.getMap().fullRepaint();
+            Raster viewShed = project.calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
+                    Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+            if(layer != null) {
+                mapViewer.getLayers().removeLayer(layer);
+            }
+            layer = new RasterLayer("Viewshed-" + (directCheckBox.isSelected()?"direct":"indirect"), new RasterShape(viewShed,
+                    project.getDtmCov().getEnvelope2D(), new RasterStyle(
+                            new Color[] {new Color(0, 0, 0, 200), new Color(0, 0, 0, 20)}), true), project.getCRS());
+            layer.setRemovable(true);
+            ((DefaultGroupLayer)mapViewer.getLayers()).addLayerFirst(layer);
+            ((DefaultGroupLayer)mapViewer.getLayers()).moveTop(centreLayer);
+        } catch (InvalidGridGeometryException | TransformException ex) {
+            Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     private void doClose() {
+        
         setVisible(false);
         dispose();
     }
@@ -258,6 +315,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     private javax.swing.JLabel jLabel3;
     private javax.swing.JButton okButton;
     private javax.swing.JTextField pointTextField;
+    private javax.swing.JButton updateButton;
     private javax.swing.JTextField zDestTextField;
     private javax.swing.JTextField zEyeTextField;
     // End of variables declaration//GEN-END:variables

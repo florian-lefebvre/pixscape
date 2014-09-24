@@ -30,7 +30,6 @@ import javax.imageio.stream.FileImageOutputStream;
 import javax.media.jai.remote.SerializableState;
 import javax.media.jai.remote.SerializerFactory;
 import org.geotools.coverage.grid.GridCoordinates2D;
-import org.geotools.coverage.grid.GridCoverageFactory;
 import org.thema.common.ProgressBar;
 import org.thema.data.IOImage;
 import org.thema.parallel.AbstractParallelTask;

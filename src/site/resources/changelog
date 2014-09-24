@@ -1,2 +1,8 @@
+version 0.2 (24/09/2014)
+- UI : viewshed is updated for each clic
+- CLI : add commands metrics : --viewmetric --tanmetric
+- CLI : remove commands --global --globaltan
+- CLI : add -sampling option with 3 modes : n for grid sampling, land for land selection and points for external shapefile
+- Metrics : SUM SHAN IJI CONTAG
 version 0.1
 - initial version

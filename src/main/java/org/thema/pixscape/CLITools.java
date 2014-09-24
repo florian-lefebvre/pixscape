@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -30,6 +32,9 @@ import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
 import org.thema.pixscape.Project.Aggregate;
+import org.thema.pixscape.metric.Metric;
+import org.thema.pixscape.metric.ViewShedMetric;
+import org.thema.pixscape.metric.ViewTanMetric;
 
 /**
  *
@@ -41,19 +46,29 @@ public class CLITools {
     private double zEye = 1.8;
     private double zDest = -1;
     private Bounds bounds = new Bounds();
+    int sample = 1;
+    SortedSet<Integer> from = null;
+    File pointFile = null;
     
     public void execute(String [] arg) throws Throwable {
         if(arg[0].equals("--help")) {
-            System.out.println("Usage :\njava -jar pimage.jar [-mpi | -proc n | -cuda n]\n"  +
+            System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
+                    "java -jar pixscape.jar [-mpi | -proc n | -cuda n]\n"  +
                     //"dtm=raster_file [resz=val] [dsm=raster_file] [land=raster_file]\n" +
                     "--project project_file.xml\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]] command\n" +
+                    "[-sampling n=val | land=code1,..,coden | points=shapefile] command\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
                     "--viewtan [prec=deg] x y\n" +
-                    "--global [sample=val] [indirect] [from=code1,..,coden] [to=code1,..,coden] [aggr=sum|shannon] [dist=d1,...,dn]\n" +
-                    "--globaltan [sample=val] [prec=deg] [from=code1,..,coden] [to=code1,..,coden] [aggr=sum|shannon]\n");
+                    "--viewmetric [indirect] metric1[[code1,...,coden]] ... metricn[[code1,...,coden]]\n" +
+                    "--tanmetric [prec=deg] metric1[[code1,...,coden]] ... metricn[[code1,...,coden]]\n");
+            return;
+        }
+        
+        if(arg[0].equals("--metrics")) {
+            showMetrics();
             return;
         }
         
@@ -107,8 +122,22 @@ public class CLITools {
                         } else if(p.startsWith("zmax=")) {
                             bounds.setZMax(Double.parseDouble(p.split("=")[1]));
                         } else
-                            throw new IllegalArgumentException("Unknown option " + p);
+                            throw new IllegalArgumentException("Unknown param for bounds option " + p);
                     }
+                    break;
+                case "-sampling":
+                    p = args.remove(0);
+                    if(p.startsWith("n=")) {
+                        sample = Integer.parseInt(p.split("=")[1]);
+                    } else if(p.startsWith("land=")) {
+                        from = new TreeSet<>();
+                        String [] codes = args.remove(0).split("=")[1].split(",");
+                        for(String code : codes)
+                            from.add(Integer.parseInt(code));
+                    } else if(p.startsWith("points")) {
+                        pointFile = new File(p.split("=")[1]);
+                    } else
+                        throw new IllegalArgumentException("Unknown param for sampling option " + p);
                     break;
                 case "-zeye":
                     p = args.remove(0);
@@ -121,6 +150,7 @@ public class CLITools {
                 case "-resdir":
                     p = args.remove(0);
                     resDir = new File(p);
+                    resDir.mkdirs();
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown option " + p);
@@ -141,12 +171,12 @@ public class CLITools {
                     case "--viewtan":
                         viewTan(args);
                         break;
-                    case "--global":
-                        globalVisibility(args);
+                    case "--viewmetric":
+                        viewMetric(args);
                         break;
-                    case "--globaltan":
-                        globalTan(args);
-                        break;
+                    case "--tanmetric":
+                        tanMetric(args);
+                        break;    
                     default:
                         throw new IllegalArgumentException("Unknown command " + p);
                 }
@@ -167,9 +197,9 @@ public class CLITools {
             args.remove(0);
         }
         DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
-        WritableRaster view = project.calcViewShed(c, zEye, zDest, direct, bounds);
+        Raster view = project.calcViewShed(c, zEye, zDest, direct, bounds);
         new GeoTiffWriter(new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif")).write(
-                new GridCoverageFactory().create("view", view, project.getDtmCov().getEnvelope2D()), null);
+                new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()), null);
     }
     
     private void viewTan(List<String> args) throws IOException, TransformException {
@@ -180,7 +210,7 @@ public class CLITools {
             aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
         }
         DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
-        WritableRaster viewTan = project.calcViewTan(p, zEye, aPrec, bounds);
+        Raster viewTan = project.calcViewTan(p, zEye, aPrec, bounds);
         // create landuse, z and dist images.
         GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(p);
         WritableRaster viewTanZ = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
@@ -201,162 +231,80 @@ public class CLITools {
                 new GridCoverageFactory().create("view", viewTanLand, env), null);
     }
 
-    private void globalVisibility(List<String> args) throws IOException {
-        int sample = 1;
-        if(!args.isEmpty() && args.get(0).startsWith("sampling=")) {
-            sample = Integer.parseInt(args.remove(0).split("=")[1]);
-        }
-        
+    private void viewMetric(List<String> args) throws IOException {
         boolean direct = true;
         if(!args.isEmpty() && args.get(0).equals("indirect")) {
             direct = false;
             args.remove(0);
         }
-        HashSet<Integer> from = new HashSet<>();
-        if(!args.isEmpty() && args.get(0).startsWith("from=")) {
-            String [] codes = args.remove(0).split("=")[1].split(",");
-            for(String code : codes)
-                from.add(Integer.parseInt(code));
-        }
-        HashSet<Integer> to = new HashSet<>();
-        if(!args.isEmpty() && args.get(0).startsWith("to=")) {
-            String [] codes = args.remove(0).split("=")[1].split(",");
-            for(String code : codes)
-                to.add(Integer.parseInt(code));
-        }
-        Aggregate aggr = Aggregate.NONE;
-        if(!args.isEmpty() && args.get(0).startsWith("aggr=")) {
-            String s = args.remove(0).split("=")[1];
-            switch (s) {
-                case "sum":
-                    aggr = Aggregate.SUM;
-                    break;
-                case "shannon":
-                    aggr = Aggregate.SHANNON;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown aggregation : " + s);
+        List<ViewShedMetric> metrics = new ArrayList<>();
+        while(!args.isEmpty()) {
+            String s = args.remove(0);
+            TreeSet<Integer> codes = null;
+            if(s.contains("[")) {
+                codes = new TreeSet<>();
+                String lst = s.split("\\[")[1].replace("]", "");
+                String [] tokens = lst.split(",");
+                for(String code : tokens)
+                    codes.add(Integer.parseInt(code));
+                s = s.split("\\[")[0];
             }
+            Metric m = Project.getMetric(s);
+            if(!(m instanceof ViewShedMetric))
+                throw new IllegalArgumentException("The metric " + m + " is not a viewshed metric");
+            m.setCodes(codes);
+            metrics.add((ViewShedMetric) m);
+        }
+        ParallelTask task;
+        if(pointFile == null) {
+            task = new GridMetricTask(zEye, zDest, direct, bounds, from, metrics, sample, resDir, null);
+        } else {
+            task = new PointMetricTask(zEye, zDest, direct, bounds, metrics, pointFile, resDir, null);
+        }
         
-        }
-        TreeSet<Double> distSet = new TreeSet<>();
-        distSet.add(bounds.getDmin());
-        if(!args.isEmpty() && args.get(0).startsWith("dist=")) {
-            String [] di = args.remove(0).split("=")[1].split(",");
-            for(String d : di)
-                distSet.add(Double.parseDouble(d));
-        }
-        List<Double> dists = new ArrayList<>(distSet.subSet(bounds.getDmin(), bounds.getDmax()));
-        dists.add(bounds.getDmax());
-        
-        for(int i = 0; i < dists.size()-1; i++) {
-            bounds.setDmin(dists.get(i));
-            bounds.setDmax(dists.get(i+1));
-            ParallelTask task;
-            if(from.isEmpty() && to.isEmpty() && aggr != Aggregate.SHANNON) {
-                //project.calcVisibility(zEye, zDest, direct, bounds, true, null);
-                task = new GlobalViewTask(zEye, zDest, direct, bounds, sample, resDir, null);
-            } else {
-                if(!project.hasLandUse()) {
-                    throw new IllegalArgumentException("No land use defined");
-                }
-                if(from.isEmpty())
-                    from.addAll(project.getCodes());
-                if(to.isEmpty())
-                    to.addAll(project.getCodes());
-                if(aggr == Aggregate.NONE) {
-//                    project.calcVisibility(zEye, zDest, direct, bounds, from, to, true, null);
-                    task = new GlobalViewLandUseTask(zEye, zDest, direct, bounds, from, to, sample, resDir, null);   
-                } else {
-                    task = new GlobalViewTask(zEye, zDest, direct, bounds, from, to, aggr, sample, resDir, null);   
-//                    project.calcVisibility(zEye, zDest, direct, bounds, from, to, aggr, true, null);             
-                } 
-            }
-            ExecutorService.execute(task);
-        }
+        ExecutorService.execute(task);
     }
     
-    private void globalTan(List<String> args) throws IOException {
-        int sample = 1;
-        if(!args.isEmpty() && args.get(0).startsWith("sampling=")) {
-            sample = Integer.parseInt(args.remove(0).split("=")[1]);
-        }
-        
+    private void tanMetric(List<String> args) throws IOException {
         double aPrec = 0.1 * Math.PI / 180;
         if(!args.isEmpty() && args.get(0).startsWith("prec=")) {
             aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
         }
-        
-        HashSet<Integer> from = new HashSet<>();
-        if(!args.isEmpty() && args.get(0).startsWith("from=")) {
-            String [] codes = args.remove(0).split("=")[1].split(",");
-            for(String code : codes)
-                from.add(Integer.parseInt(code));
-        }
-        HashSet<Integer> to = new HashSet<>();
-        if(!args.isEmpty() && args.get(0).startsWith("to=")) {
-            String [] codes = args.remove(0).split("=")[1].split(",");
-            for(String code : codes)
-                to.add(Integer.parseInt(code));
-        }
-        Aggregate aggr = Aggregate.NONE;
-        if(!args.isEmpty() && args.get(0).startsWith("aggr=")) {
-            String s = args.remove(0).split("=")[1];
-            switch (s) {
-                case "sum":
-                    aggr = Aggregate.SUM;
-                    break;
-                case "shannon":
-                    aggr = Aggregate.SHANNON;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown aggregation : " + s);
+        List<ViewTanMetric> metrics = new ArrayList<>();
+        while(!args.isEmpty()) {
+            String s = args.remove(0);
+            TreeSet<Integer> codes = null;
+            if(s.contains("(")) {
+                codes = new TreeSet<>();
+                String lst = s.split("\\(")[1].replace(")", "");
+                String [] tokens = lst.split(",");
+                for(String code : tokens)
+                    codes.add(Integer.parseInt(code));
+                s = s.split("\\(")[0];
             }
+            Metric m = Project.getMetric(s);
+            if(!(m instanceof ViewTanMetric))
+                throw new IllegalArgumentException("The metric " + m + " is not a tangential metric");
+            m.setCodes(codes);
+            metrics.add((ViewTanMetric) m);
         }
-        
         ParallelTask task;
-        if(from.isEmpty() && to.isEmpty() && aggr != Aggregate.SHANNON) {
-            task = new GlobalViewTask(zEye, aPrec, bounds, sample, resDir, null);
+        if(pointFile == null) {
+            task = new GridMetricTask(zEye, aPrec, bounds, from, metrics, sample, resDir, null);
         } else {
-            if(!project.hasLandUse()) {
-                throw new IllegalArgumentException("No land use defined");
-            }
-            if(from.isEmpty())
-                from.addAll(project.getCodes());
-            if(to.isEmpty())
-                to.addAll(project.getCodes());
-            if(aggr == Aggregate.NONE) {
-                task = new GlobalViewLandUseTask(zEye, aPrec, bounds, from, to, sample, resDir, null);   
-            } else {
-                task = new GlobalViewTask(zEye, aPrec, bounds, from, to, aggr, sample, resDir, null);             
-            } 
+            task = new PointMetricTask(zEye, aPrec, bounds, metrics, pointFile, resDir, null);
         }
-        ExecutorService.execute(task);
         
+        ExecutorService.execute(task);
     }
 
+    private void showMetrics() {
+        System.out.println("===== Metrics =====");
+        for(Metric indice : Project.METRICS) {
+            System.out.println(indice.getShortName());
+        }
+       
+    }
     
-//    public static Project createProject(List<String> args) throws IOException {
-//
-//        File dtmFile = new File(args.remove(0).split("=")[1]);
-//        double resZ = 1;
-//        
-//        if(!args.isEmpty() && args.get(0).startsWith("resz=")) {
-//            resZ = Double.parseDouble(args.remove(0).split("=")[1]);
-//        }
-//        
-//        Project project = new Project(IOImage.loadCoverage(dtmFile), resZ);
-//
-//        if(!args.isEmpty() && args.get(0).startsWith("dsm=")) {
-//            File f = new File(args.remove(0).split("=")[1]);
-//            project.setDSM(IOImage.loadCoverage(f));
-//        } 
-//        if(!args.isEmpty() && args.get(0).startsWith("land=")) {
-//            File f = new File(args.remove(0).split("=")[1]);
-//            project.setLandUse(IOImage.loadCoverage(f));
-//        }
-//
-//        return project;
-//    }
     
 }

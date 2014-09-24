@@ -2,17 +2,26 @@ package org.thema.pixscape;
 
 import com.thoughtworks.xstream.XStream;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
+import com.vividsolutions.jts.geom.util.NoninvertibleTransformationException;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EventObject;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -39,6 +48,11 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
+import org.thema.pixscape.metric.CONTAGMetric;
+import org.thema.pixscape.metric.IJIMetric;
+import org.thema.pixscape.metric.Metric;
+import org.thema.pixscape.metric.ShannonMetric;
+import org.thema.pixscape.metric.SumMetric;
 
 /**
  *
@@ -130,106 +144,13 @@ public final class Project {
         new GeoTiffWriter(new File(dir, "dsm.tif")).write(dsmCov, null);
     }
     
-    public WritableRaster calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds) throws InvalidGridGeometryException, TransformException {
-        return getComputeView().calcViewShed(dtmCov.getGridGeometry().worldToGrid(c), startZ, destZ, direct, bounds);
+    public Raster calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds) throws InvalidGridGeometryException, TransformException {
+        return getComputeView().calcViewShed(dtmCov.getGridGeometry().worldToGrid(c), startZ, destZ, direct, bounds).getView();
     }
     
-    public WritableRaster calcViewTan(DirectPosition2D c, double startZ, double ares, Bounds bounds) throws InvalidGridGeometryException, TransformException {
-        return getComputeView().calcViewTan(dtmCov.getGridGeometry().worldToGrid(c), startZ, ares, bounds);
+    public Raster calcViewTan(DirectPosition2D c, double startZ, double ares, Bounds bounds) throws InvalidGridGeometryException, TransformException {
+        return getComputeView().calcViewTan(dtmCov.getGridGeometry().worldToGrid(c), startZ, ares, bounds).getView();
     }
-
-//    public WritableRaster calcVisibility(double startZ, double destZ, boolean direct, Bounds bounds, boolean saved, ProgressBar progressBar) throws IOException {
-//        GlobalViewTask task = new GlobalViewTask(startZ, destZ, direct, bounds, saved, progressBar);
-////        if(isUseCUDA()) {
-////            WritableRaster r = ((ComputeViewCUDA)getComputeView()).calcVisibility(startZ, destZ, direct, bounds, progressBar);
-////            if(saved) {
-////                new GeoTiffWriter(task.getResultFile()).write(
-////                        new GridCoverageFactory().create("view", r, getDtmCov().getEnvelope2D()), null);
-////                return null;
-////            } else
-////                return r;
-////        } else {
-//            ExecutorService.execute(task);
-//            return task.getResult();
-////        }
-//    }
-//    
-//    public Map<Integer, WritableRaster> calcVisibility(double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode,  Set<Integer> toCode, 
-//            boolean saved, ProgressBar progressBar) throws IOException {
-//        GlobalViewLandUseTask task = new GlobalViewLandUseTask(startZ, destZ, direct, bounds, fromCode, toCode, saved, progressBar);
-////        if(isUseCUDA()) {
-////            Map<Integer, WritableRaster> views = ((ComputeViewCUDA)getComputeView()).calcVisibility(startZ, destZ, direct, bounds, fromCode, toCode, progressBar);
-////            if(saved) {
-////                for(Integer code : views.keySet()) {
-////                    new GeoTiffWriter(task.getResultFile(code)).write(
-////                        new GridCoverageFactory().create("view", views.get(code), getDtmCov().getEnvelope2D()), null);
-////                }
-////                return null;
-////            } else
-////                return views;
-////        } else {
-//            ExecutorService.execute(task);
-//            return task.getResult();
-////        }
-//    }
-//    
-//    public WritableRaster calcVisibility(double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, Set<Integer> toCode, 
-//            Aggregate aggr, boolean saved, ProgressBar progressBar) throws IOException {
-//        GlobalViewTask task = new GlobalViewTask(startZ, destZ, direct, bounds, fromCode, toCode, aggr, saved, progressBar);
-////        if(isUseCUDA()) {
-////            Map<Integer, WritableRaster> views = ((ComputeViewCUDA)getComputeView()).calcVisibility(startZ, destZ, direct, bounds, fromCode, toCode, progressBar);
-////            WritableRaster view = null;
-////            if(progressBar != null)
-////                progressBar.setIndeterminate(true);
-////            if(aggr == Aggregate.SUM) {
-////                view = views.values().iterator().next().createCompatibleWritableRaster();
-////                for(int yi = 0; yi < view.getHeight(); yi++) {
-////                    for(int xi = 0; xi < view.getWidth(); xi++) {
-////                        int sum = 0;
-////                        for(WritableRaster v : views.values())
-////                            sum += v.getSample(xi, yi, 0);
-////                        if(sum < 0)
-////                            sum = -1;
-////                        view.setSample(xi, yi, 0, sum);
-////                    }
-////                }
-////            } else if(aggr == Aggregate.SHANNON) {
-////                view = Raster.createWritableRaster(
-////                        new BandedSampleModel(DataBuffer.TYPE_FLOAT, getDtm().getWidth(), getDtm().getHeight(), 1), null);
-////                for(int yi = 0; yi < view.getHeight(); yi++)
-////                    for(int xi = 0; xi < view.getWidth(); xi++) {
-////                        int sum = 0;
-////                        for(WritableRaster v : views.values()) {
-////                            final int val = v.getSample(xi, yi, 0);
-////                            if(val != 0) {
-////                                sum += val;
-////                            }
-////                        }
-////                        if(sum < 0) {
-////                            view.setSample(xi, yi, 0, -1);
-////                            continue;
-////                        }
-////                        double shannon = 0;
-////                        for(WritableRaster v : views.values()) {
-////                            double val = v.getSample(xi, yi, 0);
-////                            if(val > 0) {
-////                                shannon += - val/sum * Math.log(val/sum);
-////                            }
-////                        }
-////                        view.setSample(xi, yi, 0, shannon/Math.log(views.size()));
-////                    }
-////            } 
-////            if(saved) {
-////                new GeoTiffWriter(task.getResultFile()).write(
-////                        new GridCoverageFactory().create("view", view, getDtmCov().getEnvelope2D()), null);
-////                return null;
-////            } else
-////                return view;
-////        } else {
-//            ExecutorService.execute(task);
-//            return task.getResult();
-////        }
-//    }
     
     public final double getZ(int x, int y) {
         double z = dtm.getSample(x, y, 0) * resZ;
@@ -240,6 +161,15 @@ public final class Project {
 
     public AffineTransformation getGrid2space() {
         return grid2space;
+    }
+    
+    public AffineTransformation getSpace2Grid() {
+        try {
+            return grid2space.getInverse();
+        } catch (NoninvertibleTransformationException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
     }
     
     public GridCoverage2D getDtmCov() {
@@ -295,7 +225,7 @@ public final class Project {
         if(computeView == null) {
             if(isUseCUDA()) {
                 try {
-                    computeView = new ComputeViewCUDA(getDtm(), resZ, res2D, land, dsm, nbGPU);
+                    computeView = new ComputeViewCUDA(getDtm(), resZ, res2D, land, codes, dsm, nbGPU);
                 } catch (Throwable ex) {
                     Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
                     Logger.getLogger(Project.class.getName()).info("CUDA not available, continue in Java mode");
@@ -303,7 +233,7 @@ public final class Project {
                 }
             } 
             if(computeView == null) {
-                computeView = new ComputeViewJava(getDtm(), resZ, res2D, land, dsm);
+                computeView = new ComputeViewJava(getDtm(), resZ, res2D, land, codes, dsm);
             }
         }
         
@@ -418,6 +348,8 @@ public final class Project {
             });
             layers.addLayerFirst(l);
         }
+        layers.setLayersVisible(false);
+        layers.getLayerFirst().setVisible(true);
     } 
 
     public static Project getProject() {
@@ -434,5 +366,52 @@ public final class Project {
         }
         
     }
+
+    public static Metric getMetric(String shortName) {
+        try {
+            for(Metric ind : METRICS)
+                if(ind.getShortName().equals(shortName))
+                    return ind.getClass().newInstance();
+            throw new IllegalArgumentException("Unknown metric " + shortName);
+        } catch (InstantiationException | IllegalAccessException ex) {
+            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Error while instanciate " + shortName);
+        }
+    }
     
+    public static List<Metric> METRICS;
+    static {
+        METRICS = new ArrayList(Arrays.asList(new SumMetric(), new ShannonMetric(), new IJIMetric(), new CONTAGMetric()));
+    }
+    
+    
+    public static void loadPluginMetric() throws Exception {
+        URL url = Project.class.getProtectionDomain().getCodeSource().getLocation();
+        File dir = new File(url.toURI()).getParentFile();
+        File loc = new File(dir, "plugins");
+
+        if(!loc.exists())
+            return;
+        
+        File[] flist = loc.listFiles(new FileFilter() {
+            public boolean accept(File file) {return file.getPath().toLowerCase().endsWith(".jar");}
+        });
+        if(flist == null || flist.length == 0)
+            return;
+        URL[] urls = new URL[flist.length];
+        for (int i = 0; i < flist.length; i++)
+            urls[i] = flist[i].toURI().toURL();
+        URLClassLoader ucl = new URLClassLoader(urls);
+
+        loadPluginMetric(ucl);
+    }
+    
+    public static void loadPluginMetric(ClassLoader loader) throws Exception {
+        ServiceLoader<Metric> sl = ServiceLoader.load(Metric.class, loader);
+        Iterator<Metric> it = sl.iterator();
+        while (it.hasNext()) {
+            Metric ind = it.next();
+            METRICS.add(ind);
+        }
+    }
 }

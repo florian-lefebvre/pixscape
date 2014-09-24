@@ -8,24 +8,17 @@ import java.awt.image.WritableRaster;
 import java.util.Arrays;
 import java.util.SortedSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.thema.pixscape.ComputeView.ViewResult;
 
 /**
  *
  * @author gvuidel
  */
-public class ComputeViewJava implements ComputeView {
+public class ComputeViewJava extends ComputeView {
     
-    private final Raster dtm;
     private final DataBuffer dtmBuf;
-    private final Raster land, dsm;
     private DataBuffer dsmBuf;
     
-    /** resolution of the grid dtm in meter */
-    private final double res2D;
-    /** resolution of altitude Z in meter */
-    private final double resZ;
-
-//    private double zTotMax;
     /**
      * 
      * @param dtm
@@ -34,13 +27,9 @@ public class ComputeViewJava implements ComputeView {
      * @param land can be null
      * @param dsm  can be null
      */
-    public ComputeViewJava(Raster dtm, double resZ, double res2D, Raster land, Raster dsm) {
-        this.dtm = dtm;
+    public ComputeViewJava(Raster dtm, double resZ, double res2D, Raster land, SortedSet<Integer> codes, Raster dsm) {
+        super(dtm, resZ, res2D, land, codes, dsm);
         this.dtmBuf = dtm.getDataBuffer();
-        this.resZ = resZ;
-        this.res2D = res2D;
-        this.land = land;
-        this.dsm = dsm;
         if(dsm != null) {
             dsmBuf = dsm.getDataBuffer();
         }
@@ -48,17 +37,20 @@ public class ComputeViewJava implements ComputeView {
 
     @Override
     public double aggrViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds) {
-        byte[] view = ((DataBufferByte)calcViewShed(cg, startZ, destZ, direct, bounds).getDataBuffer()).getData();
+//        long t1 = System.currentTimeMillis();
+        byte[] view = ((DataBufferByte)calcViewShed(cg, startZ, destZ, direct, bounds).getView().getDataBuffer()).getData();
         int sum = 0;
         for(int i = 0; i < view.length; i++) {
             sum += view[i];
         }
+//        long t2 = System.currentTimeMillis();
+//        System.out.println("View " + (t2-t1) + " ms");
         return sum;
     }
     
     @Override
     public double[] aggrViewShedLand(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds, SortedSet<Integer> codes) {
-        byte[] view = ((DataBufferByte)calcViewShed(cg, startZ, destZ, direct, bounds).getDataBuffer()).getData();
+        byte[] view = ((DataBufferByte)calcViewShed(cg, startZ, destZ, direct, bounds).getView().getDataBuffer()).getData();
         final double [] landuse = new double[codes.last()+1];
         final int w = dtm.getWidth();
         for(int i = 0; i < view.length; i++) {
@@ -73,7 +65,7 @@ public class ComputeViewJava implements ComputeView {
 
     @Override
     public double aggrViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds) {
-        int[] view = ((DataBufferInt)calcViewTan(cg, startZ, ares, bounds).getDataBuffer()).getData();
+        int[] view = ((DataBufferInt)calcViewTan(cg, startZ, ares, bounds).getView().getDataBuffer()).getData();
         int sum = 0;
         for(int i = 0; i < view.length; i++) {
             if(view[i] > -1)
@@ -84,7 +76,7 @@ public class ComputeViewJava implements ComputeView {
 
     @Override
     public double[] aggrViewTanLand(GridCoordinates2D cg, double startZ, double ares, Bounds bounds, SortedSet<Integer> codes) {
-        int[] view = ((DataBufferInt)calcViewTan(cg, startZ, ares, bounds).getDataBuffer()).getData();
+        int[] view = ((DataBufferInt)calcViewTan(cg, startZ, ares, bounds).getView().getDataBuffer()).getData();
         final int w = dtm.getWidth();
         double [] sum = new double[codes.last()+1];
         for(int i = 0; i < view.length; i++) {
@@ -100,7 +92,7 @@ public class ComputeViewJava implements ComputeView {
     }
     
     @Override
-    public WritableRaster calcViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds)  {
+    public ViewShedResult calcViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds)  {
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
         byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
         
@@ -118,11 +110,11 @@ public class ComputeViewJava implements ComputeView {
                 calcRay(direct, cg.x, cg.y, dtm.getWidth()-1, y, startZ, destZ, bounds, viewBuf);
         }
 //        System.out.println((System.currentTimeMillis()-time) + " ms");
-        return view;
+        return new ViewShedResult(cg, view);
     }
     
     @Override
-    public WritableRaster calcViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds)  {
+    public ViewTanResult calcViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds)  {
         int n = (int)Math.ceil(2*Math.PI/ares);
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/ares), 1, null);
         int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
@@ -133,98 +125,8 @@ public class ComputeViewJava implements ComputeView {
             if(bounds.isAlphaIncluded(1.5*Math.PI-(ax*ares)))
                 calcRayTan(cg.x, cg.y, startZ, bounds, viewBuf, ax, ares);
         }
-//        double a = 0;
-//        int i = 0;
-//        int x, y;
-//        x = cg.x;//(int) (cg.x - (dtm.getHeight()-1-cg.y)*Math.tan(a));
-//        while(x >= 0 && cg.y != dtm.getHeight()-1)  {
-//            if(bounds.isAlphaIncluded(1.5*Math.PI-a))
-//                calcRayTan(cg.x, cg.y, x, dtm.getHeight()-1, startZ, bounds, viewBuf, i, ares);
-//            a += ares;
-//            i++;
-//            x = (int) (cg.x - (dtm.getHeight()-1-cg.y)*Math.tan(a));
-//        }
-//        y = (int) (cg.y - cg.x*Math.tan(a-Math.PI/2));
-//        while(y >= 0 && cg.x != 0)  {
-//            if(bounds.isAlphaIncluded(1.5*Math.PI-a) && y < dtm.getHeight())
-//                calcRayTan(cg.x, cg.y, 0, y, startZ, bounds, viewBuf, i, ares);
-//            a += ares;
-//            i++;
-//            y = (int) (cg.y - cg.x*Math.tan(a-Math.PI/2));
-//        }
-//        x = (int) (cg.x + cg.y*Math.tan(a));
-//        while(x < dtm.getWidth() && cg.y != 0)  {
-//            if(bounds.isAlphaIncluded(1.5*Math.PI-a) && x >= 0)
-//                calcRayTan(cg.x, cg.y, x, 0, startZ, bounds, viewBuf, i, ares);
-//            a += ares;
-//            i++;
-//            x = (int) (cg.x + cg.y*Math.tan(a));
-//        }
-//        y = (int) (cg.y + (dtm.getWidth()-1-cg.x)*Math.tan(a-Math.PI/2));
-//        while(y < dtm.getHeight() && cg.x != dtm.getWidth()-1)  {
-//            if(bounds.isAlphaIncluded(1.5*Math.PI-a) && y >= 0)
-//                calcRayTan(cg.x, cg.y, dtm.getWidth()-1, y, startZ, bounds, viewBuf, i, ares);
-//            a += ares;
-//            i++;
-//            y = (int) (cg.y + (dtm.getWidth()-1-cg.x)*Math.tan(a-Math.PI/2));
-//        }
-//        while(i < n) {
-//            x = (int) (cg.x - (dtm.getHeight()-1-cg.y)*Math.tan(a));
-//            if(bounds.isAlphaIncluded(1.5*Math.PI-a) && x >= 0 && x < dtm.getWidth())
-//                calcRayTan(cg.x, cg.y, x, dtm.getHeight()-1, startZ, bounds, viewBuf, i, ares);
-//            a += ares;
-//            i++;
-//        }
-        
-//        x = (int) (cg.x + cg.y*Math.tan(a));
-//        while(x < dtm.getWidth())  {
-//            calcRayTan(cg.x, cg.y, x, 0, startZ, bounds, viewBuf, i++, ares);
-//            a += ares;
-//            x = (int) (cg.x + cg.y*Math.tan(a));
-//        }
-//        y = (int) (cg.y + (dtm.getWidth()-cg.x)*Math.tan(a-Math.PI/2));
-//        while(y < dtm.getHeight())  {
-//            calcRayTan(cg.x, cg.y, dtm.getWidth()-1, y, startZ, bounds, viewBuf, i++, ares);
-//            a += ares;
-//            y = (int) (cg.y + (dtm.getWidth()-cg.x)*Math.tan(a-Math.PI/2));
-//        }
-//        x = (int) (cg.x - (dtm.getHeight()-cg.y)*Math.tan(a));
-//        while(x >= 0)  {
-//            calcRayTan(cg.x, cg.y, x, dtm.getHeight()-1, startZ, bounds, viewBuf, i++, ares);
-//            a += ares;
-//            x = (int) (cg.x - (dtm.getHeight()-cg.y)*Math.tan(a));
-//        }
-//        y = (int) (cg.y - cg.x*Math.tan(a-Math.PI/2));
-//        while(y >= 0)  {
-//            calcRayTan(cg.x, cg.y, 0, y, startZ, bounds, viewBuf, i++, ares);
-//            a += ares;
-//            y = (int) (cg.y - cg.x*Math.tan(a-Math.PI/2));
-//        }
-//        while(a < ares) {
-//            x = (int) (cg.x + cg.y*Math.tan(a));
-//            calcRayTan(cg.x, cg.y, x, 0, startZ, bounds, viewBuf, i++, ares);
-//            a += ares;
-//        }
-        
-        
-        
-//        for(int i = 0; i < n; i++, a += ares) {
-//            int x = (int) (cg.x + cg.y*Math.tan(a));
-//            if(x >= 0 && x < dtm.getWidth()) {
-//                if(a > Math.PI/2 && a < 3*Math.PI/2)
-//                    calcRayTan(cg.x, cg.y, dtm.getWidth()-1-x, dtm.getHeight()-1, startZ, viewBuf, i, ares);
-//                else
-//                    calcRayTan(cg.x, cg.y, x, 0, startZ, viewBuf, i, ares);
-//            } else {
-//                int y = (int) (cg.y + cg.x*Math.tan(a-Math.PI/2));
-//                if(a < Math.PI)
-//                    calcRayTan(cg.x, cg.y, dtm.getWidth()-1, y, startZ, viewBuf, i, ares);
-//                else
-//                    calcRayTan(cg.x, cg.y, 0, dtm.getHeight()-1-y, startZ, viewBuf, i, ares);
-//            }
-//        }
         System.out.println((System.currentTimeMillis()-time) + " ms");
-        return view;
+        return new ViewTanResult(ares, cg, view);
     }
     
     private void calcRayTan(final int x0, final int y0, final double startZ, Bounds bounds, final int[] view, final int ax, final double ares) {

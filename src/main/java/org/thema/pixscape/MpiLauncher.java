@@ -37,7 +37,8 @@ public class MpiLauncher extends MainMPI {
         if(args.length < 2 || !args[0].equals("--project"))
             throw new IllegalArgumentException();
         
-        Project.loadProject(new File(args[1]));
+        Project prj = Project.loadProject(new File(args[1]));
+        prj.setUseCUDA(0);
     }
     
 }

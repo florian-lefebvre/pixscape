@@ -248,34 +248,9 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_loadProjectMenuItemActionPerformed
 
     private void viewShedMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewShedMenuItemActionPerformed
-        final ViewShedDialog dlg = new ViewShedDialog(this, mapViewer);
+        final ViewShedDialog dlg = new ViewShedDialog(this, project, mapViewer);
         dlg.setVisible(true);
         
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // on attend que la boite de dialogue soit fermée
-                while(dlg.isDisplayable()) 
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                if(!dlg.isOk)    
-                    return;
-                
-                try {
-                    WritableRaster viewShed = project.calcViewShed(dlg.point, dlg.startZ, dlg.destZ, dlg.direct, dlg.bounds);
-                    RasterLayer l = new RasterLayer("Viewshed-" + (dlg.direct?"direct":"indirect"), new RasterShape(viewShed, 
-                            project.getDtmCov().getEnvelope2D(), new RasterStyle(
-                                    new Color[] {new Color(0, 0, 0, 200), new Color(0, 0, 0, 20)}), true), project.getCRS());
-                    l.setRemovable(true);
-                    rootLayer.addLayerFirst(l);
-                } catch (InvalidGridGeometryException | TransformException ex) {
-                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }).start();
     }//GEN-LAST:event_viewShedMenuItemActionPerformed
 
     private void totViewMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_totViewMenuItemActionPerformed
@@ -339,7 +314,7 @@ public class MainFrame extends javax.swing.JFrame {
                     return;
                 
                 try {
-                    WritableRaster viewTan = project.calcViewTan(dlg.point, dlg.startZ, dlg.precision*Math.PI/180, //Math.PI/(project.getDtm().getWidth()+project.getDtm().getHeight()), 
+                    Raster viewTan = project.calcViewTan(dlg.point, dlg.startZ, dlg.precision*Math.PI/180, //Math.PI/(project.getDtm().getWidth()+project.getDtm().getHeight()), 
                             dlg.bounds);
                     // create landuse, z and dist images.
                     GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(dlg.point);
@@ -407,7 +382,7 @@ public class MainFrame extends javax.swing.JFrame {
                         Point p1 = path.get(i).getGeometry().getCentroid();
                         Point p2 = path.get(i+1).getGeometry().getCentroid();
                         double dir = Bounds.rad2deg(Math.atan2(p2.getY()-p1.getY(), p2.getX()-p1.getX()));
-                        WritableRaster viewShed = project.calcViewShed(new DirectPosition2D(p1.getX(), p1.getY()), dlg.startZ, -1, true, dlg.bounds.createBounds(dir));
+                        Raster viewShed = project.calcViewShed(new DirectPosition2D(p1.getX(), p1.getY()), dlg.startZ, -1, true, dlg.bounds.createBounds(dir));
                         Geometry view = Vectorizer.vectorize(viewShed, 1);
                         view.apply(project.getGrid2space());
                         viewSheds.add(new DefaultFeature(path.get(i).getId(), view));

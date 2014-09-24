@@ -19,6 +19,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.util.Arrays;
+import java.util.List;
 import java.util.TreeSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.junit.After;
@@ -27,6 +28,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.thema.pixscape.metric.ShannonMetric;
+import org.thema.pixscape.metric.SumMetric;
 
 /**
  *
@@ -108,8 +111,8 @@ public class ComputeViewTest {
         printArray(((DataBufferFloat)mnt.getDataBuffer()).getData());
         System.out.println("mne");
         printArray(((DataBufferFloat)mne.getDataBuffer()).getData());
-        ComputeViewCUDA cuda = new ComputeViewCUDA(mnt, 1, 1, land, mne, 1);
-        ComputeViewJava java = new ComputeViewJava(mnt, 1, 1, land, mne);
+        ComputeViewCUDA cuda = new ComputeViewCUDA(mnt, 1, 1, land, new TreeSet<>(Arrays.asList(1, 2, 3, 4, 5)), mne, 1);
+        ComputeViewJava java = new ComputeViewJava(mnt, 1, 1, land, new TreeSet<>(Arrays.asList(1, 2, 3, 4, 5)), mne);
         double startZ = 2;
         for(int y = 0; y < size; y++) {
             for(int x = 0; x < size; x++) {
@@ -128,8 +131,8 @@ public class ComputeViewTest {
     
     private void compJavaCUDA(GridCoordinates2D p, double startZ, double destZ, boolean direct, 
             ComputeViewCUDA cuda, ComputeViewJava java) {
-        WritableRaster resCuda = cuda.calcViewShed(p, startZ, destZ, direct, new Bounds());
-        WritableRaster resJava = java.calcViewShed(p, startZ, destZ, direct, new Bounds());
+        Raster resCuda = cuda.calcViewShed(p, startZ, destZ, direct, new Bounds()).getView();
+        Raster resJava = java.calcViewShed(p, startZ, destZ, direct, new Bounds()).getView();
         
         TreeSet<Integer> to = new TreeSet<>(Arrays.asList(1, 2, 3, 4, 5));
                 System.out.println("java");
@@ -140,8 +143,22 @@ public class ComputeViewTest {
         
         Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds()), cuda.aggrViewShed(p, startZ, startZ, true, new Bounds()), 0);
         
+        SumMetric sum = new SumMetric();
+        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0), 
+                java.aggrViewShed(p, startZ, startZ, true, new Bounds()), 0);
+        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0), 
+                cuda.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0));
+        
         Assert.assertArrayEquals(java.aggrViewShedLand(p, startZ, startZ, true, new Bounds(), to), 
                 cuda.aggrViewShedLand(p, startZ, startZ, true, new Bounds(), to), 0);
+        
+        List<SumMetric> metrics = Arrays.asList(new SumMetric(1), new SumMetric(2), new SumMetric(3), new SumMetric(4), new SumMetric(5));
+        Assert.assertArrayEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), metrics).toArray(), 
+                cuda.aggrViewShed(p, startZ, startZ, true, new Bounds(), metrics).toArray());
+        
+        ShannonMetric sh = new ShannonMetric();
+        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sh)).get(0), 
+                cuda.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sh)).get(0));
     }
     
     private void testViewShed(boolean cuda) throws IOException {
@@ -166,7 +183,7 @@ public class ComputeViewTest {
                         for(int j = 0; j < 5; j++)
                             mnt.setSample(j, i, 0, Double.parseDouble(values[j]));
                     }
-                    compute = cuda ? new ComputeViewCUDA(mnt, 1, 1, null, null, 1) : new ComputeViewJava(mnt, 1, 1, null, null);
+                    compute = cuda ? new ComputeViewCUDA(mnt, 1, 1, null, null, null, 1) : new ComputeViewJava(mnt, 1, 1, null, null, null);
                 } else {
                     System.out.println("Test with : " + line);
                     String[] tokens = line.split(" ");
@@ -188,19 +205,19 @@ public class ComputeViewTest {
                         for(int j = 0; j < 5; j++)
                             test[i*5+j] = Byte.parseByte(values[j]);
                     }
-                    WritableRaster result = compute.calcViewShed(p, startZ, destZ, direct, bounds);    
+                    Raster result = compute.calcViewShed(p, startZ, destZ, direct, bounds).getView();    
                     Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     if(destZ == -1) {
-                        result = compute.calcViewShed(p, startZ, 0, direct, bounds); 
+                        result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView(); 
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     }
                     if(tokens[4].equals("?")) {
                         System.out.println("Test indirect");
                         direct = false;
-                        result = compute.calcViewShed(p, startZ, destZ, direct, bounds);  
+                        result = compute.calcViewShed(p, startZ, destZ, direct, bounds).getView();  
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         if(destZ == -1) {
-                            result = compute.calcViewShed(p, startZ, 0, direct, bounds);  
+                            result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView();  
                             Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         }
                     }
@@ -235,7 +252,7 @@ public class ComputeViewTest {
                         for(int j = 0; j < 5; j++)
                             mnt.setSample(j, i, 0, Double.parseDouble(values[j]));
                     }
-                    compute = cuda ? new ComputeViewCUDA(mnt, 1, 1, null, null, 1) : new ComputeViewJava(mnt, 1, 1, null, null);
+                    compute = cuda ? new ComputeViewCUDA(mnt, 1, 1, null, null, null, 1) : new ComputeViewJava(mnt, 1, 1, null, null, null);
                 } else {
                     System.out.println("Test with : " + line);
                     String[] tokens = line.split(" ");
@@ -255,7 +272,7 @@ public class ComputeViewTest {
                         for(int j = 0; j < n; j++)
                             test[i*n+j] = Integer.parseInt(values[j]);
                     }
-                    WritableRaster result = compute.calcViewTan(p, startZ, ares*Math.PI/180, bounds);    
+                    Raster result = compute.calcViewTan(p, startZ, ares*Math.PI/180, bounds).getView();    
                     printArray(((DataBufferInt)result.getDataBuffer()).getData(), n, n/2);
                     Assert.assertArrayEquals(test, ((DataBufferInt)result.getDataBuffer()).getData());
                     

@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.SortedSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -38,24 +40,19 @@ import static jcuda.driver.JCudaDriver.cuMemcpyHtoD;
 import static jcuda.driver.JCudaDriver.cuModuleGetFunction;
 import static jcuda.driver.JCudaDriver.cuModuleLoad;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.thema.pixscape.metric.ViewShedMetric;
+import org.thema.pixscape.metric.ViewTanMetric;
 
 /**
  *
  * @author gvuidel
  */
-public class ComputeViewCUDA implements ComputeView {
+public class ComputeViewCUDA extends ComputeView {
     
-    private final int NCORE = 512;
-    
-    private final Raster dtm, land, dsm;
+    private final int NCORE = 512;    
     
     private float[] dtmBuf, dsmBuf;
     private byte[] landBuf;
-    
-    /** resolution of the grid dtm in meter */
-    private final double res2D;
-    /** resolution of altitude Z in meter */
-    private final double resZ;
 
     private final int nbDev;
     private int ncode;
@@ -70,8 +67,8 @@ public class ComputeViewCUDA implements ComputeView {
      * @param land can be null
      * @param dsm  can be null
      */
-    public ComputeViewCUDA(Raster dtm, double resZ, double res2D, Raster land, Raster dsm, int nbGPU) throws IOException {
-        this.dtm = dtm;
+    public ComputeViewCUDA(Raster dtm, double resZ, double res2D, Raster land, SortedSet<Integer> codes, Raster dsm, int nbGPU) throws IOException {
+        super(dtm, resZ, res2D, land, codes, dsm);
         if(dtm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT && resZ == 1)
             dtmBuf = ((DataBufferFloat)dtm.getDataBuffer()).getData();
         else {
@@ -80,9 +77,6 @@ public class ComputeViewCUDA implements ComputeView {
             for(int i = 0; i < dtmBuf.length; i++)
                 dtmBuf[i] = (float) (buf.getElemDouble(i));
         }
-        this.resZ = resZ;
-        this.res2D = res2D;
-        this.land = land;
         if(land != null) {
             if(land.getDataBuffer().getDataType() == DataBuffer.TYPE_BYTE)
                 landBuf = ((DataBufferByte)land.getDataBuffer()).getData();
@@ -105,8 +99,6 @@ public class ComputeViewCUDA implements ComputeView {
             ncode++;
         }
         
-            
-        this.dsm = dsm;
         if(dsm != null) {
             if(dsm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT)
                 dsmBuf = ((DataBufferFloat)dsm.getDataBuffer()).getData();
@@ -136,137 +128,35 @@ public class ComputeViewCUDA implements ComputeView {
             new Thread(new CUDAThread(dev), "CUDA-thread-" + dev).start();
         
     }
+    
+    @Override
+    public List<Double> aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, final boolean direct, 
+            final Bounds bounds, final List<? extends ViewShedMetric> metrics) {
+        CUDARunnable<List<Double>> r = new CUDARunnable<List<Double>>() {
+            @Override
+            public List<Double> run(CUDAContext cudaContext) {
 
-//    public Map<Integer, WritableRaster> calcVisibility(final double startZ, final double destZ, final boolean direct, final Bounds bounds, 
-//            Set<Integer> fromCode,  Set<Integer> toCode, final ProgressBar progressBar) {
-//        final Set<Integer> from = direct ? fromCode : toCode;
-//        final Set<Integer> to = direct ? toCode : fromCode;
-//        
-//        final Map<Integer, WritableRaster> map = new HashMap<>(); 
-//        for(int code : to) {
-//            WritableRaster r = Raster.createBandedRaster(DataBuffer.TYPE_INT, dtm.getWidth(), dtm.getHeight(), 1, null);
-//            Arrays.fill(((DataBufferInt)r.getDataBuffer()).getData(), -1);
-//            map.put(code, r);
-//        }
-//        final int w = dtm.getWidth();
-//        final BlockingQueue<Integer> queue = new ArrayBlockingQueue<>(1024);
-//        
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    for(int y = 0; y < dtm.getHeight(); y++) {
-//                        if(progressBar.isCanceled())
-//                            break;
-//                        for(int x = 0; x < w; x++) {
-//                            if(from.contains(land.getSample(x, y, 0)))
-//                                queue.put(y*w+x);
-//                        }
-//                        progressBar.incProgress(1);
-//                        System.out.println("line " + y + "/" + dtm.getHeight());
-//                    }
-//                    for(int i = 0; i < nbDev; i++)
-//                        queue.put(-1);
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//            }
-//        }).start();
-//        
-//        
-//        SimpleParallelTask task = new SimpleParallelTask.IterParallelTask(nbDev, null) {
-//            @Override
-//            protected void executeOne(final Integer dev) {
-////                final byte [] viewBuf = new byte[dtm.getWidth()*dtm.getHeight()];
-////                final int [] sum = new int[Collections.max(to)+1];
-//                CUDAContext cudaContext = new CUDAContext(dev);
-//                try {
-//                    int ind = queue.take();
-//                    while(ind != -1) {   
-//                        final long t2 = System.currentTimeMillis();
-//                        cudaContext.clearView();
-//                        cuCtxSynchronize();
-//                        cudaContext.viewShed(ind%w, ind/w, (float) startZ, (float) destZ, direct, bounds);
-//                        cuCtxSynchronize();
-//                        final long t3 = System.currentTimeMillis();
-//                        
-////                        int[] sumLandView = cudaContext.getSumLandView();
-////                        for(int code : to)
-////                            map.get(code).setSample(x, y, 0, sumLandView[code]);
-//                        
-//                        for(int code : to)
-//                            map.get(code).setSample(ind%w, ind/w, 0, cudaContext.getSumLandView((byte) code));
-//                        
-////                        cudaContext.getView(viewBuf);
-//
-//                        final long t4 = System.currentTimeMillis();
-////                        Arrays.fill(sum, 0);
-////                        for(int i = 0; i < viewBuf.length; i++) {
-////                            if(viewBuf[i] == 1) {
-////                                final int os = land.getSample(i%w, i/w, 0);
-////                                if(os < sum.length)
-////                                    sum[os]++;  
-////                            }
-////                        }
-////                        for(int code : to)
-////                            map.get(code).setSample(ind%w, ind/w, 0, sum[code]);
-//                        
-//                        final long t5 = System.currentTimeMillis();
-////                        System.out.println("View : " + (t3-t2) + " - Transfert : " + (t4-t3) + " - Sum : " + (t5-t4));
-//                        ind = queue.take();
-//                    }
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
-//                } finally {
-//                    cudaContext.dispose();
-//                }
-//            }
-//        };
-//        
-//        long time = System.currentTimeMillis();
-//        new ParallelFExecutor(task, nbDev).executeAndWait();
-//        System.out.println((System.currentTimeMillis()-time) + " ms");
-//
-//        return map;
-//    }
-//    
-//    public WritableRaster calcVisibility(final double startZ, final double destZ, final boolean direct, final Bounds bounds, final ProgressBar progressBar) {
-//        final WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, dtm.getWidth(), dtm.getHeight(), 1, null);
-//        
-//        SimpleParallelTask task = new SimpleParallelTask.IterParallelTask(nbDev, null) {
-//            @Override
-//            protected void executeOne(final Integer dev) {
-//                final int h = (int) Math.ceil(dtm.getHeight() / nbDev);
-//                final int hStart = h*dev;
-//                final int hEnd = Math.min((dev+1)*h, dtm.getHeight());
-//                CUDAContext cudaContext = new CUDAContext(dev);
-//                for(int y = hStart; y < hEnd; y++) {
-//                    if(progressBar.isCanceled()) {
-//                        cancelTask();
-//                        break;
-//                    }
-//                    for(int x = 0; x < dtm.getWidth(); x++) {
-//                        final long t1 = System.currentTimeMillis();
-//                        cudaContext.clearView();
-//                        cuCtxSynchronize();
-//                        cudaContext.viewShed(x, y, (float) startZ, (float) destZ, direct, bounds);
-//                        cuCtxSynchronize();
-//                        final long t2 = System.currentTimeMillis();
-//                        view.setSample(x, y, 0, cudaContext.getSumView());               
-//                        final long t3 = System.currentTimeMillis();
-////                        System.out.println("View : " + (t2-t1) + " - Sum : " + (t3-t2));
-//                    }
-//                    progressBar.incProgress(1);
-//                }
-//                cudaContext.dispose();
-//            }
-//        };
-//        
-//        long time = System.currentTimeMillis();
-//        new ParallelFExecutor(task, nbDev).executeAndWait();
-//        System.out.println((System.currentTimeMillis()-time) + " ms");
-//        return view;
-//    }
+                cudaContext.clearView();
+                cuCtxSynchronize();
+
+                cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
+                cuCtxSynchronize();
+
+                CUDAViewShedResult view = new CUDAViewShedResult(cg, cudaContext);
+                List<Double> results = new ArrayList<>(metrics.size());
+                for(ViewShedMetric m : metrics)
+                    results.add(m.calcMetric(view));
+                return results;
+            }
+        };
+        
+        try {
+            queue.put(r);
+            return r.get();
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
     @Override
     public double aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, 
@@ -275,11 +165,19 @@ public class ComputeViewCUDA implements ComputeView {
         CUDARunnable<Integer> r = new CUDARunnable<Integer>() {
             @Override
             public Integer run(CUDAContext cudaContext) {
+//                long t1 = System.currentTimeMillis();
                 cudaContext.clearView();
                 cuCtxSynchronize();
+//                long t2 = System.currentTimeMillis();
+                
                 cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
-                return cudaContext.getSumView();
+//                long t3 = System.currentTimeMillis();
+                
+                int sum = cudaContext.getSumView();
+//                long t4 = System.currentTimeMillis();
+//                System.out.println(cudaContext.nDev + " - clr " + (t2-t1) + " - view " + (t3-t2) + " - sum " + (t4-t3) + " ms");
+                return sum;
             }
         };
         
@@ -297,13 +195,20 @@ public class ComputeViewCUDA implements ComputeView {
         CUDARunnable<double[]> r = new CUDARunnable<double[]>() {
             @Override
             public double[] run(CUDAContext cudaContext) {
+//                long t1 = System.currentTimeMillis();
                 cudaContext.clearView();
                 cuCtxSynchronize();
+//                long t2 = System.currentTimeMillis();
+                
                 cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
+//                long t3 = System.currentTimeMillis();
+                
                 double sum[] = new double[codes.last()+1];
                 for(Integer code : codes)
                     sum[code] = cudaContext.getSumLandView(code.byteValue());
+//                long t4 = System.currentTimeMillis();
+//                System.out.println(cudaContext.nDev + " - clr " + (t2-t1) + " - view " + (t3-t2) + " - sumland " + (t4-t3) + " ms");
                 return sum;
             }
         };
@@ -317,12 +222,12 @@ public class ComputeViewCUDA implements ComputeView {
     }
     
     @Override
-    public WritableRaster calcViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, 
+    public ViewShedResult calcViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, 
             final boolean direct, final Bounds bounds)  {
             
-        CUDARunnable<WritableRaster> r = new CUDARunnable<WritableRaster>() {
+        CUDARunnable<ViewShedResult> r = new CUDARunnable<ViewShedResult>() {
             @Override
-            public WritableRaster run(CUDAContext cudaContext) {
+            public ViewShedResult run(CUDAContext cudaContext) {
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
                 byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
                 //long time = System.currentTimeMillis();
@@ -335,12 +240,39 @@ public class ComputeViewCUDA implements ComputeView {
 
                 //System.out.println("Nb : " + cudaContext.getSumView());
 
-                cudaContext.getView(viewBuf);
-                // Clean up.
-                //        cudaContext.dispose();
-                //        contexts.add(cudaContext);
+                 cudaContext.getView(viewBuf);
+                
+
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return view;
+                return new ViewShedResult(cg, view);
+            }
+        };
+        
+        try {
+            queue.put(r);
+            return r.get();
+        } catch (InterruptedException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    
+    @Override
+    public List<Double> aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, 
+            final Bounds bounds, final List<? extends ViewTanMetric> metrics) {
+        CUDARunnable<List<Double>> r = new CUDARunnable<List<Double>>() {
+            @Override
+            public List<Double> run(CUDAContext cudaContext) {
+
+                int wa = (int)Math.ceil(2*Math.PI/ares);
+                int ha = (int)Math.ceil(Math.PI/ares);    
+                cudaContext.viewTan(cg.x, cg.y, (float) startZ, (float) ares, wa, ha, bounds);
+
+                CUDAViewTanResult view = new CUDAViewTanResult(ares, cg, cudaContext);
+                List<Double> results = new ArrayList<>(metrics.size());
+                for(ViewTanMetric m : metrics)
+                    results.add(m.calcMetric(view));
+                return results;
             }
         };
         
@@ -398,10 +330,10 @@ public class ComputeViewCUDA implements ComputeView {
     }
     
     @Override
-    public WritableRaster calcViewTan(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds)  {
-        CUDARunnable<WritableRaster> r = new CUDARunnable<WritableRaster>() {
+    public ViewTanResult calcViewTan(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds)  {
+        CUDARunnable<ViewTanResult> r = new CUDARunnable<ViewTanResult>() {
             @Override
-            public WritableRaster run(CUDAContext cudaContext) {
+            public ViewTanResult run(CUDAContext cudaContext) {
                 int wa = (int)Math.ceil(2*Math.PI/ares);
                 int ha = (int)Math.ceil(Math.PI/ares);                
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, wa, ha, 1, null);
@@ -415,7 +347,7 @@ public class ComputeViewCUDA implements ComputeView {
                 cudaContext.getViewTan(viewBuf);
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return view;
+                return new ViewTanResult(ares, cg, view);
             }
         };
         
@@ -532,8 +464,9 @@ public class ComputeViewCUDA implements ComputeView {
     @Override
     public void dispose() {
         try {
-            // for stoping CUDAThread
-            queue.put(CUDARunnable.END);
+            // for stoping CUDAThreads
+            for(int dev = 0; dev < nbDev; dev++)
+                queue.put(CUDARunnable.END);
         } catch (InterruptedException ex) {
             Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -550,6 +483,7 @@ public class ComputeViewCUDA implements ComputeView {
     }
 
     private class CUDAContext {
+        final int nDev;
         final int w = dtm.getWidth();
         final int h = dtm.getHeight();
         final int size = w*h;
@@ -561,8 +495,9 @@ public class ComputeViewCUDA implements ComputeView {
                 funSumV, funSumVT, funSumLandV, funSumLandVT, funClearView, funClearViewTan, funAddView;
         private CUdeviceptr dtmDev, landDev, dsmDev, sumDev, viewDev, viewTanDev;
         public CUDAContext(int nDev) {
+            this.nDev = nDev;
             CUdevice device = new CUdevice();
-            cuDeviceGet(device, nDev);
+            cuDeviceGet(device, nDev); 
             ctx = new CUcontext();
             cuCtxCreate(ctx, 0, device);
 
@@ -887,18 +822,29 @@ public class ComputeViewCUDA implements ComputeView {
         public void run() {
             context = new CUDAContext(dev);
             try {
-                CUDARunnable run = queue.take();
-                while(run != CUDARunnable.END) {
-                    try {
-                        run.result = run.run(context);
-                    } catch(Throwable e) {
-                        run.result = e;
+                boolean end = false;
+                List<CUDARunnable> list = new ArrayList<>();
+                do {
+                    list.clear();
+                    queue.drainTo(list);
+                    if(list.isEmpty())
+                        list.add(queue.take());  
+                    for(CUDARunnable run : list) {
+                        if(run == CUDARunnable.END) {
+                            end = true;
+                            break;
+                        }
+                        try {
+                            run.result = run.run(context);
+                        } catch(Throwable e) {
+                            run.result = e;
+                        }
+                        synchronized(run) {
+                            run.notify();
+                        }
                     }
-                    synchronized(run) {
-                        run.notify();
-                    }
-                    run = queue.take();    
-                }
+                      
+                } while(!end);
             } catch (InterruptedException ex) {
                 Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -929,5 +875,85 @@ public class ComputeViewCUDA implements ComputeView {
             else
                 return result;
         }
+    }
+    
+    private class CUDAViewShedResult extends ViewShedResult {
+        private CUDAContext context;
+        
+        CUDAViewShedResult(GridCoordinates2D cg, CUDAContext context) {
+            super(cg, null);
+            this.context = context;
+        }
+
+        @Override
+        public int[] getCountLand() {
+            if(countLand == null) {
+                countLand = new int[getCodes().last()+1];
+                for(int code : getCodes())
+                    countLand[code] = context.getSumLandView((byte) code);
+            }
+            return countLand;
+        }
+
+        @Override
+        public int getCount() {
+            if(count == -1) {
+                count = context.getSumView();
+            }
+            return count;
+        }
+
+        @Override
+        public Raster getView() {
+            if(view == null) {
+                view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
+                    byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
+                context.getView(viewBuf);
+            }
+            return view;
+        }
+        
+        
+    }
+    
+    private class CUDAViewTanResult extends ViewTanResult {
+        private CUDAContext context;
+        
+        CUDAViewTanResult(double ares, GridCoordinates2D cg, CUDAContext context) {
+            super(ares, cg, null);
+            this.context = context;
+        }
+
+        @Override
+        public int[] getCountLand() {
+            if(countLand == null) {
+                countLand = new int[getCodes().last()+1];
+                for(int code : getCodes())
+                    countLand[code] = context.getSumLandViewTan((byte) code);
+            }
+            return countLand;
+        }
+
+        @Override
+        public int getCount() {
+            if(count == -1) {
+                count = context.getSumViewTan();
+            }
+            return count;
+        }
+
+        @Override
+        public  Raster getView() {
+            if(view == null) {
+                int wa = (int)Math.ceil(2*Math.PI/ares);
+                int ha = (int)Math.ceil(Math.PI/ares);                
+                view = Raster.createBandedRaster(DataBuffer.TYPE_INT, wa, ha, 1, null);
+                int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
+                context.getViewTan(viewBuf);
+            }
+            return view;
+        }
+        
+        
     }
 }
