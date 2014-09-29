@@ -6,6 +6,7 @@
 
 package org.thema.pixscape;
 
+import org.thema.pixscape.view.ComputeView;
 import com.sun.media.imageio.plugins.tiff.TIFFImageWriteParam;
 import com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi;
 import java.awt.Point;
@@ -38,8 +39,6 @@ import org.geotools.coverage.grid.GridCoordinates2D;
 import org.thema.common.ProgressBar;
 import org.thema.data.IOImage;
 import org.thema.parallel.AbstractParallelTask;
-import org.thema.pixscape.ComputeView.ViewShedResult;
-import org.thema.pixscape.ComputeView.ViewTanResult;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
@@ -48,7 +47,7 @@ import org.thema.pixscape.metric.ViewTanMetric;
  *
  * @author gvuidel
  */
-public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRaster>, Map<Metric, SerializableState>> implements Serializable {
+public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRaster>, Map<String, SerializableState>> implements Serializable {
     
     private final double startZ;
     
@@ -71,8 +70,8 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
     
     private transient ComputeView compute;
     private transient Raster dtm, land;
-    private transient Map<Metric, WritableRaster> result;
-    private transient Map<Metric, ImageWriter> writers;
+    private transient Map<String, WritableRaster> result;
+    private transient Map<String, ImageWriter> writers;
 
     public GridMetricTask(double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
@@ -116,12 +115,14 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
     }
     
     @Override
-    public Map<Metric, SerializableState> execute(int y0, int y1) {
-        Map<Metric, WritableRaster> map = new HashMap<>();
+    public Map<String, SerializableState> execute(int y0, int y1) {
+        Map<String, WritableRaster> map = new HashMap<>();
         for(Metric metric : metrics) {
-            WritableRaster r = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dtm.getWidth()/sample, y1-y0, 1), new Point(0, y0));
-            Arrays.fill(((DataBufferFloat)r.getDataBuffer()).getData(), Float.NaN);
-            map.put(metric, r);
+            for(String resName : metric.getResultNames()) {
+                WritableRaster r = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dtm.getWidth()/sample, y1-y0, 1), new Point(0, y0));
+                Arrays.fill(((DataBufferFloat)r.getDataBuffer()).getData(), Float.NaN);
+                map.put(resName, r);
+            }
         }
         final int w = dtm.getWidth()/sample;
         for(int y = y0; y < y1; y++) {
@@ -131,20 +132,24 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
                 GridCoordinates2D c = new GridCoordinates2D(x*sample+sample/2, y*sample+sample/2);
                 if(from != null && !from.contains(land.getSample(c.x, c.y, 0)))
                     continue;
-                List<Double> values;
+                List<Double[]> values;
                 if(isTanView()) {
                     values = compute.aggrViewTan(c, startZ, anglePrec, bounds, (List) metrics);
                 } else {
                     values = compute.aggrViewShed(c, startZ, destZ, direct, bounds, (List) metrics);
                 }
-                for(int i = 0; i < metrics.size(); i++)
-                    map.get(metrics.get(i)).setSample(x, y, 0, values.get(i));
+                for(int i = 0; i < metrics.size(); i++) {
+                    int j = 0;
+                    for(String resName : metrics.get(i).getResultNames()) {
+                        map.get(resName).setSample(x, y, 0, values.get(i)[j++]);
+                    }
+                }
             }
             incProgress(1);
         }
-        Map<Metric, SerializableState> serialMap = new HashMap<>();
-        for(Metric m : map.keySet())
-            serialMap.put(m, SerializerFactory.getState(map.get(m)));
+        Map<String, SerializableState> serialMap = new HashMap<>();
+        for(String s : map.keySet())
+            serialMap.put(s, SerializerFactory.getState(map.get(s)));
         return serialMap;
     }
 
@@ -154,26 +159,26 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
     }
     
     @Override
-    public Map<Metric, WritableRaster> getResult() {
+    public Map<String, WritableRaster> getResult() {
         return result;
     }
 
     @Override
-    public void gather(Map<Metric, SerializableState> map) {
+    public void gather(Map<String, SerializableState> map) {
         if(isSaved()) {
             if(writers == null)
                 writers = new HashMap<>();
-            for(Metric metric : map.keySet()) {
+            for(String resName : map.keySet()) {
                 try {
-                    if(!writers.containsKey(metric)) {
+                    if(!writers.containsKey(resName)) {
                         ImageWriter writer = new TIFFImageWriterSpi().createWriterInstance();
-                        writer.setOutput(new FileImageOutputStream(getResultFile(metric)));
+                        writer.setOutput(new FileImageOutputStream(getResultFile(resName)));
                         writer.prepareWriteEmpty(null, ImageTypeSpecifier.createBanded(ColorSpace.getInstance(ColorSpace.CS_GRAY),
                                 new int[]{0}, new int[]{0}, DataBuffer.TYPE_FLOAT, false, false), dtm.getWidth()/sample, dtm.getHeight()/sample, null, null, null);
-                        writers.put(metric, writer);
+                        writers.put(resName, writer);
                     }
-                    ImageWriter writer = writers.get(metric);
-                    Raster r = (Raster) map.get(metric).getObject();
+                    ImageWriter writer = writers.get(resName);
+                    Raster r = (Raster) map.get(resName).getObject();
                     writer.prepareReplacePixels(0, new Rectangle(r.getMinX(), r.getMinY(), r.getWidth(), r.getHeight()));
                     TIFFImageWriteParam param = new TIFFImageWriteParam(Locale.FRENCH);
                     param.setDestinationOffset(r.getBounds().getLocation());
@@ -186,10 +191,10 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
         } else {
             if(result == null)
                 result = new HashMap<>();
-            for(Metric metric : map.keySet()) {
-                if(!result.containsKey(metric))
-                    result.put(metric, Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dtm.getWidth()/sample, dtm.getHeight()/sample, 1), null));
-                result.get(metric).setRect((Raster) map.get(metric).getObject());
+            for(String resName : map.keySet()) {
+                if(!result.containsKey(resName))
+                    result.put(resName, Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dtm.getWidth()/sample, dtm.getHeight()/sample, 1), null));
+                result.get(resName).setRect((Raster) map.get(resName).getObject());
             }
         }
     }
@@ -199,11 +204,11 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
         super.finish(); 
         if(isSaved()) {
             try {
-                for(Metric metric : writers.keySet()) {
-                    writers.get(metric).endWriteEmpty();
-                    writers.get(metric).dispose();
+                for(String resName : writers.keySet()) {
+                    writers.get(resName).endWriteEmpty();
+                    writers.get(resName).dispose();
                     // TODO tfw is false when sample > 1
-                    IOImage.createTIFFWorldFile(Project.getProject().getDtmCov(), getResultFile(metric).getAbsolutePath());
+                    IOImage.createTIFFWorldFile(Project.getProject().getDtmCov(), getResultFile(resName).getAbsolutePath());
                 }
             } catch (IOException ex) {
                 Logger.getLogger(GlobalViewTask.class.getName()).log(Level.SEVERE, null, ex);
@@ -211,10 +216,10 @@ public class GridMetricTask extends AbstractParallelTask<Map<Metric, WritableRas
         }
     }
     
-    public File getResultFile(Metric metric) {
+    public File getResultFile(String resName) {
         if(isTanView())
-            return new File(resDir, metric + "-aprec" + anglePrec + "-" + bounds + ".tif");
+            return new File(resDir, resName + "-aprec" + anglePrec + "-" + bounds + ".tif");
         else
-            return new File(resDir, metric + "-" + (direct ? "direct" : "indirect") + "-" + bounds + ".tif");
+            return new File(resDir, resName + "-" + (direct ? "direct" : "indirect") + "-" + bounds + ".tif");
     }
 }

@@ -6,7 +6,7 @@
 
 package org.thema.pixscape.metric;
 
-import org.thema.pixscape.ComputeView.ViewShedResult;
+import org.thema.pixscape.view.ViewShedResult;
 
 /**
  *
@@ -14,5 +14,5 @@ import org.thema.pixscape.ComputeView.ViewShedResult;
  */
 public interface ViewShedMetric extends Metric {
     
-    public double calcMetric(ViewShedResult result) ;
+    public Double [] calcMetric(ViewShedResult result);
 }

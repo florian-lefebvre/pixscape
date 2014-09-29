@@ -6,6 +6,7 @@
 
 package org.thema.pixscape;
 
+import org.thema.pixscape.view.ComputeView;
 import com.sun.media.imageio.plugins.tiff.TIFFImageWriteParam;
 import com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi;
 import java.awt.Point;

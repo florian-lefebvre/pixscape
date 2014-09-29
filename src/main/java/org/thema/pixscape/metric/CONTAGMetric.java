@@ -9,7 +9,9 @@ package org.thema.pixscape.metric;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.util.SortedSet;
-import org.thema.pixscape.ComputeView;
+import org.thema.pixscape.view.ViewResult;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -23,7 +25,7 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
     }
 
     @Override
-    public double calcMetric(ComputeView.ViewShedResult result) {
+    public Double[] calcMetric(ViewShedResult result) {
         int [] count = new int[256];
         int[][] border = new int[256][256];
         Raster view = result.getView();
@@ -54,11 +56,11 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
             }
         }
         
-        return calcCONTAG(result, border, count);
+        return new Double[] {calcCONTAG(result, border, count)};
     }
 
     @Override
-    public double calcMetric(ComputeView.ViewTanResult result) {
+    public Double[] calcMetric(ViewTanResult result) {
         int [] count = new int[256];
         int[][] border = new int[256][256];
         Raster view = result.getView();
@@ -90,10 +92,10 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
             }
         }
         
-        return calcCONTAG(result, border, count);
+        return new Double[] {calcCONTAG(result, border, count)};
     }
     
-    private double calcCONTAG(ComputeView.ViewResult result, int[][] border, int [] count) {
+    private double calcCONTAG(ViewResult result, int[][] border, int [] count) {
         final SortedSet<Integer> codes = getCodes(result);
         final int m = codes.size();
         if(m < 2)

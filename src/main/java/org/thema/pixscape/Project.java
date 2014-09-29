@@ -49,10 +49,14 @@ import org.thema.drawshape.style.SimpleStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.pixscape.metric.CONTAGMetric;
+import org.thema.pixscape.metric.DistMetric;
 import org.thema.pixscape.metric.IJIMetric;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SumMetric;
+import org.thema.pixscape.view.ComputeView;
+import org.thema.pixscape.view.ComputeViewJava;
+import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
  *
@@ -381,7 +385,8 @@ public final class Project {
     
     public static List<Metric> METRICS;
     static {
-        METRICS = new ArrayList(Arrays.asList(new SumMetric(), new ShannonMetric(), new IJIMetric(), new CONTAGMetric()));
+        METRICS = new ArrayList(Arrays.asList(new SumMetric(), new ShannonMetric(), 
+                new IJIMetric(), new CONTAGMetric(), new DistMetric()));
     }
     
     

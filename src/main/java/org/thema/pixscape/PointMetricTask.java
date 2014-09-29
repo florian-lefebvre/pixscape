@@ -6,11 +6,11 @@
 
 package org.thema.pixscape;
 
+import org.thema.pixscape.view.ComputeView;
 import com.vividsolutions.jts.geom.Coordinate;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,8 +22,6 @@ import org.thema.common.ProgressBar;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
 import org.thema.parallel.AbstractParallelTask;
-import org.thema.pixscape.ComputeView.ViewShedResult;
-import org.thema.pixscape.ComputeView.ViewTanResult;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
@@ -32,7 +30,7 @@ import org.thema.pixscape.metric.ViewTanMetric;
  *
  * @author gvuidel
  */
-public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Double>>, Map<Feature, List<Double>>> implements Serializable {
+public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Double[]>>, Map<Feature, List<Double[]>>> implements Serializable {
     
     private final double startZ;
     
@@ -54,7 +52,7 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
     
     private transient ComputeView compute;
     private transient List<DefaultFeature> points;
-    private transient Map<Feature, List<Double>> result;
+    private transient Map<Feature, List<Double[]>> result;
 
     public PointMetricTask(double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, File resDir, ProgressBar monitor) {
         super(monitor);
@@ -99,8 +97,8 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
     }
     
     @Override
-    public Map<Feature, List<Double>> execute(int start, int end) {
-        Map<Feature, List<Double>> map = new HashMap<>();
+    public Map<Feature, List<Double[]>> execute(int start, int end) {
+        Map<Feature, List<Double[]>> map = new HashMap<>();
         
         for(int i = start; i < end; i++) {
             if(isCanceled())
@@ -108,7 +106,7 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
             Coordinate c = points.get(i).getGeometry().getCoordinate();
             Coordinate pc = Project.getProject().getSpace2Grid().transform(c, new Coordinate());
             GridCoordinates2D gc = new GridCoordinates2D((int)pc.x, (int)pc.y);
-            List<Double> values;
+            List<Double[]> values;
             if(isTanView()) {
                 values = compute.aggrViewTan(gc, startZ, anglePrec, bounds, (List) metrics);
             } else {
@@ -127,12 +125,12 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
     }
     
     @Override
-    public Map<Feature, List<Double>> getResult() {
+    public Map<Feature, List<Double[]>> getResult() {
         return result;
     }
 
     @Override
-    public void gather(Map<Feature, List<Double>> map) {
+    public void gather(Map<Feature, List<Double[]>> map) {
         if(result == null)
             result = new HashMap<>();
         result.putAll(map);
@@ -144,9 +142,12 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
         if(isSaved()) {
             try {
                 for(DefaultFeature point : points) {
-                    List<Double> values = result.get(point);
-                    for(int i = 0; i < metrics.size(); i++)
-                        point.addAttribute(metrics.get(i).toString(), values.get(i));
+                    List<Double[]> values = result.get(point);
+                    for(int i = 0; i < metrics.size(); i++) {
+                        int j = 0;
+                        for(String resName : metrics.get(i).getResultNames())
+                            point.addAttribute(resName, values.get(i)[j++]);
+                    }
                 }
                 DefaultFeature.saveFeatures(points, getResultFile());
             } catch (IOException | SchemaException ex) {

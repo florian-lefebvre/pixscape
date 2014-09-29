@@ -1,4 +1,4 @@
-package org.thema.pixscape;
+package org.thema.pixscape.view;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -8,10 +8,11 @@ import java.awt.image.WritableRaster;
 import java.util.Arrays;
 import java.util.SortedSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
-import org.thema.pixscape.ComputeView.ViewResult;
+import org.thema.pixscape.Bounds;
 
 /**
  *
+ * 
  * @author gvuidel
  */
 public class ComputeViewJava extends ComputeView {
@@ -110,7 +111,7 @@ public class ComputeViewJava extends ComputeView {
                 calcRay(direct, cg.x, cg.y, dtm.getWidth()-1, y, startZ, destZ, bounds, viewBuf);
         }
 //        System.out.println((System.currentTimeMillis()-time) + " ms");
-        return new ViewShedResult(cg, view);
+        return new ViewShedResult(cg, view, this);
     }
     
     @Override
@@ -126,7 +127,7 @@ public class ComputeViewJava extends ComputeView {
                 calcRayTan(cg.x, cg.y, startZ, bounds, viewBuf, ax, ares);
         }
         System.out.println((System.currentTimeMillis()-time) + " ms");
-        return new ViewTanResult(ares, cg, view);
+        return new ViewTanResult(ares, cg, view, this);
     }
     
     private void calcRayTan(final int x0, final int y0, final double startZ, Bounds bounds, final int[] view, final int ax, final double ares) {

@@ -8,7 +8,9 @@ package org.thema.pixscape.metric;
 
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
-import org.thema.pixscape.ComputeView;
+import org.thema.pixscape.view.ViewResult;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -22,7 +24,7 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
     }
 
     @Override
-    public double calcMetric(ComputeView.ViewShedResult result) {
+    public Double[] calcMetric(ViewShedResult result) {
         int[][] border = new int[256][256];
         Raster view = result.getView();
         Raster land = result.getLanduse();
@@ -55,11 +57,11 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
             }
         }
         
-        return calcIJI(result, border, tot);
+        return new Double[] {calcIJI(result, border, tot)};
     }
 
     @Override
-    public double calcMetric(ComputeView.ViewTanResult result) {
+    public Double[] calcMetric(ViewTanResult result) {
         int[][] border = new int[256][256];
         Raster view = result.getView();
         byte[] land = ((DataBufferByte)result.getLanduse().getDataBuffer()).getData();
@@ -93,10 +95,10 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
             }
         }
         
-        return calcIJI(result, border, tot);
+        return new Double[] {calcIJI(result, border, tot)};
     }
     
-    private double calcIJI(ComputeView.ViewResult result, int[][] border, int tot) {
+    private double calcIJI(ViewResult result, int[][] border, int tot) {
         int m = getCodes(result).size();
         if(tot == 0 || m < 3)
             return Double.NaN;

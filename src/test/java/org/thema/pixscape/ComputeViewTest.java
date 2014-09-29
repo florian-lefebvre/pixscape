@@ -6,6 +6,9 @@
 
 package org.thema.pixscape;
 
+import org.thema.pixscape.view.ComputeView;
+import org.thema.pixscape.view.cuda.ComputeViewCUDA;
+import org.thema.pixscape.view.ComputeViewJava;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -144,10 +147,10 @@ public class ComputeViewTest {
         Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds()), cuda.aggrViewShed(p, startZ, startZ, true, new Bounds()), 0);
         
         SumMetric sum = new SumMetric();
-        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0), 
+        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0)[0], 
                 java.aggrViewShed(p, startZ, startZ, true, new Bounds()), 0);
-        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0), 
-                cuda.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0));
+        Assert.assertEquals(java.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0)[0], 
+                cuda.aggrViewShed(p, startZ, startZ, true, new Bounds(), Arrays.asList(sum)).get(0)[0]);
         
         Assert.assertArrayEquals(java.aggrViewShedLand(p, startZ, startZ, true, new Bounds(), to), 
                 cuda.aggrViewShedLand(p, startZ, startZ, true, new Bounds(), to), 0);

@@ -6,10 +6,9 @@
 
 package org.thema.pixscape.metric;
 
-import java.util.SortedSet;
-import org.thema.pixscape.ComputeView.ViewResult;
-import org.thema.pixscape.ComputeView.ViewShedResult;
-import org.thema.pixscape.ComputeView.ViewTanResult;
+import org.thema.pixscape.view.ViewResult;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -18,13 +17,13 @@ import org.thema.pixscape.ComputeView.ViewTanResult;
 public class ShannonMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
     @Override
-    public double calcMetric(ViewShedResult result) {
-        return calcShannon(result);
+    public Double[] calcMetric(ViewShedResult result) {
+        return new Double[] {calcShannon(result)};
     }
     
     @Override
-    public double calcMetric(ViewTanResult result) {
-        return calcShannon(result);
+    public Double[] calcMetric(ViewTanResult result) {
+        return new Double[] {calcShannon(result)};
     }
     
     private double calcShannon(ViewResult result) {

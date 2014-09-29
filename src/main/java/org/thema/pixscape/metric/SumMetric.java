@@ -8,9 +8,9 @@ package org.thema.pixscape.metric;
 
 import java.util.Arrays;
 import java.util.TreeSet;
-import org.thema.pixscape.ComputeView.ViewResult;
-import org.thema.pixscape.ComputeView.ViewShedResult;
-import org.thema.pixscape.ComputeView.ViewTanResult;
+import org.thema.pixscape.view.ViewResult;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -26,13 +26,13 @@ public class SumMetric extends AbstractMetric implements ViewShedMetric, ViewTan
     }
 
     @Override
-    public double calcMetric(ViewShedResult result) {
-        return calcSum(result) * result.getRes2D()*result.getRes2D();
+    public Double[] calcMetric(ViewShedResult result) {
+        return new Double[] {calcSum(result) * result.getRes2D()*result.getRes2D()};
     }
     
     @Override
-    public double calcMetric(ViewTanResult result) {
-        return calcSum(result) * Math.pow(result.getAres()*180/Math.PI, 2);
+    public Double[] calcMetric(ViewTanResult result) {
+        return new Double[] {calcSum(result) * Math.pow(result.getAres()*180/Math.PI, 2)};
     }
     
     public int calcSum(ViewResult result) {

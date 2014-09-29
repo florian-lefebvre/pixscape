@@ -9,7 +9,7 @@ package org.thema.pixscape.metric;
 import java.util.Arrays;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import org.thema.pixscape.ComputeView;
+import org.thema.pixscape.view.ViewResult;
 
 /**
  *
@@ -31,7 +31,7 @@ public abstract class AbstractMetric implements Metric {
         return codes;
     }
     
-    protected SortedSet<Integer> getCodes(ComputeView.ViewResult result) {
+    protected SortedSet<Integer> getCodes(ViewResult result) {
         return getCodes().isEmpty() ? result.getCodes() : getCodes();
     }
     
@@ -43,6 +43,10 @@ public abstract class AbstractMetric implements Metric {
         }
         return s;
     }
-    
+
+    @Override
+    public String[] getResultNames() {
+        return new String[] {toString()};
+    }
     
 }

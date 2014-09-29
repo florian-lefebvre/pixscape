@@ -1,4 +1,4 @@
-package org.thema.pixscape;
+package org.thema.pixscape.view.cuda;
 
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -40,8 +40,12 @@ import static jcuda.driver.JCudaDriver.cuMemcpyHtoD;
 import static jcuda.driver.JCudaDriver.cuModuleGetFunction;
 import static jcuda.driver.JCudaDriver.cuModuleLoad;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.thema.pixscape.Bounds;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.ComputeView;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -130,11 +134,11 @@ public class ComputeViewCUDA extends ComputeView {
     }
     
     @Override
-    public List<Double> aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, final boolean direct, 
+    public List<Double[]> aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, final boolean direct, 
             final Bounds bounds, final List<? extends ViewShedMetric> metrics) {
-        CUDARunnable<List<Double>> r = new CUDARunnable<List<Double>>() {
+        CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
-            public List<Double> run(CUDAContext cudaContext) {
+            public List<Double[]> run(CUDAContext cudaContext) {
 
                 cudaContext.clearView();
                 cuCtxSynchronize();
@@ -142,8 +146,8 @@ public class ComputeViewCUDA extends ComputeView {
                 cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
 
-                CUDAViewShedResult view = new CUDAViewShedResult(cg, cudaContext);
-                List<Double> results = new ArrayList<>(metrics.size());
+                CUDAViewShedResult view = new CUDAViewShedResult(cg, cudaContext, org.thema.pixscape.view.cuda.ComputeViewCUDA.this);
+                List<Double[]> results = new ArrayList<>(metrics.size());
                 for(ViewShedMetric m : metrics)
                     results.add(m.calcMetric(view));
                 return results;
@@ -244,7 +248,7 @@ public class ComputeViewCUDA extends ComputeView {
                 
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return new ViewShedResult(cg, view);
+                return new ViewShedResult(cg, view, ComputeViewCUDA.this);
             }
         };
         
@@ -258,18 +262,18 @@ public class ComputeViewCUDA extends ComputeView {
     
     
     @Override
-    public List<Double> aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, 
+    public List<Double[]> aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, 
             final Bounds bounds, final List<? extends ViewTanMetric> metrics) {
-        CUDARunnable<List<Double>> r = new CUDARunnable<List<Double>>() {
+        CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
-            public List<Double> run(CUDAContext cudaContext) {
+            public List<Double[]> run(CUDAContext cudaContext) {
 
                 int wa = (int)Math.ceil(2*Math.PI/ares);
                 int ha = (int)Math.ceil(Math.PI/ares);    
                 cudaContext.viewTan(cg.x, cg.y, (float) startZ, (float) ares, wa, ha, bounds);
 
-                CUDAViewTanResult view = new CUDAViewTanResult(ares, cg, cudaContext);
-                List<Double> results = new ArrayList<>(metrics.size());
+                CUDAViewTanResult view = new CUDAViewTanResult(ares, cg, cudaContext, ComputeViewCUDA.this);
+                List<Double[]> results = new ArrayList<>(metrics.size());
                 for(ViewTanMetric m : metrics)
                     results.add(m.calcMetric(view));
                 return results;
@@ -347,7 +351,7 @@ public class ComputeViewCUDA extends ComputeView {
                 cudaContext.getViewTan(viewBuf);
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return new ViewTanResult(ares, cg, view);
+                return new ViewTanResult(ares, cg, view, ComputeViewCUDA.this);
             }
         };
         
@@ -482,7 +486,7 @@ public class ComputeViewCUDA extends ComputeView {
         }
     }
 
-    private class CUDAContext {
+    class CUDAContext {
         final int nDev;
         final int w = dtm.getWidth();
         final int h = dtm.getHeight();
@@ -561,7 +565,7 @@ public class ComputeViewCUDA extends ComputeView {
 
         }
         
-        private void clearView() {
+        void clearView() {
             Pointer clearViewParam = Pointer.to(
                 Pointer.to(viewDev),
                 Pointer.to(new int[]{size})
@@ -574,7 +578,7 @@ public class ComputeViewCUDA extends ComputeView {
             );
         }
         
-        private void clearViewTan() {
+        void clearViewTan() {
             Pointer clearViewParam = Pointer.to(
                 Pointer.to(viewTanDev),
                 Pointer.to(new int[]{wa*ha})
@@ -587,7 +591,7 @@ public class ComputeViewCUDA extends ComputeView {
             );
         }
         
-        private void viewShed(int x, int y, float startZ, float destZ, boolean direct, Bounds bounds) {
+        void viewShed(int x, int y, float startZ, float destZ, boolean direct, Bounds bounds) {
             Pointer viewShedParam;
             CUfunction fun;
             if(bounds.isUnbounded()) {
@@ -637,7 +641,7 @@ public class ComputeViewCUDA extends ComputeView {
                 );
         }
         
-        private void viewTan(int x, int y, double startZ, double ares, int wa, int ha, Bounds bounds) {
+        void viewTan(int x, int y, double startZ, double ares, int wa, int ha, Bounds bounds) {
             if(this.wa != wa || this.ha != ha) {
                 if(viewTanDev != null) {
                     cuMemFree(viewTanDev);
@@ -685,7 +689,7 @@ public class ComputeViewCUDA extends ComputeView {
             cuCtxSynchronize();
         }
         
-        private int getSumView() {
+        int getSumView() {
             Pointer sumVParam = Pointer.to(
                 Pointer.to(viewDev),
                 Pointer.to(new int[]{size}),
@@ -709,7 +713,7 @@ public class ComputeViewCUDA extends ComputeView {
             return nb;
         }
         
-        private int getSumViewTan() {
+        int getSumViewTan() {
             Pointer sumVParam = Pointer.to(
                 Pointer.to(viewTanDev),
                 Pointer.to(new int[]{wa*ha}),
@@ -733,7 +737,7 @@ public class ComputeViewCUDA extends ComputeView {
             return nb;
         }
         
-        private int getSumLandView(byte code) {
+        int getSumLandView(byte code) {
             Pointer sumVParam = Pointer.to(
                 Pointer.to(viewDev),
                 Pointer.to(new int[]{size}),
@@ -758,7 +762,7 @@ public class ComputeViewCUDA extends ComputeView {
             return nb;
         }
         
-        private int getSumLandViewTan(byte code) {
+        int getSumLandViewTan(byte code) {
             Pointer sumVParam = Pointer.to(
                 Pointer.to(viewTanDev),
                 Pointer.to(new int[]{wa*ha}),
@@ -797,13 +801,13 @@ public class ComputeViewCUDA extends ComputeView {
             JCudaDriver.cuCtxDestroy(ctx);
         }
 
-        private void getView(byte[] viewBuf) {
+        void getView(byte[] viewBuf) {
             if(viewBuf.length != size)
                 throw new IllegalArgumentException("Bad size buffer");
             cuMemcpyDtoH(Pointer.to(viewBuf), viewDev, size * Sizeof.CHAR);
         }
         
-        private void getViewTan(int[] viewBuf) {
+        void getViewTan(int[] viewBuf) {
             if(viewBuf.length != wa*ha)
                 throw new IllegalArgumentException("Bad size buffer");
             cuMemcpyDtoH(Pointer.to(viewBuf), viewTanDev, wa*ha * Sizeof.INT);
@@ -857,103 +861,4 @@ public class ComputeViewCUDA extends ComputeView {
         
     }
     
-    private static abstract class CUDARunnable<T> {
-        public static final CUDARunnable END = new CUDARunnable() {
-            @Override
-            public Object run(CUDAContext context) {
-                throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-            }
-        };
-        private T result;
-        public abstract T run(CUDAContext context);
-        public synchronized T get() throws InterruptedException {
-            while(result == null) {
-                wait();
-            }
-            if(result instanceof Throwable)
-                throw new RuntimeException((Throwable) result);
-            else
-                return result;
-        }
-    }
-    
-    private class CUDAViewShedResult extends ViewShedResult {
-        private CUDAContext context;
-        
-        CUDAViewShedResult(GridCoordinates2D cg, CUDAContext context) {
-            super(cg, null);
-            this.context = context;
-        }
-
-        @Override
-        public int[] getCountLand() {
-            if(countLand == null) {
-                countLand = new int[getCodes().last()+1];
-                for(int code : getCodes())
-                    countLand[code] = context.getSumLandView((byte) code);
-            }
-            return countLand;
-        }
-
-        @Override
-        public int getCount() {
-            if(count == -1) {
-                count = context.getSumView();
-            }
-            return count;
-        }
-
-        @Override
-        public Raster getView() {
-            if(view == null) {
-                view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
-                    byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
-                context.getView(viewBuf);
-            }
-            return view;
-        }
-        
-        
-    }
-    
-    private class CUDAViewTanResult extends ViewTanResult {
-        private CUDAContext context;
-        
-        CUDAViewTanResult(double ares, GridCoordinates2D cg, CUDAContext context) {
-            super(ares, cg, null);
-            this.context = context;
-        }
-
-        @Override
-        public int[] getCountLand() {
-            if(countLand == null) {
-                countLand = new int[getCodes().last()+1];
-                for(int code : getCodes())
-                    countLand[code] = context.getSumLandViewTan((byte) code);
-            }
-            return countLand;
-        }
-
-        @Override
-        public int getCount() {
-            if(count == -1) {
-                count = context.getSumViewTan();
-            }
-            return count;
-        }
-
-        @Override
-        public  Raster getView() {
-            if(view == null) {
-                int wa = (int)Math.ceil(2*Math.PI/ares);
-                int ha = (int)Math.ceil(Math.PI/ares);                
-                view = Raster.createBandedRaster(DataBuffer.TYPE_INT, wa, ha, 1, null);
-                int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
-                context.getViewTan(viewBuf);
-            }
-            return view;
-        }
-        
-        
-    }
 }

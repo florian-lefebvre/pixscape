@@ -1,3 +1,5 @@
+version 0.2.1 (29/09/2014)
+- Metric : add DIST metric
 version 0.2 (24/09/2014)
 - UI : viewshed is updated for each clic
 - CLI : add commands metrics : --viewmetric --tanmetric

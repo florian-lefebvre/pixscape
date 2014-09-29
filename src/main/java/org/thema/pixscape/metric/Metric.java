@@ -17,4 +17,5 @@ public interface Metric {
     public void setCodes(SortedSet<Integer> codes);
     public SortedSet<Integer> getCodes();
     public String getShortName();
+    public String [] getResultNames();
 }

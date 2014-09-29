@@ -6,7 +6,7 @@
 
 package org.thema.pixscape.metric;
 
-import org.thema.pixscape.ComputeView.ViewTanResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -14,5 +14,5 @@ import org.thema.pixscape.ComputeView.ViewTanResult;
  */
 public interface ViewTanMetric extends Metric {
     
-    public double calcMetric(ViewTanResult result) ;
+    public Double [] calcMetric(ViewTanResult result);
 }
