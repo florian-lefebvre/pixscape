@@ -62,8 +62,8 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
         mapViewer.addMouseListener(this);
         mapViewer.setCursorMode(PanelMap.INPUT_CURSOR_MODE);
         this.mapViewer = mapViewer;
-        double x = mapViewer.getMap().bounds.getCenterX();
-        double y = mapViewer.getMap().bounds.getCenterY();
+        double x = mapViewer.getLayers().getBounds().getCenterX();
+        double y = mapViewer.getLayers().getBounds().getCenterY();
         pointTextField.setText(x + ", " + y);
         centreShape = new PointShape(x, y);
         centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));

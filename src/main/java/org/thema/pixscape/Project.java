@@ -52,6 +52,7 @@ import org.thema.pixscape.metric.CONTAGMetric;
 import org.thema.pixscape.metric.DistMetric;
 import org.thema.pixscape.metric.IJIMetric;
 import org.thema.pixscape.metric.Metric;
+import org.thema.pixscape.metric.RasterMetric;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SumMetric;
 import org.thema.pixscape.view.ComputeView;
@@ -102,10 +103,9 @@ public final class Project {
             wktCRS = crs.toWKT();
         Envelope2D zone = demCov.getEnvelope2D();
         GridEnvelope2D range = demCov.getGridGeometry().getGridRange2D();
-        grid2space = new AffineTransformation(zone.getWidth() / range.getWidth(), 0,
-                    zone.getMinX() - zone.getWidth() / range.getWidth(),
-                0, -zone.getHeight() / range.getHeight(),
-                    zone.getMaxY() + zone.getHeight() / range.getHeight());
+        grid2space = new AffineTransformation(
+                zone.getWidth() / range.getWidth(), 0, zone.getMinX(),
+                0, -zone.getHeight() / range.getHeight(), zone.getMaxY());
         
         project = this;
         save();
@@ -386,7 +386,7 @@ public final class Project {
     public static List<Metric> METRICS;
     static {
         METRICS = new ArrayList(Arrays.asList(new SumMetric(), new ShannonMetric(), 
-                new IJIMetric(), new CONTAGMetric(), new DistMetric()));
+                new IJIMetric(), new CONTAGMetric(), new DistMetric(), new RasterMetric()));
     }
     
     

@@ -331,14 +331,10 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
     const int ax = blockIdx.x * blockDim.x + threadIdx.x;
     if (ax >= wa)
         return;
-    
-    double a = 1.5*M_PI - ax*ares;
+    double a = (aleft - ax*ares);
     if(a < 0)
         a += 2*M_PI;
-/*
-    else if(a >= 2*M_PI)
-        a -= 2*M_PI;
-*/
+
     if(!(aright < aleft && a >= aright && a <= aleft || (aright >= aleft && (a >= aright || a <= aleft))))
         return;
 

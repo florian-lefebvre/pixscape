@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>0.2.1</version>
+    <version>0.2.2</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <build>
@@ -69,16 +69,11 @@
     <dependencies>
         <dependency>
             <groupId>${project.groupId}</groupId>
-            <artifactId>data</artifactId>
-            <version>1.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.thema</groupId>
             <artifactId>drawshape</artifactId>
-            <version>1.2.1</version>
+            <version>1.2.5</version>
         </dependency>
         <dependency>
-            <groupId>org.thema</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>parallel</artifactId>
             <version>1.1</version>
             <type>jar</type>
@@ -105,20 +100,23 @@
         <maven.compiler.source>1.7</maven.compiler.source>
         <maven.compiler.target>1.7</maven.compiler.target>
     </properties>
-    
     <repositories>
         <repository>
-            <id>thema</id>
-            <name>Local ThéMA Repository</name>
-            <url>http://dev.umrthema.univ-fcomte.fr/repository/</url>
+            <id>thema-sf</id>
+            <name>ThéMA libs Repository</name>
+            <url>http://themalibs.sourceforge.net/repository/</url>
         </repository>
     </repositories>
-    <distributionManagement>
-        <site>
-            <id>local-thema</id>
-            <url>file:///var/www/projects/${project.artifactId}/</url>
-        </site>
-    </distributionManagement>
+    <organization>
+        <name>Laboratoire ThéMA - UMR 6049 - CNRS / Université de Franche-Comté</name>
+        <url>http://thema.univ-fcomte.fr</url>
+    </organization>
+    <developers>
+        <developer>
+            <id>gvuidel</id>
+            <name>Gilles Vuidel</name>
+        </developer>
+    </developers>
     <reporting>
         <plugins>
             <plugin>
@@ -129,7 +127,6 @@
                     <reportSet>
                         <reports>
                             <report>summary</report>
-                            <!--<report>dependencies</report>-->
                             <report>license</report>
                         </reports>
                     </reportSet>

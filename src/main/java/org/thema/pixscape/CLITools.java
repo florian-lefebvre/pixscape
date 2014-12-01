@@ -15,9 +15,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
@@ -31,7 +29,6 @@ import org.thema.common.swing.TaskMonitor;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
-import org.thema.pixscape.Project.Aggregate;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
@@ -46,18 +43,17 @@ public class CLITools {
     private double zEye = 1.8;
     private double zDest = -1;
     private Bounds bounds = new Bounds();
-    int sample = 1;
-    SortedSet<Integer> from = null;
-    File pointFile = null;
+    private int sample = 1;
+    private SortedSet<Integer> from = null;
+    private File pointFile = null;
     
     public void execute(String [] arg) throws Throwable {
         if(arg[0].equals("--help")) {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
                     "java -jar pixscape.jar [-mpi | -proc n | -cuda n]\n"  +
-                    //"dtm=raster_file [resz=val] [dsm=raster_file] [land=raster_file]\n" +
                     "--project project_file.xml\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
-                    "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]] command\n" +
+                    "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
                     "[-sampling n=val | land=code1,..,coden | points=shapefile] command\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
@@ -93,8 +89,9 @@ public class CLITools {
                     throw new IllegalArgumentException("Unknown option " + p);
             }
         }
-        if(args.isEmpty())
+        if(args.isEmpty()) {
             throw new IllegalArgumentException("Need --project");
+        }
         
         //project = createProject(args);
         args.remove(0);
@@ -103,7 +100,7 @@ public class CLITools {
         resDir = new File(".");
         
         // global options
-        if(!args.isEmpty() && !args.get(0).startsWith("--")) {
+        while(!args.isEmpty() && !args.get(0).startsWith("--")) {
             String p = args.remove(0);
             switch (p) {
                 case "-bounds":
@@ -205,10 +202,11 @@ public class CLITools {
     private void viewTan(List<String> args) throws IOException, TransformException {
         if(args.size() < 2)
             throw new IllegalArgumentException("viewtan command needs at least 2 parameters");
-        double aPrec = 0.1 * Math.PI / 180;
+        double aPrec = 0.1;
         if(args.get(0).startsWith("prec=")) {
             aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
         }
+        aPrec = aPrec * Math.PI / 180;
         DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
         Raster viewTan = project.calcViewTan(p, zEye, aPrec, bounds);
         // create landuse, z and dist images.
@@ -266,21 +264,22 @@ public class CLITools {
     }
     
     private void tanMetric(List<String> args) throws IOException {
-        double aPrec = 0.1 * Math.PI / 180;
+        double aPrec = 0.1;
         if(!args.isEmpty() && args.get(0).startsWith("prec=")) {
             aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
         }
+        aPrec = aPrec * Math.PI / 180;
         List<ViewTanMetric> metrics = new ArrayList<>();
         while(!args.isEmpty()) {
             String s = args.remove(0);
             TreeSet<Integer> codes = null;
-            if(s.contains("(")) {
+            if(s.contains("[")) {
                 codes = new TreeSet<>();
-                String lst = s.split("\\(")[1].replace(")", "");
+                String lst = s.split("\\[")[1].replace("]", "");
                 String [] tokens = lst.split(",");
                 for(String code : tokens)
                     codes.add(Integer.parseInt(code));
-                s = s.split("\\(")[0];
+                s = s.split("\\[")[0];
             }
             Metric m = Project.getMetric(s);
             if(!(m instanceof ViewTanMetric))

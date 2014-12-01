@@ -1,3 +1,9 @@
+version 0.2.2
+CAUTION : older project must be removed, the dtm envelope was shifted by one pixel
+- In tangential mode, the view is always centered on the orientation
+- CLI : for points sampling, the bounds are overridable by fields in the shapefile (dmin, dmax, zmin, zmax, orien, amp)
+- CLI : bug : manage only one global option
+- Metrics : add Rast metric which is not really a metric... save the view in one raster for each point (for debugging purpose)
 version 0.2.1 (29/09/2014)
 - Metric : add DIST metric
 version 0.2 (24/09/2014)

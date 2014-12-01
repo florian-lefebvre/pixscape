@@ -267,10 +267,8 @@ public class ComputeViewCUDA extends ComputeView {
         CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
-
-                int wa = (int)Math.ceil(2*Math.PI/ares);
-                int ha = (int)Math.ceil(Math.PI/ares);    
-                cudaContext.viewTan(cg.x, cg.y, (float) startZ, (float) ares, wa, ha, bounds);
+  
+                cudaContext.viewTan(cg.x, cg.y, (float) startZ, (float) ares, bounds);
 
                 CUDAViewTanResult view = new CUDAViewTanResult(ares, cg, cudaContext, ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
@@ -292,10 +290,8 @@ public class ComputeViewCUDA extends ComputeView {
     public double aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds) {
         CUDARunnable<Double> r = new CUDARunnable<Double>() {
             @Override
-            public Double run(CUDAContext cudaContext) {
-                int wa = (int)Math.ceil(2*Math.PI/ares);
-                int ha = (int)Math.ceil(Math.PI/ares);                
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, wa, ha, bounds);
+            public Double run(CUDAContext cudaContext) {            
+                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
                 int sum = cudaContext.getSumViewTan();
                 return sum * Math.pow(ares*180/Math.PI, 2);
             }
@@ -313,10 +309,8 @@ public class ComputeViewCUDA extends ComputeView {
     public double[] aggrViewTanLand(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds, final SortedSet<Integer> codes) {
         CUDARunnable<double[]> r = new CUDARunnable<double[]>() {
             @Override
-            public double[] run(CUDAContext cudaContext) {
-                int wa = (int)Math.ceil(2*Math.PI/ares);
-                int ha = (int)Math.ceil(Math.PI/ares);                
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, wa, ha, bounds);
+            public double[] run(CUDAContext cudaContext) {              
+                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
                 double [] sum = new double[codes.last()+1];
                 for(Integer code : codes) {
                     sum[code] = cudaContext.getSumLandViewTan(code.byteValue()) * Math.pow(ares*180/Math.PI, 2);
@@ -338,16 +332,14 @@ public class ComputeViewCUDA extends ComputeView {
         CUDARunnable<ViewTanResult> r = new CUDARunnable<ViewTanResult>() {
             @Override
             public ViewTanResult run(CUDAContext cudaContext) {
-                int wa = (int)Math.ceil(2*Math.PI/ares);
-                int ha = (int)Math.ceil(Math.PI/ares);                
-                WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, wa, ha, 1, null);
-                int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
+               
                 //long time = System.currentTimeMillis();
 
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, wa, ha, bounds);
+                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
 
                 //System.out.println("Nb : " + cudaContext.getSumView());
-
+                WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, cudaContext.getWa(), cudaContext.getHa(), 1, null);
+                int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
                 cudaContext.getViewTan(viewBuf);
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
@@ -641,7 +633,9 @@ public class ComputeViewCUDA extends ComputeView {
                 );
         }
         
-        void viewTan(int x, int y, double startZ, double ares, int wa, int ha, Bounds bounds) {
+        void viewTan(int x, int y, double startZ, double ares, Bounds bounds) {
+            int wa = (int)Math.ceil(bounds.getAmplitudeRad()/ares);
+            int ha = (int)Math.ceil(Math.PI/ares);   
             if(this.wa != wa || this.ha != ha) {
                 if(viewTanDev != null) {
                     cuMemFree(viewTanDev);
@@ -811,6 +805,14 @@ public class ComputeViewCUDA extends ComputeView {
             if(viewBuf.length != wa*ha)
                 throw new IllegalArgumentException("Bad size buffer");
             cuMemcpyDtoH(Pointer.to(viewBuf), viewTanDev, wa*ha * Sizeof.INT);
+        }
+
+        public int getWa() {
+            return wa;
+        }
+
+        public int getHa() {
+            return ha;
         }
     }
 

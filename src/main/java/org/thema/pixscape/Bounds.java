@@ -21,12 +21,23 @@ public final class Bounds implements Serializable {
     public Bounds() {
         this.dmin = 0;
         this.dmax = Double.POSITIVE_INFINITY;
-        this.orientation = Math.PI/2;
-        this.amplitude = 2*Math.PI;
-        this.alphaleft = 2*Math.PI;
-        this.alpharight = 0;
+        this.orientation = Math.PI/2; // Default to North
+        this.amplitude = 2*Math.PI; // 360°
+        this.alphaleft = 3*Math.PI/2; // Default to South
+        this.alpharight = 3*Math.PI/2; // Default to South
         this.slopemin = Double.NEGATIVE_INFINITY;
         this.slopemax = Double.POSITIVE_INFINITY;
+    }
+    
+    public Bounds(Bounds bounds) {
+        this.dmin = bounds.dmin;
+        this.dmax = bounds.dmax;
+        this.orientation = bounds.orientation;
+        this.amplitude = bounds.amplitude;
+        this.alphaleft = bounds.alphaleft;
+        this.alpharight = bounds.alpharight;
+        this.slopemin = bounds.slopemin;
+        this.slopemax = bounds.slopemax;
     }
     
     public Bounds(double dmin, double dmax, double orientation, double amplitude, double zmin, double zmax) {
@@ -42,8 +53,12 @@ public final class Bounds implements Serializable {
 
     public boolean isUnbounded() {
         return dmin == 0 && dmax == Double.POSITIVE_INFINITY 
-                && orientation == Math.PI/2 && amplitude == 2*Math.PI
+                && !isOrienBounded()
                 && slopemin == Double.NEGATIVE_INFINITY && slopemax == Double.POSITIVE_INFINITY;
+    }
+    
+    public boolean isOrienBounded() {
+        return amplitude < 2*Math.PI;
     }
     /**
      * 
@@ -51,6 +66,8 @@ public final class Bounds implements Serializable {
      * @return true if alpha is in bounds
      */
     public boolean isAlphaIncluded(double alpha) {
+        if(!isOrienBounded())
+            return true;
         final double a = (alpha + 2*Math.PI) % (2*Math.PI);
         if(alpharight < alphaleft)
             return a >= alpharight && a <= alphaleft;
@@ -114,6 +131,10 @@ public final class Bounds implements Serializable {
         return amplitude * 180 / Math.PI;
     }
  
+    public double getAmplitudeRad() {
+        return amplitude;
+    }
+    
     public double getZMin() {
         return Math.atan(slopemin) * 180 / Math.PI;
     }
@@ -123,11 +144,11 @@ public final class Bounds implements Serializable {
     }
 
     public void setZMin(double zmin) {
-        slopemin = zmin == -90 ? Double.NEGATIVE_INFINITY : Math.tan(slopemin * Math.PI / 180);
+        slopemin = zmin == -90 ? Double.NEGATIVE_INFINITY : Math.tan(zmin * Math.PI / 180);
     }
 
     public void setZMax(double zmax) {
-        slopemax = zmax == 90 ? Double.POSITIVE_INFINITY : Math.tan(slopemax * Math.PI / 180);
+        slopemax = zmax == 90 ? Double.POSITIVE_INFINITY : Math.tan(zmax * Math.PI / 180);
     }
     
     public Bounds createBounds(double orientation) {

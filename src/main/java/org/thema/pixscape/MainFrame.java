@@ -10,7 +10,6 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Toolkit;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
@@ -314,7 +313,7 @@ public class MainFrame extends javax.swing.JFrame {
                     return;
                 
                 try {
-                    Raster viewTan = project.calcViewTan(dlg.point, dlg.startZ, dlg.precision*Math.PI/180, //Math.PI/(project.getDtm().getWidth()+project.getDtm().getHeight()), 
+                    Raster viewTan = project.calcViewTan(dlg.point, dlg.startZ, dlg.precision*Math.PI/180, 
                             dlg.bounds);
                     // create landuse, z and dist images.
                     GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(dlg.point);
@@ -330,7 +329,7 @@ public class MainFrame extends javax.swing.JFrame {
                     DefaultGroupLayer gl = new DefaultGroupLayer("Views", true);
                     RasterStyle s = new RasterStyle(ColorRamp.RAMP_DEM);
                     s.setNoDataValue(-1000);
-                    Rectangle2D r = new Rectangle2D.Double(-180, -90, 360, 180);
+                    Rectangle2D r = new Rectangle2D.Double(dlg.bounds.getOrientation()-dlg.bounds.getAmplitude()/2, -90, dlg.bounds.getAmplitude(), 180);
                     gl.addLayerFirst(new RasterLayer("Elevation", new RasterShape(viewTanZ, r, s, true)));
                     s = new RasterStyle();
                     s.setNoDataValue(-1);
@@ -484,12 +483,18 @@ public class MainFrame extends javax.swing.JFrame {
         progressBar.close();
     }
 
+    /**
+     * Extract version number from manifest if exists.
+     * If the manifest does not exist return "unpackage version"
+     * @return the version of th software contained in jar file manifest
+     */
     public static String getVersion() {
         String version = MainFrame.class.getPackage().getImplementationVersion();
-        if(version == null)
+        if(version == null) {
             return "unpackage version";
-        else
+        } else {
             return version;
+        }
     }
     
     /**
@@ -547,9 +552,11 @@ public class MainFrame extends javax.swing.JFrame {
         // UI execution
         // Relaunch java with preferences memory
         try {
-            if(args.length == 0)
-                if(JavaLoader.launchApp(MainFrame.class, 2048))
+            if(args.length == 0) {
+                if(JavaLoader.launchApp(MainFrame.class, 2048)) {
                     System.exit(0);
+                }
+            }
         } catch (Exception ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }

@@ -116,25 +116,26 @@ public class ComputeViewJava extends ComputeView {
     
     @Override
     public ViewTanResult calcViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds)  {
-        int n = (int)Math.ceil(2*Math.PI/ares);
+        int n = (int)Math.ceil(bounds.getAmplitudeRad()/ares);
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/ares), 1, null);
         int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
         Arrays.fill(viewBuf, -1);
+        double aStart = bounds.getAlphaleft();
         long time = System.currentTimeMillis();
-        // démarre au sud dans le sens des aiguilles d'une montre
         for(int ax = 0; ax < n; ax++) {
-            if(bounds.isAlphaIncluded(1.5*Math.PI-(ax*ares)))
-                calcRayTan(cg.x, cg.y, startZ, bounds, viewBuf, ax, ares);
+            double a = (aStart - ax*ares + 2*Math.PI) % (2*Math.PI);
+            if(bounds.isAlphaIncluded(a)) {
+                calcRayTan(cg.x, cg.y, startZ, bounds, viewBuf, a, n, ax, ares);
+            }
         }
         System.out.println((System.currentTimeMillis()-time) + " ms");
         return new ViewTanResult(ares, cg, view, this);
     }
     
-    private void calcRayTan(final int x0, final int y0, final double startZ, Bounds bounds, final int[] view, final int ax, final double ares) {
+    private void calcRayTan(final int x0, final int y0, final double startZ, Bounds bounds, final int[] view, final double a, final int wa, final int ax, final double ares) {
         
         final int w = dtm.getWidth();
         final int h = dtm.getHeight();
-        double a = 1.5*Math.PI - ax*ares;
         int y1 = a >= 0 && a < Math.PI ? 0 : h-1; // haut ou bas ?
         int x1 = a >= Math.PI/2 && a < 1.5*Math.PI ? 0 : w-1; // droite ou gauche ?
         int sens = x1 == 0 ? -1 : +1;
@@ -150,7 +151,6 @@ public class ComputeViewJava extends ComputeView {
         
         final double z0 = dtm.getSample(x0, y0, 0) * resZ + startZ;
         
-        final int wa = (int) Math.ceil(2*Math.PI / ares);
         final int dx = Math.abs(x1-x0);
         final int dy = Math.abs(y1-y0);
         final int sx = x0 < x1 ? 1 : -1;
@@ -160,8 +160,6 @@ public class ComputeViewJava extends ComputeView {
         int yy = 0;
         int ind = x0 + y0*w;
         final int ind1 = x1 + y1*w;
-        
-        
         
         if(bounds.getDmin() == 0) {
             final double si = Math.min(-startZ / (res2D/2), bounds.getSlopemax());
@@ -185,8 +183,7 @@ public class ComputeViewJava extends ComputeView {
                 yy += sy;
                 ind += sy*w;
             }
-//            if(Math.abs(xx) > dx || Math.abs(yy) > dy) 
-//                return;
+
             final double z = dtmBuf.getElemDouble(ind) * resZ + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
             if(maxSlope >= 0 && z <= maxZ)
                 continue;

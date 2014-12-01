@@ -17,7 +17,10 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.feature.SchemaException;
+import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.common.ProgressBar;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
@@ -101,16 +104,23 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
         Map<Feature, List<Double[]>> map = new HashMap<>();
         
         for(int i = start; i < end; i++) {
-            if(isCanceled())
+            if(isCanceled()) {
                 break;
-            Coordinate c = points.get(i).getGeometry().getCoordinate();
-            Coordinate pc = Project.getProject().getSpace2Grid().transform(c, new Coordinate());
-            GridCoordinates2D gc = new GridCoordinates2D((int)pc.x, (int)pc.y);
-            List<Double[]> values;
+            }
+            Feature p = points.get(i);
+            Coordinate c = p.getGeometry().getCoordinate();
+            GridCoordinates2D gc = null;
+            try {
+                gc = Project.getProject().getDtmCov().getGridGeometry().worldToGrid(new DirectPosition2D(c.x, c.y));
+            } catch (InvalidGridGeometryException | TransformException ex) {
+                Logger.getLogger(PointMetricTask.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            List<Double[]> values;          
+            Bounds b = getBounds(p);
             if(isTanView()) {
-                values = compute.aggrViewTan(gc, startZ, anglePrec, bounds, (List) metrics);
+                values = compute.aggrViewTan(gc, startZ, anglePrec, b, (List) metrics);
             } else {
-                values = compute.aggrViewShed(gc, startZ, destZ, direct, bounds, (List) metrics);
+                values = compute.aggrViewShed(gc, startZ, destZ, direct, b, (List) metrics);
             }
             map.put(points.get(i), values);
             incProgress(1);
@@ -157,9 +167,34 @@ public class PointMetricTask extends AbstractParallelTask<Map<Feature, List<Doub
     }
     
     public File getResultFile() {
-        if(isTanView())
-            return new File(resDir, "metrics-aprec" + anglePrec + "-" + bounds + ".shp");
-        else
-            return new File(resDir, "metrics-" + (direct ? "direct" : "indirect") + "-" + bounds + ".shp");
+        if(isTanView()) {
+            return new File(resDir, "metrics-aprec" + anglePrec + "-" + pointFile.getName());
+        } else {
+            return new File(resDir, "metrics-" + (direct ? "direct" : "indirect") + "-" + pointFile.getName());
+        }
+    }
+
+    private Bounds getBounds(Feature p) {
+        Bounds b = new Bounds(bounds);
+        if(p.getAttributeNames().contains("zmin")) {
+            b.setZMin(((Number)p.getAttribute("zmin")).doubleValue());
+        }
+        if(p.getAttributeNames().contains("zmax")) {
+            b.setZMax(((Number)p.getAttribute("zmax")).doubleValue());
+        }
+        if(p.getAttributeNames().contains("dmin")) {
+            b.setDmin(((Number)p.getAttribute("dmin")).doubleValue());
+        }
+        if(p.getAttributeNames().contains("dmax")) {
+            b.setDmax(((Number)p.getAttribute("dmax")).doubleValue());
+        }
+        if(p.getAttributeNames().contains("orien")) {
+            if(p.getAttributeNames().contains("amp")) {
+                b = b.createBounds(((Number)p.getAttribute("orien")).doubleValue(), ((Number)p.getAttribute("amp")).doubleValue());
+            } else {
+                b = b.createBounds(((Number)p.getAttribute("orien")).doubleValue());
+            }
+        }
+        return b;
     }
 }
