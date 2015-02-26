@@ -6,14 +6,10 @@
 
 package org.thema.pixscape.view;
 
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferInt;
-import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
-import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.Bounds;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
@@ -24,59 +20,69 @@ import org.thema.pixscape.metric.ViewTanMetric;
  */
 public abstract class ComputeView {
     
-    protected final Raster dtm, land, dsm;
-    protected final SortedSet<Integer> codes;
+    /**
+     * Alpha precision in radian
+     */
+    protected double aPrec;
+
+    public ComputeView(double aPrec) {
+        setaPrec(aPrec);
+    }
     
-    /** resolution of the grid dtm in meter */
-    protected final double res2D;
-    /** resolution of altitude Z in meter */
-    protected final double resZ;
+    public List<Double[]> aggrViewShed(DirectPosition2D cg, double startZ, double destZ, boolean direct, Bounds bounds, List<? extends ViewShedMetric> metrics) {
+        try {
+            ViewShedResult view = calcViewShed(cg, startZ, destZ, direct, bounds);
+            
+            List<Double[]> results = new ArrayList<>(metrics.size());
+            for(ViewShedMetric m : metrics) {
+                results.add(m.calcMetric(view));
+            }
+            return results;
+        } catch (TransformException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+    
+    public List<Double[]> aggrViewTan(DirectPosition2D cg, double startZ, Bounds bounds, List<? extends ViewTanMetric> metrics) {
+        try {
+            ViewTanResult view = calcViewTan(cg, startZ, bounds);
+            
+            List<Double[]> results = new ArrayList<>(metrics.size());
+            for(ViewTanMetric m : metrics) {
+                results.add(m.calcMetric(view));
+            }
+            return results;
+        } catch (TransformException ex) {
+            throw new IllegalArgumentException(ex);
+        }
+    }
+    
+    public abstract ViewTanResult calcViewTan(DirectPosition2D cg, double startZ, Bounds bounds) throws TransformException;
+    public abstract ViewShedResult calcViewShed(DirectPosition2D cg, double startZ, double destZ, boolean direct, Bounds bounds) throws TransformException;
+    
+    
+    /**
+     * Default implementation does nothing
+     */
+    public void dispose() {
+        
+    }
+
+    /**
+     * Alpha precision in degree
+     * @return 
+     */
+    public double getaPrec() {
+        return aPrec * 180 / Math.PI;
+    }
 
     /**
      * 
-     * @param dtm
-     * @param resZ
-     * @param res2D
-     * @param land can be null
-     * @param dsm  can be null
+     * @param aPrec alpha precision in degree
      */
-    public ComputeView(Raster dtm, double resZ, double res2D, Raster land, SortedSet<Integer> codes,  Raster dsm) {
-        this.dtm = dtm;
-        this.resZ = resZ;
-        this.res2D = res2D;
-        this.land = land;
-        this.codes = codes;
-        this.dsm = dsm;
+    public final void setaPrec(double aPrec) {
+        this.aPrec = aPrec * Math.PI / 180;
     }
     
-    public List<Double[]> aggrViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds, List<? extends ViewShedMetric> metrics) {
-        ViewShedResult view = calcViewShed(cg, startZ, destZ, direct, bounds);
-        
-        List<Double[]> results = new ArrayList<>(metrics.size());
-        for(ViewShedMetric m : metrics)
-            results.add(m.calcMetric(view));
-        return results;
-    }
-    
-    public List<Double[]> aggrViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds, List<? extends ViewTanMetric> metrics) {
-        ViewTanResult view = calcViewTan(cg, startZ, ares, bounds);
-        
-        List<Double[]> results = new ArrayList<>(metrics.size());
-        for(ViewTanMetric m : metrics)
-            results.add(m.calcMetric(view));
-        return results;
-    }
-    
-    public abstract ViewTanResult calcViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds);
-    public abstract ViewShedResult calcViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds);
-    
-    
-    public abstract double aggrViewShed(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds);
-    public abstract double[] aggrViewShedLand(GridCoordinates2D cg, double startZ, double destZ, boolean direct, Bounds bounds, SortedSet<Integer> codes) ;
-    
-    public abstract double aggrViewTan(GridCoordinates2D cg, double startZ, double ares, Bounds bounds);
-    public abstract double[] aggrViewTanLand(GridCoordinates2D cg, double startZ, double ares, Bounds bounds, SortedSet<Integer> codes);
-    
-    public abstract void dispose();
     
 }

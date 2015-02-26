@@ -14,6 +14,7 @@ import java.util.SortedSet;
  * @author gvuidel
  */
 public interface Metric {
+    public boolean isCodeSupported();
     public void setCodes(SortedSet<Integer> codes);
     public SortedSet<Integer> getCodes();
     public String getShortName();

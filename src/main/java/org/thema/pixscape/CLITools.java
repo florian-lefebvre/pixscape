@@ -32,6 +32,7 @@ import org.thema.parallel.ParallelTask;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -40,12 +41,13 @@ import org.thema.pixscape.metric.ViewTanMetric;
 public class CLITools {
     private Project project;
     private File resDir;
-    private double zEye = 1.8;
+    private double zEye;
     private double zDest = -1;
     private Bounds bounds = new Bounds();
     private int sample = 1;
     private SortedSet<Integer> from = null;
     private File pointFile = null;
+    private String idField = null;
     
     public void execute(String [] arg) throws Throwable {
         if(arg[0].equals("--help")) {
@@ -54,7 +56,7 @@ public class CLITools {
                     "--project project_file.xml\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
-                    "[-sampling n=val | land=code1,..,coden | points=shapefile] command\n" +
+                    "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname] command\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
                     "--viewtan [prec=deg] x y\n" +
@@ -98,6 +100,7 @@ public class CLITools {
         project = Project.loadProject(new File(args.remove(0)));
         project.setUseCUDA(useCUDA);
         resDir = new File(".");
+        zEye = project.getStartZ();
         
         // global options
         while(!args.isEmpty() && !args.get(0).startsWith("--")) {
@@ -118,8 +121,9 @@ public class CLITools {
                             bounds.setZMin(Double.parseDouble(p.split("=")[1]));
                         } else if(p.startsWith("zmax=")) {
                             bounds.setZMax(Double.parseDouble(p.split("=")[1]));
-                        } else
+                        } else {
                             throw new IllegalArgumentException("Unknown param for bounds option " + p);
+                        }
                     }
                     break;
                 case "-sampling":
@@ -129,12 +133,15 @@ public class CLITools {
                     } else if(p.startsWith("land=")) {
                         from = new TreeSet<>();
                         String [] codes = args.remove(0).split("=")[1].split(",");
-                        for(String code : codes)
+                        for(String code : codes) {
                             from.add(Integer.parseInt(code));
+                        }
                     } else if(p.startsWith("points")) {
                         pointFile = new File(p.split("=")[1]);
-                    } else
+                        idField = args.remove(0).split("=")[1];
+                    } else {
                         throw new IllegalArgumentException("Unknown param for sampling option " + p);
+                    }
                     break;
                 case "-zeye":
                     p = args.remove(0);
@@ -154,8 +161,9 @@ public class CLITools {
             }
         }
         
-        if(args.isEmpty())
+        if(args.isEmpty()) {
             throw new IllegalArgumentException("No command to execute");
+        }
         
         try {
             String p = args.remove(0);
@@ -186,47 +194,43 @@ public class CLITools {
     }
 
     private void viewShed(List<String> args) throws IOException, TransformException {
-        if(args.size() < 2)
+        if(args.size() < 2) {
             throw new IllegalArgumentException("viewshed command needs at least 2 parameters");
+        }
         boolean direct = true;
         if(args.get(0).equals("indirect")) {
             direct = false;
             args.remove(0);
         }
         DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
-        Raster view = project.calcViewShed(c, zEye, zDest, direct, bounds);
+        Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, direct, bounds).getView();
         new GeoTiffWriter(new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif")).write(
                 new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()), null);
     }
     
     private void viewTan(List<String> args) throws IOException, TransformException {
-        if(args.size() < 2)
+        if(args.size() < 2) {
             throw new IllegalArgumentException("viewtan command needs at least 2 parameters");
-        double aPrec = 0.1;
-        if(args.get(0).startsWith("prec=")) {
-            aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
         }
-        aPrec = aPrec * Math.PI / 180;
-        DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
-        Raster viewTan = project.calcViewTan(p, zEye, aPrec, bounds);
-        // create landuse, z and dist images.
-        GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(p);
-        WritableRaster viewTanZ = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                viewTan.getWidth(), viewTan.getHeight(), 1), null);
-        WritableRaster viewTanDist = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                viewTan.getWidth(), viewTan.getHeight(), 1), null);
-        WritableRaster viewTanLand = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, 
-                viewTan.getWidth(), viewTan.getHeight(), 1), null);
 
-        project.fillViewTan(c, viewTan, viewTanZ, viewTanDist, viewTanLand);
-        Envelope2D env = new Envelope2D(null, -180, -90, 360, 180);
-        new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-z.tif")).write(
-                new GridCoverageFactory().create("view", viewTanZ, env), null);
+        if(args.get(0).startsWith("prec=")) {
+            double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
+            project.setaPrec(aPrec);
+        }
+
+        DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
+        ViewTanResult result = project.getDefaultComputeView().calcViewTan(p, zEye, bounds);
+
+        GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(p);
+        Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
+        new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-elev.tif")).write(
+                new GridCoverageFactory().create("view", result.getElevationView(), env), null);
         new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-dist.tif")).write(
-                new GridCoverageFactory().create("view", viewTanDist, env), null);
-        if(project.hasLandUse())
+                new GridCoverageFactory().create("view", result.getDistanceView(), env), null);
+        if(project.hasLandUse()) {
             new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-land.tif")).write(
-                new GridCoverageFactory().create("view", viewTanLand, env), null);
+                    new GridCoverageFactory().create("view", result.getLanduseView(), env), null);
+        }
     }
 
     private void viewMetric(List<String> args) throws IOException {
@@ -243,13 +247,15 @@ public class CLITools {
                 codes = new TreeSet<>();
                 String lst = s.split("\\[")[1].replace("]", "");
                 String [] tokens = lst.split(",");
-                for(String code : tokens)
+                for(String code : tokens) {
                     codes.add(Integer.parseInt(code));
+                }
                 s = s.split("\\[")[0];
             }
             Metric m = Project.getMetric(s);
-            if(!(m instanceof ViewShedMetric))
+            if(!(m instanceof ViewShedMetric)) {
                 throw new IllegalArgumentException("The metric " + m + " is not a viewshed metric");
+            }
             m.setCodes(codes);
             metrics.add((ViewShedMetric) m);
         }
@@ -257,18 +263,18 @@ public class CLITools {
         if(pointFile == null) {
             task = new GridMetricTask(zEye, zDest, direct, bounds, from, metrics, sample, resDir, null);
         } else {
-            task = new PointMetricTask(zEye, zDest, direct, bounds, metrics, pointFile, resDir, null);
+            task = new PointMetricTask(zEye, zDest, direct, bounds, metrics, pointFile, idField, resDir, null);
         }
         
         ExecutorService.execute(task);
     }
     
     private void tanMetric(List<String> args) throws IOException {
-        double aPrec = 0.1;
         if(!args.isEmpty() && args.get(0).startsWith("prec=")) {
-            aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
+            double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
+            project.setaPrec(aPrec);
         }
-        aPrec = aPrec * Math.PI / 180;
+
         List<ViewTanMetric> metrics = new ArrayList<>();
         while(!args.isEmpty()) {
             String s = args.remove(0);
@@ -277,21 +283,23 @@ public class CLITools {
                 codes = new TreeSet<>();
                 String lst = s.split("\\[")[1].replace("]", "");
                 String [] tokens = lst.split(",");
-                for(String code : tokens)
+                for(String code : tokens) {
                     codes.add(Integer.parseInt(code));
+                }
                 s = s.split("\\[")[0];
             }
             Metric m = Project.getMetric(s);
-            if(!(m instanceof ViewTanMetric))
+            if(!(m instanceof ViewTanMetric)) {
                 throw new IllegalArgumentException("The metric " + m + " is not a tangential metric");
+            }
             m.setCodes(codes);
             metrics.add((ViewTanMetric) m);
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(zEye, aPrec, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(zEye, bounds, from, metrics, sample, resDir, null);
         } else {
-            task = new PointMetricTask(zEye, aPrec, bounds, metrics, pointFile, resDir, null);
+            task = new PointMetricTask(zEye, bounds, metrics, pointFile, idField, resDir, null);
         }
         
         ExecutorService.execute(task);
@@ -299,7 +307,7 @@ public class CLITools {
 
     private void showMetrics() {
         System.out.println("===== Metrics =====");
-        for(Metric indice : Project.METRICS) {
+        for(Metric indice : Project.getMetrics(Metric.class)) {
             System.out.println(indice.getShortName());
         }
        

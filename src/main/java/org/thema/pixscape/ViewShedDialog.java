@@ -7,34 +7,38 @@
 package org.thema.pixscape;
 
 
+import com.vividsolutions.jts.geom.Geometry;
 import java.awt.Color;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.image.Raster;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
 import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.geometry.DirectPosition2D;
 import org.opengis.referencing.operation.TransformException;
+import org.thema.data.feature.DefaultFeature;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
 import org.thema.drawshape.SelectableShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
 import org.thema.drawshape.layer.DefaultLayer;
+import org.thema.drawshape.layer.FeatureLayer;
+import org.thema.drawshape.layer.Layer;
 import org.thema.drawshape.layer.RasterLayer;
+import org.thema.drawshape.style.FeatureStyle;
 import org.thema.drawshape.style.PointStyle;
 import org.thema.drawshape.style.RasterStyle;
+import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.drawshape.ui.MapViewer;
+import org.thema.pixscape.view.MultiViewShedResult;
+import org.thema.pixscape.view.ViewResult;
+import org.thema.process.Vectorizer;
 
 /**
  *
@@ -42,49 +46,37 @@ import org.thema.drawshape.ui.MapViewer;
  */
 public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.ShapeMouseListener {
 
-    public boolean isOk = false;
-    public DirectPosition2D point;
-    public double startZ;
-    public double destZ;
-    public boolean direct;
-    public Bounds bounds;
+    private boolean isOk = false;
+    private Bounds bounds;
     
-    private MapViewer mapViewer;
+    private final MapViewer mapViewer;
+    private final Project project;
+
     private PointShape centreShape;
-    private Project project;
-    private RasterLayer layer;
     private DefaultLayer centreLayer;
+    private DefaultGroupLayer layers;
+    
+    private final MetricResultDialog metricDlg;
     
     /** Creates new form ViewShedDialog */
     public ViewShedDialog(Frame parent, Project project, MapViewer mapViewer) {
         super(parent, false);
         this.project = project;
         initComponents();
-        setLocationRelativeTo(parent);
         getRootPane().setDefaultButton(updateButton);
-        // Close the dialog when Esc is pressed
-        String cancelName = "cancel";
-        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
-        ActionMap actionMap = getRootPane().getActionMap();
-        actionMap.put(cancelName, new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                doClose();
-            }
-        });
         
-        mapViewer.addMouseListener(this);
-        mapViewer.setCursorMode(PanelMap.INPUT_CURSOR_MODE);
+        multiScaleCheckBox.setEnabled(project.hasMultiScale());
+        
+        zEyeTextField.setText(""+project.getStartZ());
+        minDistTextField.setText(""+project.getMinDistMS());
+        
+        
         this.mapViewer = mapViewer;
         double x = mapViewer.getLayers().getBounds().getCenterX();
         double y = mapViewer.getLayers().getBounds().getCenterY();
         pointTextField.setText(x + ", " + y);
-        centreShape = new PointShape(x, y);
-        centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));
-        centreLayer = new DefaultLayer("Centre", centreShape);
-        centreLayer.setRemovable(true);
-        ((DefaultGroupLayer)mapViewer.getLayers()).addLayerFirst(centreLayer);
-//        mapViewer.getMap().addShape(centreShape);
+        
+        metricDlg = new MetricResultDialog(this, false, project.getDefaultScale().getCodes());
     }
 
 
@@ -96,7 +88,9 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
@@ -108,15 +102,20 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         jLabel3 = new javax.swing.JLabel();
         zDestTextField = new javax.swing.JTextField();
         updateButton = new javax.swing.JButton();
+        multiScaleCheckBox = new javax.swing.JCheckBox();
+        minDistTextField = new javax.swing.JTextField();
+        jPanel1 = new javax.swing.JPanel();
+        rasterRadioButton = new javax.swing.JRadioButton();
+        vectorRadioButton = new javax.swing.JRadioButton();
+        metricsButton = new javax.swing.JButton();
 
         setTitle("Viewshed");
-        setAlwaysOnTop(true);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            public void windowClosed(java.awt.event.WindowEvent evt) {
-                formWindowClosed(evt);
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
             }
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                closeDialog(evt);
+            public void componentHidden(java.awt.event.ComponentEvent evt) {
+                formComponentHidden(evt);
             }
         });
 
@@ -163,6 +162,50 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
             }
         });
 
+        multiScaleCheckBox.setText("Multi scale - Min distance : ");
+
+        minDistTextField.setText("500");
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, multiScaleCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), minDistTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Result"));
+
+        buttonGroup1.add(rasterRadioButton);
+        rasterRadioButton.setSelected(true);
+        rasterRadioButton.setText("Raster transparency");
+
+        buttonGroup1.add(vectorRadioButton);
+        vectorRadioButton.setText("Polygon");
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(rasterRadioButton)
+                    .add(vectorRadioButton))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(rasterRadioButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(vectorRadioButton)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        metricsButton.setText("Metrics");
+        metricsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                metricsButtonActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -193,8 +236,17 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                                 .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(18, 18, 18)
                                 .add(directCheckBox)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 68, Short.MAX_VALUE)
-                                .add(boundsButton)))))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 74, Short.MAX_VALUE)
+                                .add(boundsButton))))
+                    .add(layout.createSequentialGroup()
+                        .add(multiScaleCheckBox)
+                        .add(18, 18, 18)
+                        .add(minDistTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 69, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(metricsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
 
@@ -217,27 +269,31 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel3)
                     .add(zDestTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cancelButton)
-                    .add(okButton)
-                    .add(updateButton))
+                    .add(multiScaleCheckBox)
+                    .add(minDistTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 16, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(cancelButton)
+                            .add(okButton)
+                            .add(updateButton)))
+                    .add(metricsButton))
                 .addContainerGap())
         );
 
         getRootPane().setDefaultButton(okButton);
 
+        bindingGroup.bind();
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-//        String[] coords = pointTextField.getText().split(",");
-//        point = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-//        startZ = Double.parseDouble(zEyeTextField.getText());
-//        destZ = Double.parseDouble(zDestTextField.getText());
-//        direct = directCheckBox.isSelected();
-//        if(bounds == null)
-//            bounds = new Bounds();
         isOk = true;
         doClose();
     }//GEN-LAST:event_okButtonActionPerformed
@@ -246,27 +302,12 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         doClose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
-    /** Closes the dialog */
-    private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-        doClose();
-    }//GEN-LAST:event_closeDialog
-
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        mapViewer.removeShapeMouseListener(this);
-        //mapViewer.getMap().removeShapes(Arrays.asList(centreShape));
-        if(!isOk) {
-            mapViewer.getLayers().removeLayer(centreLayer);
-            if(layer != null) {
-                mapViewer.getLayers().removeLayer(layer);
-            }
-        }
-    }//GEN-LAST:event_formWindowClosed
-
     private void boundsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_boundsButtonActionPerformed
         BoundsDialog dlg = new BoundsDialog((Frame) this.getParent(), bounds == null ? new Bounds() : bounds);
         dlg.setVisible(true);
-        if(dlg.isOk)
+        if(dlg.isOk) {
             bounds = dlg.bounds;
+        }
     }//GEN-LAST:event_boundsButtonActionPerformed
 
     private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
@@ -275,47 +316,112 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         mouseClicked(p, null, null, 0);
     }//GEN-LAST:event_updateButtonActionPerformed
 
+    private void metricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metricsButtonActionPerformed
+        metricDlg.setLocation(getX(), getY() + getHeight());
+        metricDlg.setVisible(true);
+    }//GEN-LAST:event_metricsButtonActionPerformed
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        mapViewer.addMouseListener(this);
+        mapViewer.setCursorMode(PanelMap.INPUT_CURSOR_MODE);
+        String[] coords = pointTextField.getText().split(",");
+        Point2D p = new Point2D.Double(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+        centreShape = new PointShape(p);
+        centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));
+        centreLayer = new DefaultLayer("Centre", centreShape);
+        centreLayer.setRemovable(true);
+        layers = new DefaultGroupLayer("ViewShed", true);
+        layers.setRemovable(true);
+        layers.addLayerFirst(centreLayer);
+        ((DefaultGroupLayer)mapViewer.getLayers()).addLayerFirst(layers);
+    }//GEN-LAST:event_formComponentShown
+
+    private void formComponentHidden(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentHidden
+        mapViewer.removeShapeMouseListener(this);
+        if(!isOk) {
+            mapViewer.getLayers().removeLayer(layers);
+        }
+    }//GEN-LAST:event_formComponentHidden
+
     @Override
     public void mouseClicked(Point2D p, List<SelectableShape> shapes, MouseEvent sourceEvent, int cursorMode) {
         try {
             pointTextField.setText(p.getX() + "," + p.getY());
             centreShape.setPoint2D(p);
-            //mapViewer.getMap().fullRepaint();
-            Raster viewShed = project.calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
-                    Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-            if(layer != null) {
-                mapViewer.getLayers().removeLayer(layer);
+            for(Layer l : new ArrayList<>(layers.getLayers())) {
+                if(!(l instanceof DefaultLayer)) {
+                    layers.removeLayer(l);
+                }
             }
-            layer = new RasterLayer("Viewshed-" + (directCheckBox.isSelected()?"direct":"indirect"), new RasterShape(viewShed,
-                    project.getDtmCov().getEnvelope2D(), new RasterStyle(
-                            new Color[] {new Color(0, 0, 0, 200), new Color(0, 0, 0, 20)}), true), project.getCRS());
-            layer.setRemovable(true);
-            ((DefaultGroupLayer)mapViewer.getLayers()).addLayerFirst(layer);
-            ((DefaultGroupLayer)mapViewer.getLayers()).moveTop(centreLayer);
+            ViewResult result;
+            Raster viewShed;
+            if(multiScaleCheckBox.isSelected()) {
+                MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
+                        .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
+                                Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+                for(double res : multiResult.getViews().keySet()) {
+                    addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+                }
+//                addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+                result = multiResult;
+            } else {
+                result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
+                    Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+                viewShed = result.getView();
+                addViewShedLayer(viewShed, project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+            }
+            
+            metricDlg.setResult(result);
+            mapViewer.getMap().fullRepaint(); // normalement pas utile mais par moment bug du rafraichissement...
         } catch (InvalidGridGeometryException | TransformException ex) {
             Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     
+    private void addViewShedLayer(Raster view, double res, String name) {
+        Layer layer;
+        if(rasterRadioButton.isSelected()) {
+//            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+//                        project.getScaleDatas().get(res).getGridGeometry().getEnvelope2D(), new RasterStyle( 
+//                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true), project.getCRS());
+            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+                        project.getScaleDatas().get(res).getGridGeometry().getEnvelope2D(), new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
+                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0))), true), true), project.getCRS());
+        } else {
+            Geometry poly = Vectorizer.vectorize(view, 1);
+            poly.apply(project.getScaleDatas().get(res).getGrid2Space());
+            layer = new FeatureLayer("Viewshed-" + name, Arrays.asList(new DefaultFeature(name, poly)), 
+                    new FeatureStyle(new Color(0, 0, 0, 40), null), project.getCRS());
+        }
+        layer.setRemovable(true);
+        layers.addLayerLast(layer);
+    }
+    
     private void doClose() {
-        
         setVisible(false);
-        dispose();
     }
 
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton boundsButton;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox directCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JButton metricsButton;
+    private javax.swing.JTextField minDistTextField;
+    private javax.swing.JCheckBox multiScaleCheckBox;
     private javax.swing.JButton okButton;
     private javax.swing.JTextField pointTextField;
+    private javax.swing.JRadioButton rasterRadioButton;
     private javax.swing.JButton updateButton;
+    private javax.swing.JRadioButton vectorRadioButton;
     private javax.swing.JTextField zDestTextField;
     private javax.swing.JTextField zEyeTextField;
+    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 
 }

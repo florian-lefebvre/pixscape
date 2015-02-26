@@ -10,43 +10,40 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import org.geotools.coverage.grid.GridCoordinates2D;
-import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.SimpleViewShedResult;
 
 /**
  *
  * @author gvuidel
  */
-class CUDAViewShedResult extends ViewShedResult {
-    ComputeViewCUDA.CUDAContext context;
-
+class CUDAViewShedResult extends SimpleViewShedResult {
+    
+    private final ComputeViewCUDA.CUDAContext context;
+    
     CUDAViewShedResult(GridCoordinates2D cg, ComputeViewCUDA.CUDAContext context, ComputeViewCUDA compute) {
         super(cg, null, compute);
         this.context = context;
     }
 
     @Override
-    public int[] getCountLand() {
-        if (countLand == null) {
-            countLand = new int[getCodes().last() + 1];
-            for (int code : getCodes()) {
-                countLand[code] = context.getSumLandView((byte) code);
-            }
+    public double[] getAreaLandUnbounded() {
+        double [] countLand = new double[getCodes().last() + 1];
+        for (int code : getCodes()) {
+            countLand[code] = context.getSumLandView((byte) code) * getRes2D()*getRes2D();
         }
+        
         return countLand;
     }
 
     @Override
-    public int getCount() {
-        if (count == -1) {
-            count = context.getSumView();
-        }
-        return count;
+    public double getAreaUnbounded() {
+        return context.getSumView() * getRes2D()*getRes2D();
     }
 
     @Override
-    public Raster getView() {
+    public synchronized Raster getView() {
         if (view == null) {
-            view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, getDtm().getWidth(), getDtm().getHeight(), 1, null);
+            view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, getGrid().getGridRange2D().width, getGrid().getGridRange2D().height, 1, null);
             byte[] viewBuf = ((DataBufferByte) view.getDataBuffer()).getData();
             context.getView(viewBuf);
         }

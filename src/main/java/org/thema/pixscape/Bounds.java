@@ -6,13 +6,31 @@
 
 package org.thema.pixscape;
 
+import com.vividsolutions.jts.geom.Geometry;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import org.thema.data.feature.DefaultFeature;
+import org.thema.data.feature.Feature;
 
 /**
  *
  * @author gvuidel
  */
 public final class Bounds implements Serializable {
+    
+    public static final String DMIN = "dmin";
+    public static final String DMAX = "dmax";
+    public static final String ZMIN = "zmin";
+    public static final String ZMAX = "zmax";
+    public static final String ORIEN = "orien";
+    public static final String AMP = "amp";
+    
+    public static final List<String> ATTRIBUTES = Arrays.asList(
+        DMIN, DMAX, ORIEN, AMP, ZMIN, ZMAX
+    );
+    
     private double dmin, dmax;
     private final double orientation, amplitude;
     private final double alphaleft, alpharight;
@@ -66,13 +84,15 @@ public final class Bounds implements Serializable {
      * @return true if alpha is in bounds
      */
     public boolean isAlphaIncluded(double alpha) {
-        if(!isOrienBounded())
+        if(!isOrienBounded()) {
             return true;
+        }
         final double a = (alpha + 2*Math.PI) % (2*Math.PI);
-        if(alpharight < alphaleft)
+        if(alpharight < alphaleft) {
             return a >= alpharight && a <= alphaleft;
-        else
+        } else {
             return a >= alpharight || a <= alphaleft;
+        }
     }
 
     public double getAlphaleft() {
@@ -170,18 +190,58 @@ public final class Bounds implements Serializable {
     @Override
     public String toString() {
         String s = "";
-        if(dmin != 0)
-            s += "dmin"+dmin;
-        if(dmax != Double.POSITIVE_INFINITY)
-            s += "dmax"+dmax;
-        if(getOrientation() != 0)
-            s += "orien"+getOrientation();
-        if(getAmplitude() != 360)
-            s += "amp"+getAmplitude();
-        if(getZMin() != -90)
-            s += "zmin"+getZMin();
-        if(getZMax() != 90)
-            s += "zmax"+getZMax();
+        if(dmin != 0) {
+            s += DMIN+dmin;
+        }
+        if(dmax != Double.POSITIVE_INFINITY) {
+            s += DMAX+dmax;
+        }
+        if(getOrientation() != 0) {
+            s += ORIEN+getOrientation();
+        }
+        if(getAmplitude() != 360) {
+            s += AMP+getAmplitude();
+        }
+        if(getZMin() != -90) {
+            s += ZMIN+getZMin();
+        }
+        if(getZMax() != 90) {
+            s += ZMAX+getZMax();
+        }
         return s;
+    }
+    
+    /**
+     * Creates a new Bound from this and update values from attribute of the feature
+     * @param f the feature which may contain boundary attributes
+     * @return a new updated bounds
+     */
+    public Bounds updateBounds(Feature f) {
+        Bounds b = new Bounds(this);
+        if(f.getAttributeNames().contains(ZMIN)) {
+            b.setZMin(((Number)f.getAttribute(ZMIN)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(ZMAX)) {
+            b.setZMax(((Number)f.getAttribute(ZMAX)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(DMIN)) {
+            b.setDmin(((Number)f.getAttribute(DMIN)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(DMAX)) {
+            b.setDmax(((Number)f.getAttribute(DMAX)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(ORIEN)) {
+            if(f.getAttributeNames().contains(AMP)) {
+                b = b.createBounds(((Number)f.getAttribute(ORIEN)).doubleValue(), ((Number)f.getAttribute(AMP)).doubleValue());
+            } else {
+                b = b.createBounds(((Number)f.getAttribute(ORIEN)).doubleValue());
+            }
+        }
+        return b;
+    }
+    
+    public DefaultFeature createFeatureWithBoundAttr(Object id, Geometry geom) {
+        return new DefaultFeature(id, geom, new ArrayList<>(ATTRIBUTES), new ArrayList<>(Arrays.asList(
+                getDmin(), getDmax(), getOrientation(), getAmplitude(), getZMin(), getZMax())));
     }
 }

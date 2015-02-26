@@ -1,3 +1,10 @@
+version 0.3 (26/02/2015)
+WARNING : projects are incompatible with previous versions.
+- Multi resolution support (viewshed only)
+- Metrics are integrated in the GUI
+- Several distance intervals can be used for some metrics (A, S, SL)
+- Add metrics : FD (fractal dimension), P (viewshed perimeter), C (viewshed compactness), SD (shannon on distances), SL (skyline length ratio)
+- Landuse colors are correclty saved in the project
 version 0.2.2
 CAUTION : older project must be removed, the dtm envelope was shifted by one pixel
 - In tangential mode, the view is always centered on the orientation

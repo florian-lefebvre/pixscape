@@ -16,39 +16,42 @@ import org.thema.pixscape.view.ViewTanResult;
  *
  * @author gvuidel
  */
-public class SumMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
+public class AreaMetric extends AbstractDistMetric implements ViewShedMetric, ViewTanMetric {
 
-    public SumMetric() {
+    public AreaMetric() {
+        super(true);
     }
     
-    public SumMetric(int code) {
+    public AreaMetric(int code) {
+        this();
         setCodes(new TreeSet<>(Arrays.asList(code)));
     }
+    
+    @Override
+    protected double calcMetric(ViewShedResult result, double dmin, double dmax) {
+        return calcArea(result, dmin, dmax);
+    }
 
     @Override
-    public Double[] calcMetric(ViewShedResult result) {
-        return new Double[] {calcSum(result) * result.getRes2D()*result.getRes2D()};
+    protected double calcMetric(ViewTanResult result, double dmin, double dmax) {
+        return calcArea(result, dmin, dmax);
     }
     
-    @Override
-    public Double[] calcMetric(ViewTanResult result) {
-        return new Double[] {calcSum(result) * Math.pow(result.getAres()*180/Math.PI, 2)};
-    }
-    
-    public int calcSum(ViewResult result) {
+    public double calcArea(ViewResult result, double dmin, double dmax) {
         if(getCodes().isEmpty()) {
-            return result.getCount();
+            return result.getArea(dmin, dmax);
         } else {
-            int[] count = result.getCountLand();
-            int sum = 0;
-            for(int code : getCodes()) 
+            double[] count = result.getAreaLand(dmin, dmax);
+            double sum = 0;
+            for(int code : getCodes()) {
                 sum += count[code];
+            }
             return sum;
         }
     }
     
     @Override
     public String getShortName() {
-        return "SUM";
+        return "A";
     }
 }

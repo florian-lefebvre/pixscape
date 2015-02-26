@@ -6,8 +6,6 @@ package org.thema.pixscape;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.thema.parallel.mpi.MainMPI;
@@ -34,8 +32,9 @@ public class MpiLauncher extends MainMPI {
 
     @Override
     public void initWorker(String [] args) throws IOException {
-        if(args.length < 2 || !args[0].equals("--project"))
+        if(args.length < 2 || !args[0].equals("--project")) {
             throw new IllegalArgumentException();
+        }
         
         Project prj = Project.loadProject(new File(args[1]));
         prj.setUseCUDA(0);

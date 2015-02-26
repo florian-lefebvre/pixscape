@@ -23,6 +23,10 @@ import org.thema.pixscape.view.ViewTanResult;
  */
 public class RasterMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
+    public RasterMetric() {
+        super(false);
+    }
+
     @Override
     public String getShortName() {
         return "Rast";

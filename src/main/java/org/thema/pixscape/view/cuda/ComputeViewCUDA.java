@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
@@ -40,10 +39,14 @@ import static jcuda.driver.JCudaDriver.cuMemcpyHtoD;
 import static jcuda.driver.JCudaDriver.cuModuleGetFunction;
 import static jcuda.driver.JCudaDriver.cuModuleLoad;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.geometry.DirectPosition2D;
 import org.thema.pixscape.Bounds;
+import org.thema.pixscape.ScaleData;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
-import org.thema.pixscape.view.ComputeView;
+import org.thema.pixscape.view.SimpleComputeView;
+import org.thema.pixscape.view.SimpleViewShedResult;
+import org.thema.pixscape.view.SimpleViewTanResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
@@ -51,10 +54,11 @@ import org.thema.pixscape.view.ViewTanResult;
  *
  * @author gvuidel
  */
-public class ComputeViewCUDA extends ComputeView {
+public class ComputeViewCUDA extends SimpleComputeView {
     
     private final int NCORE = 512;    
     
+    private Raster dtm;
     private float[] dtmBuf, dsmBuf;
     private byte[] landBuf;
 
@@ -63,51 +67,44 @@ public class ComputeViewCUDA extends ComputeView {
     private final File ptxFile;
     
     private final BlockingQueue<CUDARunnable> queue = new ArrayBlockingQueue<>(100);
-    /**
-     * 
-     * @param dtm
-     * @param resZ
-     * @param res2D
-     * @param land can be null
-     * @param dsm  can be null
-     */
-    public ComputeViewCUDA(Raster dtm, double resZ, double res2D, Raster land, SortedSet<Integer> codes, Raster dsm, int nbGPU) throws IOException {
-        super(dtm, resZ, res2D, land, codes, dsm);
-        if(dtm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT && resZ == 1)
+
+    public ComputeViewCUDA(ScaleData data, double aPrec, int nbGPU) throws IOException {
+        super(data, aPrec);
+        dtm = data.getDtm();
+        if(dtm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT) {
             dtmBuf = ((DataBufferFloat)dtm.getDataBuffer()).getData();
-        else {
-            DataBuffer buf = dtm.getDataBuffer();
-            dtmBuf = new float[buf.getSize()];
-            for(int i = 0; i < dtmBuf.length; i++)
-                dtmBuf[i] = (float) (buf.getElemDouble(i));
+        } else {
+            throw new IllegalArgumentException("DTM is not float data type");
         }
-        if(land != null) {
-            if(land.getDataBuffer().getDataType() == DataBuffer.TYPE_BYTE)
-                landBuf = ((DataBufferByte)land.getDataBuffer()).getData();
-            else {
-                DataBuffer buf = land.getDataBuffer();
+        if(data.hasLandUse()) {
+            if(data.getLand().getDataBuffer().getDataType() == DataBuffer.TYPE_BYTE) {
+                landBuf = ((DataBufferByte)data.getLand().getDataBuffer()).getData();
+            } else {
+                DataBuffer buf = data.getLand().getDataBuffer();
                 landBuf = new byte[buf.getSize()];
                 for(int i = 0; i < landBuf.length; i++) {
                     int v = buf.getElem(i);
-                    if(v < 0 || v > 255)
+                    if(v < 0 || v > 255) {
                         throw new RuntimeException("Land use code > 255 is not supported with CUDA");
+                    }
                     landBuf[i] = (byte) v;
                 }
             }
             ncode = -1;
             for(int i = 0; i < landBuf.length; i++){
                 int v = landBuf[i];
-                if(v > ncode)
+                if(v > ncode) {
                     ncode = v;
+                }
             }
             ncode++;
         }
         
-        if(dsm != null) {
-            if(dsm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT)
-                dsmBuf = ((DataBufferFloat)dsm.getDataBuffer()).getData();
-            else {
-                DataBuffer buf = dsm.getDataBuffer();
+        if(data.getDsm() != null) {
+            if(data.getDsm().getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT) {
+                dsmBuf = ((DataBufferFloat)data.getDsm().getDataBuffer()).getData();
+            } else {
+                DataBuffer buf = data.getDsm().getDataBuffer();
                 dsmBuf = new float[buf.getSize()];
                 for(int i = 0; i < dsmBuf.length; i++) {
                     dsmBuf[i] = (float) buf.getElem(i);
@@ -128,28 +125,30 @@ public class ComputeViewCUDA extends ComputeView {
         cuDeviceGetCount(nb);
         nbDev = Math.min(nb[0], nbGPU);
         // launch cuda threads, one for each GPU
-        for(int dev = 0; dev < nbDev; dev++)
+        for(int dev = 0; dev < nbDev; dev++) {
             new Thread(new CUDAThread(dev), "CUDA-thread-" + dev).start();
+        }
         
     }
     
     @Override
-    public List<Double[]> aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, final boolean direct, 
+    public List<Double[]> aggrViewShed(final DirectPosition2D p, final double startZ, final double destZ, final boolean direct, 
             final Bounds bounds, final List<? extends ViewShedMetric> metrics) {
         CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
-
+                GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.clearView();
                 cuCtxSynchronize();
 
-                cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
+                cudaContext.viewShed(cg, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
 
                 CUDAViewShedResult view = new CUDAViewShedResult(cg, cudaContext, org.thema.pixscape.view.cuda.ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
-                for(ViewShedMetric m : metrics)
+                for(ViewShedMetric m : metrics) {
                     results.add(m.calcMetric(view));
+                }
                 return results;
             }
         };
@@ -161,72 +160,9 @@ public class ComputeViewCUDA extends ComputeView {
             throw new RuntimeException(ex);
         }
     }
-
-    @Override
-    public double aggrViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, 
-            final boolean direct, final Bounds bounds) {
-        
-        CUDARunnable<Integer> r = new CUDARunnable<Integer>() {
-            @Override
-            public Integer run(CUDAContext cudaContext) {
-//                long t1 = System.currentTimeMillis();
-                cudaContext.clearView();
-                cuCtxSynchronize();
-//                long t2 = System.currentTimeMillis();
-                
-                cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
-                cuCtxSynchronize();
-//                long t3 = System.currentTimeMillis();
-                
-                int sum = cudaContext.getSumView();
-//                long t4 = System.currentTimeMillis();
-//                System.out.println(cudaContext.nDev + " - clr " + (t2-t1) + " - view " + (t3-t2) + " - sum " + (t4-t3) + " ms");
-                return sum;
-            }
-        };
-        
-        try {
-            queue.put(r);
-            return r.get();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public double[] aggrViewShedLand(final GridCoordinates2D cg, final double startZ, final double destZ, 
-            final boolean direct, final Bounds bounds, final SortedSet<Integer> codes) {
-        CUDARunnable<double[]> r = new CUDARunnable<double[]>() {
-            @Override
-            public double[] run(CUDAContext cudaContext) {
-//                long t1 = System.currentTimeMillis();
-                cudaContext.clearView();
-                cuCtxSynchronize();
-//                long t2 = System.currentTimeMillis();
-                
-                cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
-                cuCtxSynchronize();
-//                long t3 = System.currentTimeMillis();
-                
-                double sum[] = new double[codes.last()+1];
-                for(Integer code : codes)
-                    sum[code] = cudaContext.getSumLandView(code.byteValue());
-//                long t4 = System.currentTimeMillis();
-//                System.out.println(cudaContext.nDev + " - clr " + (t2-t1) + " - view " + (t3-t2) + " - sumland " + (t4-t3) + " ms");
-                return sum;
-            }
-        };
-        
-        try {
-            queue.put(r);
-            return r.get();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
     
     @Override
-    public ViewShedResult calcViewShed(final GridCoordinates2D cg, final double startZ, final double destZ, 
+    public ViewShedResult calcViewShed(final DirectPosition2D p, final double startZ, final double destZ, 
             final boolean direct, final Bounds bounds)  {
             
         CUDARunnable<ViewShedResult> r = new CUDARunnable<ViewShedResult>() {
@@ -235,11 +171,11 @@ public class ComputeViewCUDA extends ComputeView {
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
                 byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
                 //long time = System.currentTimeMillis();
-
+                GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.clearView();
                 cuCtxSynchronize();
 
-                cudaContext.viewShed(cg.x, cg.y, (float) startZ, (float) destZ, direct, bounds);
+                cudaContext.viewShed(cg, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
 
                 //System.out.println("Nb : " + cudaContext.getSumView());
@@ -248,7 +184,7 @@ public class ComputeViewCUDA extends ComputeView {
                 
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return new ViewShedResult(cg, view, ComputeViewCUDA.this);
+                return new SimpleViewShedResult(cg, view, ComputeViewCUDA.this);
             }
         };
         
@@ -262,18 +198,19 @@ public class ComputeViewCUDA extends ComputeView {
     
     
     @Override
-    public List<Double[]> aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, 
+    public List<Double[]> aggrViewTan(final DirectPosition2D p, final double startZ, 
             final Bounds bounds, final List<? extends ViewTanMetric> metrics) {
         CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
-  
-                cudaContext.viewTan(cg.x, cg.y, (float) startZ, (float) ares, bounds);
+                GridCoordinates2D cg = getWorld2Grid(p);
+                cudaContext.viewTan(cg, (float) startZ, (float) aPrec, bounds);
 
-                CUDAViewTanResult view = new CUDAViewTanResult(ares, cg, cudaContext, ComputeViewCUDA.this);
+                CUDAViewTanResult view = new CUDAViewTanResult(aPrec, cg, cudaContext, ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
-                for(ViewTanMetric m : metrics)
+                for(ViewTanMetric m : metrics) {
                     results.add(m.calcMetric(view));
+                }
                 return results;
             }
         };
@@ -286,56 +223,16 @@ public class ComputeViewCUDA extends ComputeView {
         }
     }
     
-    @Override
-    public double aggrViewTan(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds) {
-        CUDARunnable<Double> r = new CUDARunnable<Double>() {
-            @Override
-            public Double run(CUDAContext cudaContext) {            
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
-                int sum = cudaContext.getSumViewTan();
-                return sum * Math.pow(ares*180/Math.PI, 2);
-            }
-        };
-        
-        try {
-            queue.put(r);
-            return r.get();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public double[] aggrViewTanLand(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds, final SortedSet<Integer> codes) {
-        CUDARunnable<double[]> r = new CUDARunnable<double[]>() {
-            @Override
-            public double[] run(CUDAContext cudaContext) {              
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
-                double [] sum = new double[codes.last()+1];
-                for(Integer code : codes) {
-                    sum[code] = cudaContext.getSumLandViewTan(code.byteValue()) * Math.pow(ares*180/Math.PI, 2);
-                }
-                return sum;
-            }
-        };
-        
-        try {
-            queue.put(r);
-            return r.get();
-        } catch (InterruptedException ex) {
-            throw new RuntimeException(ex);
-        }
-    }
     
     @Override
-    public ViewTanResult calcViewTan(final GridCoordinates2D cg, final double startZ, final double ares, final Bounds bounds)  {
+    public ViewTanResult calcViewTan(final DirectPosition2D p, final double startZ, final Bounds bounds)  {
         CUDARunnable<ViewTanResult> r = new CUDARunnable<ViewTanResult>() {
             @Override
             public ViewTanResult run(CUDAContext cudaContext) {
                
                 //long time = System.currentTimeMillis();
-
-                cudaContext.viewTan(cg.x, cg.y, (double) startZ, (double) ares, bounds);
+                GridCoordinates2D cg = getWorld2Grid(p);
+                cudaContext.viewTan(cg, (double) startZ, (double) aPrec, bounds);
 
                 //System.out.println("Nb : " + cudaContext.getSumView());
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, cudaContext.getWa(), cudaContext.getHa(), 1, null);
@@ -343,7 +240,7 @@ public class ComputeViewCUDA extends ComputeView {
                 cudaContext.getViewTan(viewBuf);
 
                 //System.out.println((System.currentTimeMillis()-time) + " ms");
-                return new ViewTanResult(ares, cg, view, ComputeViewCUDA.this);
+                return new SimpleViewTanResult(aPrec, cg, view, ComputeViewCUDA.this);
             }
         };
         
@@ -583,20 +480,19 @@ public class ComputeViewCUDA extends ComputeView {
             );
         }
         
-        void viewShed(int x, int y, float startZ, float destZ, boolean direct, Bounds bounds) {
+        void viewShed(GridCoordinates2D c, float startZ, float destZ, boolean direct, Bounds bounds) {
             Pointer viewShedParam;
             CUfunction fun;
             if(bounds.isUnbounded()) {
                 viewShedParam = Pointer.to(
-                    Pointer.to(new int[]{x}),
-                    Pointer.to(new int[]{y}),
+                    Pointer.to(new int[]{c.x}),
+                    Pointer.to(new int[]{c.y}),
                     Pointer.to(new float[]{startZ}),
                     Pointer.to(new float[]{destZ}),
                     Pointer.to(dtmDev),
                     Pointer.to(new int[]{dtm.getWidth()}),
                     Pointer.to(new int[]{dtm.getHeight()}),
-                    Pointer.to(new float[]{(float)resZ}),
-                    Pointer.to(new float[]{(float)res2D}),
+                    Pointer.to(new float[]{(float)getData().getResolution()}),
                     Pointer.to(new int[]{dsmBuf != null ? 1 : 0}),
                     Pointer.to(dsmDev),
                     Pointer.to(viewDev)
@@ -604,15 +500,14 @@ public class ComputeViewCUDA extends ComputeView {
                 fun = direct ? funViewShed : funViewShedInd;
             } else {
                 viewShedParam = Pointer.to(
-                    Pointer.to(new int[]{x}),
-                    Pointer.to(new int[]{y}),
+                    Pointer.to(new int[]{c.x}),
+                    Pointer.to(new int[]{c.y}),
                     Pointer.to(new float[]{startZ}),
                     Pointer.to(new float[]{destZ}),
                     Pointer.to(dtmDev),
                     Pointer.to(new int[]{dtm.getWidth()}),
                     Pointer.to(new int[]{dtm.getHeight()}),
-                    Pointer.to(new float[]{(float)resZ}),
-                    Pointer.to(new float[]{(float)res2D}),
+                    Pointer.to(new float[]{(float)getData().getResolution()}),
                     Pointer.to(new int[]{dsmBuf != null ? 1 : 0}),
                     Pointer.to(dsmDev),
                     Pointer.to(viewDev),
@@ -633,7 +528,7 @@ public class ComputeViewCUDA extends ComputeView {
                 );
         }
         
-        void viewTan(int x, int y, double startZ, double ares, Bounds bounds) {
+        void viewTan(GridCoordinates2D c, double startZ, double ares, Bounds bounds) {
             int wa = (int)Math.ceil(bounds.getAmplitudeRad()/ares);
             int ha = (int)Math.ceil(Math.PI/ares);   
             if(this.wa != wa || this.ha != ha) {
@@ -653,14 +548,13 @@ public class ComputeViewCUDA extends ComputeView {
             cuCtxSynchronize();
             
             Pointer viewTanParam = Pointer.to(
-                Pointer.to(new int[]{x}),
-                Pointer.to(new int[]{y}),
+                Pointer.to(new int[]{c.x}),
+                Pointer.to(new int[]{c.y}),
                 Pointer.to(new double[]{startZ}),
                 Pointer.to(dtmDev),
                 Pointer.to(new int[]{w}),
                 Pointer.to(new int[]{h}),
-                Pointer.to(new double[]{(double)resZ}),
-                Pointer.to(new double[]{(double)res2D}),
+                Pointer.to(new double[]{(double)getData().getResolution()}),
                 Pointer.to(new int[]{dsmBuf != null ? 1 : 0}),
                 Pointer.to(dsmDev),
                 Pointer.to(viewTanDev),

@@ -7,25 +7,35 @@
 package org.thema.pixscape;
 
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Frame;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.Raster;
 import java.util.Arrays;
 import java.util.List;
-import javax.swing.AbstractAction;
-import javax.swing.ActionMap;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JDialog;
+import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
 import org.thema.drawshape.SelectableShape;
+import org.thema.drawshape.image.RasterShape;
+import org.thema.drawshape.layer.DefaultGroupLayer;
+import org.thema.drawshape.layer.RasterLayer;
 import org.thema.drawshape.style.PointStyle;
+import org.thema.drawshape.style.RasterStyle;
+import org.thema.drawshape.style.table.ColorRamp;
+import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.drawshape.ui.MapViewer;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -33,41 +43,34 @@ import org.thema.drawshape.ui.MapViewer;
  */
 public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.ShapeMouseListener {
 
-    public boolean isOk = false;
-    public DirectPosition2D point;
-    public double startZ;
-    public double precision;
-    public Bounds bounds;
+
+    private Bounds bounds = new Bounds();
+    private JDialog viewFrame;
+    private MapViewer viewMapViewer;
     
+    private Project project;
     private MapViewer mapViewer;
     private PointShape centreShape;
+    private RasterShape viewshed;
+    
+    private final MetricResultDialog metricDlg;
+
     
     /** Creates new form ViewShedDialog */
-    public ViewTanDialog(Frame parent, MapViewer mapViewer) {
+    public ViewTanDialog(Frame parent, Project project, MapViewer mapViewer) {
         super(parent, false);
         initComponents();
         setLocationRelativeTo(parent);
-        getRootPane().setDefaultButton(okButton);
-        // Close the dialog when Esc is pressed
-        String cancelName = "cancel";
-        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
-        ActionMap actionMap = getRootPane().getActionMap();
-        actionMap.put(cancelName, new AbstractAction() {
-            public void actionPerformed(ActionEvent e) {
-                doClose();
-            }
-        });
-        
-        mapViewer.addMouseListener(this);
-        mapViewer.setCursorMode(PanelMap.INPUT_CURSOR_MODE);
+        this.project = project;
         this.mapViewer = mapViewer;
+        
+        zEyeTextField.setText(""+project.getStartZ());      
+        
         double x = mapViewer.getLayers().getBounds().getCenterX();
         double y = mapViewer.getLayers().getBounds().getCenterY();
         pointTextField.setText(x + ", " + y);
-        centreShape = new PointShape(x, y);
-        centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));
-        mapViewer.getMap().addShape(centreShape);
+        
+        metricDlg = new MetricResultDialog(this, true, project.getDefaultScale().getCodes());
     }
 
 
@@ -80,38 +83,40 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        okButton = new javax.swing.JButton();
-        cancelButton = new javax.swing.JButton();
+        buttonGroup1 = new javax.swing.ButtonGroup();
+        closeButton = new javax.swing.JButton();
         jLabel1 = new javax.swing.JLabel();
         pointTextField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         zEyeTextField = new javax.swing.JTextField();
         boundsButton = new javax.swing.JButton();
-        jLabel3 = new javax.swing.JLabel();
-        precTextField = new javax.swing.JTextField();
-        jLabel4 = new javax.swing.JLabel();
+        updateButton = new javax.swing.JButton();
+        jPanel1 = new javax.swing.JPanel();
+        landRadioButton = new javax.swing.JRadioButton();
+        distRadioButton = new javax.swing.JRadioButton();
+        zRadioButton = new javax.swing.JRadioButton();
+        metricsButton = new javax.swing.JButton();
+        viewshedCheckBox = new javax.swing.JCheckBox();
 
-        setAlwaysOnTop(true);
+        setTitle("Tangential view");
+        addComponentListener(new java.awt.event.ComponentAdapter() {
+            public void componentShown(java.awt.event.ComponentEvent evt) {
+                formComponentShown(evt);
+            }
+            public void componentHidden(java.awt.event.ComponentEvent evt) {
+                formComponentHidden(evt);
+            }
+        });
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
             }
-            public void windowClosing(java.awt.event.WindowEvent evt) {
-                closeDialog(evt);
-            }
         });
 
-        okButton.setText("OK");
-        okButton.addActionListener(new java.awt.event.ActionListener() {
+        closeButton.setText("Close");
+        closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                okButtonActionPerformed(evt);
-            }
-        });
-
-        cancelButton.setText("Cancel");
-        cancelButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                cancelButtonActionPerformed(evt);
+                closeButtonActionPerformed(evt);
             }
         });
 
@@ -130,11 +135,57 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
             }
         });
 
-        jLabel3.setText("Precision");
+        updateButton.setText("Update");
+        updateButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                updateButtonActionPerformed(evt);
+            }
+        });
 
-        precTextField.setText("0.1");
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Result"));
 
-        jLabel4.setText("°");
+        buttonGroup1.add(landRadioButton);
+        landRadioButton.setSelected(true);
+        landRadioButton.setText("Land use");
+
+        buttonGroup1.add(distRadioButton);
+        distRadioButton.setText("Distance");
+
+        buttonGroup1.add(zRadioButton);
+        zRadioButton.setText("Elevation");
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(landRadioButton)
+                    .add(distRadioButton)
+                    .add(zRadioButton))
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(landRadioButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(distRadioButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(zRadioButton)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        metricsButton.setText("Metrics");
+        metricsButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                metricsButtonActionPerformed(evt);
+            }
+        });
+
+        viewshedCheckBox.setText("Viewshed");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -143,11 +194,13 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(0, 210, Short.MAX_VALUE)
-                        .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(cancelButton))
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(18, 18, 18)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(metricsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 96, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(viewshedCheckBox))
+                        .add(0, 0, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -158,18 +211,12 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
                         .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(boundsButton))
-                    .add(layout.createSequentialGroup()
-                        .add(jLabel3)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(precTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 57, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(jLabel4, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(0, 0, Short.MAX_VALUE)))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                        .add(updateButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 72, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(closeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
-
-        layout.linkSize(new java.awt.Component[] {cancelButton, okButton}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
-
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
@@ -183,78 +230,155 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
                     .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(boundsButton))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(jLabel3)
-                    .add(precTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(jLabel4))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cancelButton)
-                    .add(okButton))
-                .addContainerGap())
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(viewshedCheckBox)
+                        .add(31, 31, 31)
+                        .add(metricsButton)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(updateButton)
+                            .add(closeButton))
+                        .add(6, 6, 6))))
         );
-
-        getRootPane().setDefaultButton(okButton);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        String[] coords = pointTextField.getText().split(",");
-        point = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-        startZ = Double.parseDouble(zEyeTextField.getText());
-        precision = Double.parseDouble(precTextField.getText());
-        if(bounds == null)
-            bounds = new Bounds();
-        isOk = true;
+    private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
         doClose();
-    }//GEN-LAST:event_okButtonActionPerformed
-
-    private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
-        doClose();
-    }//GEN-LAST:event_cancelButtonActionPerformed
-
-    /** Closes the dialog */
-    private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
-        doClose();
-    }//GEN-LAST:event_closeDialog
-
-    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        mapViewer.removeShapeMouseListener(this);
-        mapViewer.getMap().removeShapes(Arrays.asList(centreShape));
-    }//GEN-LAST:event_formWindowClosed
+    }//GEN-LAST:event_closeButtonActionPerformed
 
     private void boundsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_boundsButtonActionPerformed
-        BoundsDialog dlg = new BoundsDialog((Frame) this.getParent(), bounds == null ? new Bounds() : bounds);
+        BoundsDialog dlg = new BoundsDialog((Frame) this.getParent(), bounds);
         dlg.setVisible(true);
-        if(dlg.isOk)
+        if(dlg.isOk) {
             bounds = dlg.bounds;
+        }
     }//GEN-LAST:event_boundsButtonActionPerformed
+
+    private void formComponentHidden(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentHidden
+        mapViewer.removeShapeMouseListener(this);
+        mapViewer.getMap().removeShapes(Arrays.asList(centreShape));
+        if(viewshed != null) {
+            mapViewer.getMap().removeShapes(Arrays.asList(viewshed));
+        }
+    }//GEN-LAST:event_formComponentHidden
+
+    private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
+        mapViewer.addMouseListener(this);
+        mapViewer.setCursorMode(PanelMap.INPUT_CURSOR_MODE);
+        
+        String[] coords = pointTextField.getText().split(",");
+        Point2D p = new Point2D.Double(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+        centreShape = new PointShape(p);
+        centreShape.setStyle(new PointStyle(Color.BLACK, Color.RED));
+        mapViewer.getMap().addShape(centreShape);
+    }//GEN-LAST:event_formComponentShown
+
+    private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
+        String[] coords = pointTextField.getText().split(",");
+        Point2D p = new Point2D.Double(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+        mouseClicked(p, null, null, 0);
+    }//GEN-LAST:event_updateButtonActionPerformed
+
+    private void metricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metricsButtonActionPerformed
+        metricDlg.setLocation(getX(), getY() + getHeight());
+        metricDlg.setVisible(true);
+    }//GEN-LAST:event_metricsButtonActionPerformed
+
+    private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
+        if(viewFrame != null) {
+            viewFrame.setVisible(false);
+            viewFrame.dispose();
+            viewFrame = null;
+            viewMapViewer = null;
+        }
+    }//GEN-LAST:event_formWindowClosed
 
     @Override
     public void mouseClicked(Point2D p, List<SelectableShape> shapes, MouseEvent sourceEvent, int cursorMode) {
         pointTextField.setText(p.getX() + "," + p.getY());
         centreShape.setPoint2D(p);
         mapViewer.getMap().fullRepaint();
+        
+        try {
+            if(viewshedCheckBox.isSelected()) {
+                if(viewshed != null) {
+                    mapViewer.getMap().removeShapes(Arrays.asList(viewshed));
+                }
+                Raster view = project.getDefaultComputeView().calcViewShed(
+                        new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, true, bounds).getView();
+                viewshed = new RasterShape(view,
+                        project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle(
+                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true);
+                mapViewer.getMap().addShape(viewshed);
+            }
+            
+            ViewTanResult result = project.getDefaultComputeView().calcViewTan(
+                    new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), bounds);
+           
+            Rectangle2D r = new Rectangle2D.Double(bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
+            DefaultGroupLayer gl = new DefaultGroupLayer("Tangential view", true);
+            if(zRadioButton.isSelected()) {
+                RasterStyle s = new RasterStyle(ColorRamp.RAMP_DEM);
+//                s.setNoDataValue(-1000);
+                gl.addLayerFirst(new RasterLayer("Elevation", new RasterShape(result.getElevationView(), r, s, true)));
+            }
+            if(distRadioButton.isSelected()) {
+                RasterStyle s = new RasterStyle();
+//                s.setNoDataValue(-1);
+                gl.addLayerFirst(new RasterLayer("Distance", new RasterShape(result.getDistanceView(), r, s, true)));
+            }
+            if(project.hasLandUse() && landRadioButton.isSelected()) {
+                RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()));
+                s.setNoDataValue(255);
+                gl.addLayerFirst(new RasterLayer("Land use", new RasterShape(result.getLanduseView(), r, s, true)));
+            }
+            
+            if(viewFrame == null) {
+                viewMapViewer = new MapViewer();
+                viewMapViewer.setTreeLayerVisible(true);
+                viewFrame = new JDialog(this);
+                viewFrame.setAlwaysOnTop(false);
+                viewFrame.setTitle("Tangential view");
+                viewFrame.getContentPane().add(viewMapViewer, BorderLayout.CENTER);
+                viewFrame.pack();
+                viewFrame.setLocationRelativeTo(null);
+                viewFrame.setDefaultCloseOperation(HIDE_ON_CLOSE);
+            }
+            viewFrame.setVisible(true);
+            viewMapViewer.setRootLayer(gl);
+            
+            metricDlg.setResult(result);
+        } catch (InvalidGridGeometryException | TransformException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
     private void doClose() {
         setVisible(false);
-        dispose();
     }
 
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton boundsButton;
-    private javax.swing.JButton cancelButton;
+    private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JButton closeButton;
+    private javax.swing.JRadioButton distRadioButton;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JButton okButton;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JRadioButton landRadioButton;
+    private javax.swing.JButton metricsButton;
     private javax.swing.JTextField pointTextField;
-    private javax.swing.JTextField precTextField;
+    private javax.swing.JButton updateButton;
+    private javax.swing.JCheckBox viewshedCheckBox;
     private javax.swing.JTextField zEyeTextField;
+    private javax.swing.JRadioButton zRadioButton;
     // End of variables declaration//GEN-END:variables
 
 }

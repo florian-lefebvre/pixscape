@@ -14,24 +14,29 @@ import org.thema.pixscape.view.ViewTanResult;
  *
  * @author gvuidel
  */
-public class ShannonMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
+public class ShannonMetric extends AbstractDistMetric implements ViewShedMetric, ViewTanMetric {
+
+    public ShannonMetric() {
+        super(true);
+    }
 
     @Override
-    public Double[] calcMetric(ViewShedResult result) {
-        return new Double[] {calcShannon(result)};
+    protected double calcMetric(ViewShedResult result, double dmin, double dmax) {
+        return calcShannon(result, dmin, dmax);
     }
-    
+
     @Override
-    public Double[] calcMetric(ViewTanResult result) {
-        return new Double[] {calcShannon(result)};
+    protected double calcMetric(ViewTanResult result, double dmin, double dmax) {
+        return calcShannon(result, dmin, dmax);
     }
     
-    private double calcShannon(ViewResult result) {
-        int[] count = result.getCountLand();
+    private double calcShannon(ViewResult result, double dmin, double dmax) {
+        double[] count = result.getAreaLand(dmin, dmax);
         double shannon = 0;
         double sum = 0;
-        for(int code : getCodes(result)) 
+        for(int code : getCodes(result)) {
             sum += count[code];
+        }
         for(int code : getCodes(result)) {
             final double nb = count[code];
             if(nb > 0) {
@@ -43,6 +48,6 @@ public class ShannonMetric extends AbstractMetric implements ViewShedMetric, Vie
 
     @Override
     public String getShortName() {
-        return "SHAN";
+        return "S";
     }
 }

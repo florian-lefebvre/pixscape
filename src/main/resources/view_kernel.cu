@@ -7,7 +7,7 @@
 
 extern "C"
 __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-        float resZ, float res2D, int hasdsm, float * dsm, unsigned char *view) {
+        float res2D, int hasdsm, float * dsm, unsigned char *view) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
     if (tid < w) {
@@ -26,7 +26,7 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
         return;
     int ind = x0 + y0*w;
     const int ind1 = x1 + y1*w;
-    const float z0 = dtm[ind] * resZ + startZ;
+    const float z0 = dtm[ind] + startZ;
     const int dx = abs(x1 - x0);
     const int dy = abs(y1 - y0);
     const int sx = x0 < x1 ? 1 : -1;
@@ -51,8 +51,8 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
             yy += sy;
             ind += sy*w;
         }
-        const float zSurf = dtm[ind] * resZ + (hasdsm ? dsm[ind] : 0);
-        const float zView = destZ == -1 ? zSurf : (dtm[ind] * resZ + destZ);
+        const float zSurf = dtm[ind] + (hasdsm ? dsm[ind] : 0);
+        const float zView = destZ == -1 ? zSurf : (dtm[ind] + destZ);
             
         if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ)
             continue;
@@ -82,7 +82,7 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
 
 extern "C"
 __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-        float resZ, float res2D, int hasdsm, float * dsm, unsigned char *view) {
+        float res2D, int hasdsm, float * dsm, unsigned char *view) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
     if (tid < w) {
@@ -105,7 +105,7 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
     const float dsmZ = hasdsm ? dsm[ind] : 0;
     if(destZ != -1 && destZ < dsmZ)
         return;
-    const float z0 = dtm[ind] * resZ + (destZ != -1 ? destZ : dsmZ);
+    const float z0 = dtm[ind] + (destZ != -1 ? destZ : dsmZ);
     const int dx = abs(x1 - x0);
     const int dy = abs(y1 - y0);
     const int sx = x0 < x1 ? 1 : -1;
@@ -130,7 +130,7 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
             yy += sy;
             ind += sy*w;
         }
-        const float z = dtm[ind] * resZ;
+        const float z = dtm[ind];
         if (maxSlope >= 0 && z + startZ <= maxZ)
             continue;
 
@@ -152,7 +152,7 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
 
 extern "C"
 __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-            float resZ, float res2D, int hasdsm, float * dsm, unsigned char *view,
+            float res2D, int hasdsm, float * dsm, unsigned char *view,
             // bounds
             float dMin2, float dMax2, float aleft, float aright, float sMin2, float sMax2) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -180,7 +180,7 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
         
     int ind = x0 + y0*w;
     const int ind1 = x1 + y1*w;
-    float z0 = dtm[ind] * resZ + startZ;
+    float z0 = dtm[ind] + startZ;
     const int dx = abs(x1 - x0);
     const int dy = abs(y1 - y0);
     const int sx = x0 < x1 ? 1 : -1;
@@ -206,8 +206,8 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
             yy += sy;
             ind += sy*w;
         }
-        const float zSurf = dtm[ind] * resZ + (hasdsm ? dsm[ind] : 0);
-        const float zView = destZ == -1 ? zSurf : (dtm[ind] * resZ + destZ);
+        const float zSurf = dtm[ind] + (hasdsm ? dsm[ind] : 0);
+        const float zView = destZ == -1 ? zSurf : (dtm[ind] + destZ);
             
         if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ)
             continue;
@@ -241,7 +241,7 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
 
 extern "C"
 __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-            float resZ, float res2D, int hasdsm, float * dsm, unsigned char *view,
+            float res2D, int hasdsm, float * dsm, unsigned char *view,
             float dMin2, float dMax2, float aleft, float aright, float sMin2, float sMax2) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
@@ -272,7 +272,7 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
     const float dsmZ = hasdsm ? dsm[ind] : 0;
     if(destZ != -1 && destZ < dsmZ)
         return;
-    const float z0 = dtm[ind] * resZ + (destZ != -1 ? destZ : dsmZ);
+    const float z0 = dtm[ind] + (destZ != -1 ? destZ : dsmZ);
     const int dx = abs(x1 - x0);
     const int dy = abs(y1 - y0);
     const int sx = x0 < x1 ? 1 : -1;
@@ -298,7 +298,7 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
             yy += sy;
             ind += sy*w;
         }
-        const float z = dtm[ind] * resZ;
+        const float z = dtm[ind];
         if (maxSlope >= 0 && z + startZ <= maxZ)
             continue;
 
@@ -325,7 +325,7 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
 
 extern "C"
 __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, int h, 
-            double resZ, double res2D, int hasdsm, float * dsm, int *view, int wa, double ares,
+            double res2D, int hasdsm, float * dsm, int *view, int wa, double ares,
             double dMin, double dMax, double aleft, double aright, double sMin, double sMax) {
     
     const int ax = blockIdx.x * blockDim.x + threadIdx.x;
@@ -423,7 +423,7 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
     int yy = 0;
     int ind = x0 + y0*w;
     const int ind1 = x1 + y1*w;
-    const double z0 = dtm[ind] * resZ + startZ;
+    const double z0 = dtm[ind] + startZ;
     
     if(dMin == 0) {
         const double si = min(-startZ / (res2D/2), sMax);
@@ -447,7 +447,7 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
             yy += sy;
             ind += sy*w;
         }
-        const double z = dtm[ind] * resZ + (hasdsm ? dsm[ind] : 0);
+        const double z = dtm[ind] + (hasdsm ? dsm[ind] : 0);
         if(maxSlope >= 0 && z <= maxZ)
             continue;
         const double dist = res2D * sqrt((double)(xx*xx + yy*yy)) - copysign(1.0, z-z0)*res2D/2;

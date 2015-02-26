@@ -2,12 +2,11 @@ package org.thema.pixscape;
 
 import com.thoughtworks.xstream.XStream;
 import com.vividsolutions.jts.geom.util.AffineTransformation;
-import com.vividsolutions.jts.geom.util.NoninvertibleTransformationException;
 import java.awt.Color;
+import java.awt.event.ActionEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
@@ -27,18 +26,14 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.coverage.grid.GridCoordinates2D;
+import javax.swing.AbstractAction;
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.GridEnvelope2D;
-import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.gce.geotiff.GeoTiffWriter;
-import org.geotools.geometry.DirectPosition2D;
-import org.geotools.geometry.Envelope2D;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
-import org.opengis.referencing.operation.TransformException;
-import org.thema.data.IOImage;
 import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
@@ -52,11 +47,18 @@ import org.thema.pixscape.metric.CONTAGMetric;
 import org.thema.pixscape.metric.DistMetric;
 import org.thema.pixscape.metric.IJIMetric;
 import org.thema.pixscape.metric.Metric;
+import org.thema.pixscape.metric.PerimeterMetric;
 import org.thema.pixscape.metric.RasterMetric;
 import org.thema.pixscape.metric.ShannonMetric;
-import org.thema.pixscape.metric.SumMetric;
+import org.thema.pixscape.metric.SkyLineMetric;
+import org.thema.pixscape.metric.AreaMetric;
+import org.thema.pixscape.metric.CompactMetric;
+import org.thema.pixscape.metric.FractalDimMetric;
+import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.view.ComputeView;
 import org.thema.pixscape.view.ComputeViewJava;
+import org.thema.pixscape.view.MultiComputeViewJava;
+import org.thema.pixscape.view.SimpleComputeView;
 import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
@@ -70,140 +72,156 @@ public final class Project {
     
     private static Project project;
     
-    private transient GridCoverage2D dtmCov;
-    private transient Raster dtm;
-    private transient Raster land, dsm;
     private transient DefaultGroupLayer layers;
     private transient File dir;
-    private transient ComputeView computeView;
+    private transient SimpleComputeView simpleComputeView;
+    
+    private TreeMap<Double, ScaleData> scaleDatas;
     
     private String name;
-    /** resolution of the grid dtm in meter */
-    private double res2D;
-    /** resolution of altitude Z in meter */
-    private double resZ;
+    
     private String wktCRS;
     private TreeSet<Integer> codes;
     private TreeMap<Double, Color> colors;
-    private AffineTransformation grid2space;
     
+    // options
     private int nbGPU = 0;
+    private double startZ = 1.8;
+    private double aPrec = 0.1;
+    private double minDistMS = -1;
 
     public Project(String name, File prjPath, GridCoverage2D demCov, double resZ) throws IOException {
         this.name = name;
         this.dir = prjPath;
-        this.dtmCov = demCov;
+        this.scaleDatas = new TreeMap<>();
+        ScaleData scaleData = new ScaleData(demCov, null, null, resZ);
+        scaleDatas.put(scaleData.getResolution(), scaleData);
         
-        new GeoTiffWriter(new File(prjPath, "dtm.tif")).write(dtmCov, null);
+        new GeoTiffWriter(new File(prjPath, "dtm-" + scaleData.getResolution() + ".tif")).write(scaleData.getDtmCov(), null);
         
-        this.resZ = resZ;
-        this.res2D = demCov.getEnvelope2D().getWidth() / demCov.getGridGeometry().getGridRange2D().getWidth();
         CoordinateReferenceSystem crs = demCov.getCoordinateReferenceSystem2D();
-        if(crs != null)
+        if(crs != null) {
             wktCRS = crs.toWKT();
-        Envelope2D zone = demCov.getEnvelope2D();
-        GridEnvelope2D range = demCov.getGridGeometry().getGridRange2D();
-        grid2space = new AffineTransformation(
-                zone.getWidth() / range.getWidth(), 0, zone.getMinX(),
-                0, -zone.getHeight() / range.getHeight(), zone.getMaxY());
+        }
         
         project = this;
         save();
     }
 
     public void setLandUse(GridCoverage2D landCov) throws IOException {
-        if(!dtmCov.getEnvelope2D().boundsEquals(landCov.getEnvelope2D(), 0, 1, 0.1))
+        if(hasMultiScale()) {
+            throw new IllegalStateException("Cannot set land use with multi scale database");
+        }
+        if(!getDtmCov().getEnvelope2D().boundsEquals(landCov.getEnvelope2D(), 0, 1, 0.1)) {
             throw new IllegalArgumentException("Land use bounds does not correspond to DTM bounds");
-        if(landCov.getRenderedImage() instanceof BufferedImage)
-            this.land = ((BufferedImage)landCov.getRenderedImage()).getRaster();
-        else
-            this.land = landCov.getRenderedImage().getData();
-        if(land.getWidth() != getDtm().getWidth() || land.getHeight() != getDtm().getHeight())
-            throw new IllegalArgumentException("Land use raster size does not correspond to DTM raster size");
-        int type = land.getSampleModel().getDataType();
-        if(type == DataBuffer.TYPE_FLOAT || type == DataBuffer.TYPE_DOUBLE)
-            throw new IllegalArgumentException("Float types are not supported for land use");
-        codes = new TreeSet<>();
-        for(int yi = 0; yi < land.getHeight(); yi++)
-            for(int xi = 0; xi < land.getWidth(); xi++)
-                codes.add(land.getSample(xi, yi, 0));
-        colors = new TreeMap<>();
-        for(Integer code : codes)
-            colors.put(code.doubleValue(), SimpleStyle.randomColor().brighter());
+        }
+        Raster land;
+        if(landCov.getRenderedImage() instanceof BufferedImage) {
+            land = ((BufferedImage)landCov.getRenderedImage()).getRaster();
+        } else {
+            land = landCov.getRenderedImage().getData();
+        }
         
-        new GeoTiffWriter(new File(dir, "land.tif")).write(landCov, null);
+        ScaleData newData = new ScaleData(getDtmCov(), land, getDefaultScale().getDsm());
+        scaleDatas.put(newData.getResolution(), newData);
+        simpleComputeView = null;
+        
+        codes = new TreeSet<>(newData.getCodes());
+        
+        colors = new TreeMap<>();
+        for(Integer code : codes) {
+            colors.put(code.doubleValue(), SimpleStyle.randomColor().brighter());
+        }
+        
+        new GeoTiffWriter(new File(dir, "land-" + newData.getResolution() + ".tif")).write(landCov, null);
         save();
     }
     
     public void setDSM(GridCoverage2D dsmCov) throws IOException {
-        if(!dtmCov.getEnvelope2D().boundsEquals(dsmCov.getEnvelope2D(), 0, 1, 0.1))
-            throw new IllegalArgumentException("DSM bounds does not correspond to DTM bounds");
-        if(dsmCov.getRenderedImage() instanceof BufferedImage)
-            dsm = ((BufferedImage)dsmCov.getRenderedImage()).getRaster();
-        else
-            dsm = dsmCov.getRenderedImage().getData();
-        if(dsm.getWidth() != getDtm().getWidth() || dsm.getHeight() != getDtm().getHeight())
-            throw new IllegalArgumentException("DSM raster size does not correspond to DTM raster size");
+        if(hasMultiScale()) {
+            throw new IllegalStateException("Cannot set land use with multi scale database");
+        }
         
-        new GeoTiffWriter(new File(dir, "dsm.tif")).write(dsmCov, null);
+        if(!getDtmCov().getEnvelope2D().boundsEquals(dsmCov.getEnvelope2D(), 0, 1, 0.1)) {
+            throw new IllegalArgumentException("DSM bounds does not correspond to DTM bounds");
+        }
+        Raster dsm;
+        if(dsmCov.getRenderedImage() instanceof BufferedImage) {
+            dsm = ((BufferedImage)dsmCov.getRenderedImage()).getRaster();
+        } else {
+            dsm = dsmCov.getRenderedImage().getData();
+        }
+        
+        ScaleData newData = new ScaleData(getDtmCov(), getLandUse(), dsm);
+        scaleDatas.put(newData.getResolution(), newData);
+        simpleComputeView = null;
+        
+        new GeoTiffWriter(new File(dir, "dsm-" + newData.getResolution() + ".tif")).write(dsmCov, null);
+        save();
     }
     
-    public Raster calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds) throws InvalidGridGeometryException, TransformException {
-        return getComputeView().calcViewShed(dtmCov.getGridGeometry().worldToGrid(c), startZ, destZ, direct, bounds).getView();
+    public void addScaleData(ScaleData data) throws IOException {
+        if(!data.getGridGeometry().getEnvelope2D().contains((Rectangle2D)getDefaultScale().getGridGeometry().getEnvelope2D())) {
+            throw new IllegalArgumentException("The data must cover the first scale zone.");
+        }
+        if(hasLandUse() != data.hasLandUse()) {
+            throw new IllegalArgumentException("Land use must be present for all scales or any.");
+        }
+        scaleDatas.put(data.getResolution(), data);
+        data.save(dir);
+        if(hasLandUse()) {
+            codes.addAll(data.getCodes());
+            for(int code : data.getCodes()) {
+                if(!colors.containsKey((double)code)) {
+                    colors.put((double)code, SimpleStyle.randomColor().brighter());
+                }
+            }
+        }
+        save();
+        layers = null;
     }
     
-    public Raster calcViewTan(DirectPosition2D c, double startZ, double ares, Bounds bounds) throws InvalidGridGeometryException, TransformException {
-        return getComputeView().calcViewTan(dtmCov.getGridGeometry().worldToGrid(c), startZ, ares, bounds).getView();
+    public void removeScaleData() throws IOException {
+        scaleDatas = new TreeMap<>(scaleDatas.headMap(scaleDatas.firstKey(), true));
+        save();
+        layers = null;
     }
     
-    public final double getZ(int x, int y) {
-        double z = dtm.getSample(x, y, 0) * resZ;
-        if(dsm != null)
-            z += dsm.getSample(x, y, 0);
-        return z;
+    private void removeScaleData(double res) throws IOException {
+        scaleDatas.remove(res);
+        save();
     }
 
     public AffineTransformation getGrid2space() {
-        return grid2space;
-    }
-    
-    public AffineTransformation getSpace2Grid() {
-        try {
-            return grid2space.getInverse();
-        } catch (NoninvertibleTransformationException ex) {
-            Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        return null;
+        return getDefaultScale().getGrid2Space();
     }
     
     public GridCoverage2D getDtmCov() {
-        return dtmCov;
+        return getDefaultScale().getDtmCov();
     }
 
-    public synchronized Raster getDtm() {
-        if(dtm == null) {
-            if(dtmCov.getRenderedImage() instanceof BufferedImage)
-                this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
-            else
-                this.dtm = dtmCov.getRenderedImage().getData();
-        }
-        return dtm;
+    public Raster getDtm() {
+        return getDefaultScale().getDtm();
     }
 
-    public double getRes2D() {
-        return res2D;
+    public ScaleData getDefaultScale() {
+        return scaleDatas.firstEntry().getValue();
     }
-
-    public double getResZ() {
-        return resZ;
+    
+    public boolean hasMultiScale() {
+        return scaleDatas.size() > 1;
+    }
+    
+    public TreeMap<Double, ScaleData> getScaleDatas() {
+        return scaleDatas;
     }
 
     public boolean hasLandUse() {
-        return land != null;
+        return getDefaultScale().hasLandUse();
     }
 
     public Raster getLandUse() {
-        return land;
+        return getDefaultScale().getLand();
     }
 
     public SortedSet<Integer> getCodes() {
@@ -220,46 +238,75 @@ public final class Project {
 
     public synchronized void setUseCUDA(int nbGPU) {
         this.nbGPU = nbGPU;
-        if(computeView != null)
-            computeView.dispose();
-        computeView = null;
+        if(simpleComputeView != null) {
+            simpleComputeView.dispose();
+        }
+        simpleComputeView = null;
+    }
+
+    public double getStartZ() {
+        return startZ;
+    }
+
+    public void setStartZ(double startZ) {
+        this.startZ = startZ;
+    }
+
+    public double getaPrec() {
+        return aPrec;
+    }
+
+    public void setaPrec(double aPrec) {
+        this.aPrec = aPrec;
+        if(simpleComputeView != null) {
+            simpleComputeView.setaPrec(aPrec);
+        }
+    }
+
+    public double getMinDistMS() {
+        return minDistMS;
+    }
+
+    public void setMinDistMS(double minDistMS) {
+        this.minDistMS = minDistMS;
     }
     
-    public synchronized ComputeView getComputeView() {
-        if(computeView == null) {
+    public synchronized ComputeView getDefaultComputeView() {
+        if(minDistMS > 0) {
+            return getMultiComputeView(minDistMS);
+        } else {
+            return getSimpleComputeView();
+        }
+    }
+    
+    public synchronized SimpleComputeView getSimpleComputeView() {
+        if(simpleComputeView == null) {
             if(isUseCUDA()) {
                 try {
-                    computeView = new ComputeViewCUDA(getDtm(), resZ, res2D, land, codes, dsm, nbGPU);
+                    simpleComputeView = new ComputeViewCUDA(getDefaultScale(), aPrec, nbGPU);
                 } catch (Throwable ex) {
                     Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
                     Logger.getLogger(Project.class.getName()).info("CUDA not available, continue in Java mode");
                     nbGPU = 0;
                 }
             } 
-            if(computeView == null) {
-                computeView = new ComputeViewJava(getDtm(), resZ, res2D, land, codes, dsm);
+            if(simpleComputeView == null) {
+                simpleComputeView = new ComputeViewJava(getDefaultScale(), aPrec);
             }
         }
         
-        return computeView;
+        return simpleComputeView;
     }
     
-    public void fillViewTan(GridCoordinates2D c, Raster viewTan, WritableRaster viewTanZ, WritableRaster viewTanDist, WritableRaster viewTanLand) {
-        int w = getDtm().getWidth();
-        for(int y = 0; y < viewTan.getHeight(); y++)
-            for(int x = 0; x < viewTan.getWidth(); x++) {
-                int ind = viewTan.getSample(x, y, 0);
-                if(ind == -1) {
-                    viewTanZ.setSample(x, y, 0, -1000);
-                    viewTanDist.setSample(x, y, 0, -1);
-                    viewTanLand.setSample(x, y, 0, 255);
-                } else {
-                    viewTanZ.setSample(x, y, 0, getZ(ind%w, ind/w));
-                    viewTanDist.setSample(x, y, 0, getRes2D() * Math.sqrt(Math.pow(c.x - (ind%w), 2) +  Math.pow(c.y - (ind/w), 2)));
-                    if(hasLandUse())
-                        viewTanLand.setSample(x, y, 0, getLandUse().getSample(ind%w, ind/w, 0));
-                }
-            }
+    public MultiComputeViewJava getMultiComputeView(double distMin) {
+        if(!hasMultiScale()) {
+            throw new IllegalStateException("Project has no multi scale data.");
+        }
+        
+        MultiComputeViewJava compute = new MultiComputeViewJava(scaleDatas, 
+            (int) Math.ceil(distMin/getDefaultScale().getResolution()), aPrec);
+
+        return compute;
     }
     
     public static synchronized Project loadProject(File file) throws IOException {       
@@ -272,24 +319,8 @@ public final class Project {
             prj.dir = file.getAbsoluteFile().getParentFile();
         }
 
-        prj.dtmCov = IOImage.loadTiffWithoutCRS(new File(prj.dir, "dtm.tif"));
-        
-        File dsmFile = new File(prj.dir, "dsm.tif");
-        if(dsmFile.exists()) {
-            GridCoverage2D cov = IOImage.loadTiffWithoutCRS(dsmFile);
-            if(cov.getRenderedImage() instanceof BufferedImage)
-                prj.dsm = ((BufferedImage)cov.getRenderedImage()).getRaster();
-            else
-                prj.dsm = cov.getRenderedImage().getData();
-        }
-        
-        File luFile = new File(prj.dir, "land.tif");
-        if(luFile.exists()) {
-            GridCoverage2D cov = IOImage.loadTiffWithoutCRS(luFile);
-            if(cov.getRenderedImage() instanceof BufferedImage)
-                prj.land = ((BufferedImage)cov.getRenderedImage()).getRaster();
-            else
-                prj.land = cov.getRenderedImage().getData();
+        for(ScaleData data : prj.scaleDatas.values()) {
+            data.load(prj.dir);
         }
         project = prj;
         return prj;
@@ -312,12 +343,13 @@ public final class Project {
     }
     
     public CoordinateReferenceSystem getCRS() {
-        if(wktCRS != null && !wktCRS.isEmpty())
+        if(wktCRS != null && !wktCRS.isEmpty()) {
             try {
                 return CRS.parseWKT(wktCRS);
             } catch (FactoryException ex) {
                 Logger.getLogger(Project.class.getName()).log(Level.WARNING, null, ex);
             }
+        }
         return null;
     }
 
@@ -329,15 +361,63 @@ public final class Project {
     }
     
     private void createLayers() {
-        layers = new DefaultGroupLayer(name, true);
-        layers.addLayerFirst(new RasterLayer("DTM", new CoverageShape(dtmCov, new RasterStyle(ColorRamp.RAMP_DEM))));
-        if(dsm != null) {
-            layers.addLayerFirst(new RasterLayer("DSM", new RasterShape(dsm, dtmCov.getEnvelope2D(), 
+        layers = createScaleDataLayers(getDefaultScale());
+        layers.setName(name);
+        layers.setExpanded(true);
+        
+        layers.getLayerFirst().setVisible(true);
+        
+        if(hasMultiScale()) {
+            DefaultGroupLayer gl = new DefaultGroupLayer("Other scales", false);
+            for(ScaleData data : scaleDatas.values()) {
+                if(data == getDefaultScale()) {
+                    continue;
+                }
+                gl.addLayerLast(createScaleDataLayers(data));
+            }
+            layers.addLayerLast(gl);
+        }
+        
+        
+    } 
+
+    private DefaultGroupLayer createScaleDataLayers(final ScaleData data) {
+        DefaultGroupLayer gl = new DefaultGroupLayer(""+data.getResolution(), false) {
+
+            @Override
+            public JPopupMenu getContextMenu() {
+                if(data == project.getDefaultScale()) {
+                    return null;
+                }
+                JPopupMenu menu = new JPopupMenu();
+                menu.add(new AbstractAction("Remove...") {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        int res = JOptionPane.showConfirmDialog(null, "Do you want to remove the scale " + getName() + " ?",
+                        "Suppression...", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if(res == JOptionPane.YES_OPTION) {
+                            try {
+                                Project.this.removeScaleData(Double.parseDouble(getName()));
+                                getParent().removeLayer(getParent().getLayer(getName()));
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    }
+                });
+                return menu;
+            }
+            
+        };
+        
+        gl.addLayerFirst(new RasterLayer("DTM", new CoverageShape(data.getDtmCov(), new RasterStyle(ColorRamp.RAMP_DEM))));
+        if(data.getDsm() != null) {
+            gl.addLayerFirst(new RasterLayer("DSM", new RasterShape(data.getDsm(), data.getDtmCov().getEnvelope2D(), 
                     new RasterStyle(ColorRamp.RAMP_TEMP), true)));
         }
-        if(land != null) {
+        if(hasLandUse()) {
             final UniqueColorTable colorTable = new UniqueColorTable((Map)colors);
-            RasterLayer l = new RasterLayer("Land use", new RasterShape(land, dtmCov.getEnvelope2D(), 
+            RasterLayer l = new RasterLayer("Land use", new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
                     new RasterStyle(colorTable), true));
             l.addLayerListener(new LayerListener() {
                 @Override
@@ -345,17 +425,18 @@ public final class Project {
                 }
                 @Override
                 public void layerStyleChanged(EventObject e) {
-                    for(Double code : colors.keySet())
+                    for(Double code : colors.keySet()) {
                         colors.put(code, colorTable.getColor(code));
+                    }
                     
                 }
             });
-            layers.addLayerFirst(l);
+            gl.addLayerFirst(l);
         }
-        layers.setLayersVisible(false);
-        layers.getLayerFirst().setVisible(true);
+        gl.setLayersVisible(false);
+        return gl;
     } 
-
+    
     public static Project getProject() {
         return project;
     }
@@ -363,19 +444,36 @@ public final class Project {
     public void close() {
         try {
             save();
-            if(computeView != null)
-                computeView.dispose();
+            if(simpleComputeView != null) {
+                simpleComputeView.dispose();
+            }
         } catch (IOException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
         }
         
     }
 
+    public static <U extends Metric> List<U> getMetrics(Class<U> cls) {
+        List<U> metrics = new ArrayList<>();
+        for(Metric m : METRICS) {
+            if(cls.isAssignableFrom(m.getClass())) {
+                try {
+                    metrics.add((U) m.getClass().newInstance());
+                } catch (InstantiationException | IllegalAccessException ex) {
+                    Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+        return metrics;
+    }
+    
     public static Metric getMetric(String shortName) {
         try {
-            for(Metric ind : METRICS)
-                if(ind.getShortName().equals(shortName))
+            for(Metric ind : METRICS) {
+                if(ind.getShortName().equals(shortName)) {
                     return ind.getClass().newInstance();
+                }
+            }
             throw new IllegalArgumentException("Unknown metric " + shortName);
         } catch (InstantiationException | IllegalAccessException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
@@ -383,10 +481,12 @@ public final class Project {
         }
     }
     
-    public static List<Metric> METRICS;
+    private static final List<Metric> METRICS;
     static {
-        METRICS = new ArrayList(Arrays.asList(new SumMetric(), new ShannonMetric(), 
-                new IJIMetric(), new CONTAGMetric(), new DistMetric(), new RasterMetric()));
+        METRICS = new ArrayList(Arrays.asList(new AreaMetric(), new PerimeterMetric(), 
+                new CompactMetric(), new ShannonMetric(), new FractalDimMetric(),
+                new IJIMetric(), new CONTAGMetric(), new DistMetric(), new SkyLineMetric(), 
+                new ShanDistMetric(), new RasterMetric()));
     }
     
     
@@ -395,17 +495,21 @@ public final class Project {
         File dir = new File(url.toURI()).getParentFile();
         File loc = new File(dir, "plugins");
 
-        if(!loc.exists())
+        if(!loc.exists()) {
             return;
+        }
         
         File[] flist = loc.listFiles(new FileFilter() {
+            @Override
             public boolean accept(File file) {return file.getPath().toLowerCase().endsWith(".jar");}
         });
-        if(flist == null || flist.length == 0)
+        if(flist == null || flist.length == 0) {
             return;
+        }
         URL[] urls = new URL[flist.length];
-        for (int i = 0; i < flist.length; i++)
+        for (int i = 0; i < flist.length; i++) {
             urls[i] = flist[i].toURI().toURL();
+        }
         URLClassLoader ucl = new URLClassLoader(urls);
 
         loadPluginMetric(ucl);

@@ -6,7 +6,6 @@
 
 package org.thema.pixscape.metric;
 
-import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -19,6 +18,10 @@ import org.thema.pixscape.view.ViewTanResult;
  */
 public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
+    public DistMetric() {
+        super(false);
+    }
+
     @Override
     public String getShortName() {
         return "DIST";
@@ -30,8 +33,9 @@ public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTa
         DescriptiveStatistics stat = new DescriptiveStatistics();
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
-                if(view.getSample(x, y, 0) != 1)
+                if(view.getSample(x, y, 0) != 1) {
                     continue;
+                }
                 stat.addValue(result.getCoord().distance(x, y) * result.getRes2D());
             }
         }
@@ -43,13 +47,15 @@ public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTa
     @Override
     public Double[] calcMetric(ViewTanResult result) {
         int[] view = ((DataBufferInt)result.getView().getDataBuffer()).getData();
+        final int w = result.getGrid().getGridRange2D().width;
         DescriptiveStatistics stat = new DescriptiveStatistics();
         for(int i = 0; i < view.length; i++) {
             final int ind = view[i];
-            if(ind == -1)
+            if(ind == -1) {
                 continue;
-            final int x = ind % result.getDtm().getWidth();
-            final int y = ind / result.getDtm().getWidth();
+            }
+            final int x = ind % w;
+            final int y = ind / w;
             stat.addValue(result.getCoord().distance(x, y) * result.getRes2D());
         }
         

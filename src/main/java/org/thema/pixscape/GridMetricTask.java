@@ -36,6 +36,9 @@ import javax.imageio.stream.FileImageOutputStream;
 import javax.media.jai.remote.SerializableState;
 import javax.media.jai.remote.SerializerFactory;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.common.ProgressBar;
 import org.thema.data.IOImage;
 import org.thema.parallel.AbstractParallelTask;
@@ -49,14 +52,13 @@ import org.thema.pixscape.metric.ViewTanMetric;
  */
 public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRaster>, Map<String, SerializableState>> implements Serializable {
     
+    private final boolean isTan;
+    
     private final double startZ;
     
     // options for viewshed
     private double destZ;
     private boolean direct;
-    
-    // option for tangential view
-    private final double anglePrec;
     
     private final Bounds bounds;
     
@@ -68,6 +70,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     
     private final File resDir;
     
+    private transient GridGeometry2D grid;
     private transient ComputeView compute;
     private transient Raster dtm, land;
     private transient Map<String, WritableRaster> result;
@@ -79,35 +82,32 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         this.destZ = destZ;
         this.direct = direct;
         this.bounds = bounds;
-        this.from = fromCode != null ? new TreeSet<>(fromCode) : null;
+        this.from = fromCode != null && !fromCode.isEmpty() ? new TreeSet<>(fromCode) : null;
         this.metrics = metrics;
         this.sample = sample;
         this.resDir = resDir;
-        this.anglePrec = Double.NaN;
+        this.isTan = false;
     }
     
-    public GridMetricTask(double startZ, double anglePrec, Bounds bounds, Set<Integer> fromCode, List<ViewTanMetric> metrics, int sample, File resDir, ProgressBar monitor) {
+    public GridMetricTask(double startZ, Bounds bounds, Set<Integer> fromCode, List<ViewTanMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
         this.startZ = startZ;
-        this.anglePrec = anglePrec;
         this.bounds = bounds;
-        this.from = fromCode != null ? new TreeSet<>(fromCode) : null;
+        this.from = fromCode != null && !fromCode.isEmpty() ? new TreeSet<>(fromCode) : null;
         this.metrics = metrics;
         this.sample = sample;
         this.resDir = resDir;
+        this.isTan = true;
     }
 
     @Override
     public void init() {
         // needed for getSplitRange
         dtm = Project.getProject().getDtm();
+        grid = Project.getProject().getDtmCov().getGridGeometry();
         super.init(); 
-        compute = Project.getProject().getComputeView();
+        compute = Project.getProject().getDefaultComputeView();
         land = Project.getProject().getLandUse();
-    }
-    
-    private boolean isTanView() {
-        return !Double.isNaN(anglePrec);
     }
     
     public boolean isSaved() {
@@ -126,17 +126,26 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         }
         final int w = dtm.getWidth()/sample;
         for(int y = y0; y < y1; y++) {
-            if(isCanceled())
+            if(isCanceled()) {
                 break;
+            }
             for(int x = 0; x < w; x++) {
                 GridCoordinates2D c = new GridCoordinates2D(x*sample+sample/2, y*sample+sample/2);
-                if(from != null && !from.contains(land.getSample(c.x, c.y, 0)))
+                
+                if(from != null && !from.contains(land.getSample(c.x, c.y, 0))) {
                     continue;
+                }
+                DirectPosition2D p = null;
+                try {
+                    p = (DirectPosition2D) grid.gridToWorld(c);
+                } catch (TransformException ex) {
+                    Logger.getLogger(GridMetricTask.class.getName()).log(Level.SEVERE, null, ex);
+                }
                 List<Double[]> values;
-                if(isTanView()) {
-                    values = compute.aggrViewTan(c, startZ, anglePrec, bounds, (List) metrics);
+                if(isTan) {
+                    values = compute.aggrViewTan(p, startZ, bounds, (List) metrics);
                 } else {
-                    values = compute.aggrViewShed(c, startZ, destZ, direct, bounds, (List) metrics);
+                    values = compute.aggrViewShed(p, startZ, destZ, direct, bounds, (List) metrics);
                 }
                 for(int i = 0; i < metrics.size(); i++) {
                     int j = 0;
@@ -148,8 +157,9 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
             incProgress(1);
         }
         Map<String, SerializableState> serialMap = new HashMap<>();
-        for(String s : map.keySet())
+        for(String s : map.keySet()) {
             serialMap.put(s, SerializerFactory.getState(map.get(s)));
+        }
         return serialMap;
     }
 
@@ -166,8 +176,9 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     @Override
     public void gather(Map<String, SerializableState> map) {
         if(isSaved()) {
-            if(writers == null)
+            if(writers == null) {
                 writers = new HashMap<>();
+            }
             for(String resName : map.keySet()) {
                 try {
                     if(!writers.containsKey(resName)) {
@@ -189,11 +200,13 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                 }
             }
         } else {
-            if(result == null)
+            if(result == null) {
                 result = new HashMap<>();
+            }
             for(String resName : map.keySet()) {
-                if(!result.containsKey(resName))
+                if(!result.containsKey(resName)) {
                     result.put(resName, Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dtm.getWidth()/sample, dtm.getHeight()/sample, 1), null));
+                }
                 result.get(resName).setRect((Raster) map.get(resName).getObject());
             }
         }
@@ -211,15 +224,16 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                     IOImage.createTIFFWorldFile(Project.getProject().getDtmCov(), getResultFile(resName).getAbsolutePath());
                 }
             } catch (IOException ex) {
-                Logger.getLogger(GlobalViewTask.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(GridMetricTask.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     }
     
     public File getResultFile(String resName) {
-        if(isTanView())
-            return new File(resDir, resName + "-aprec" + anglePrec + "-" + bounds + ".tif");
-        else
+        if(isTan) {
+            return new File(resDir, resName + "-" + bounds + ".tif");
+        } else {
             return new File(resDir, resName + "-" + (direct ? "direct" : "indirect") + "-" + bounds + ".tif");
+        }
     }
 }

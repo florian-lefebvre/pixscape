@@ -8,11 +8,7 @@ package org.thema.pixscape;
 
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
-import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BandedSampleModel;
-import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -20,8 +16,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.NavigableSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.CancellationException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Filter;
@@ -29,14 +28,15 @@ import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
-import javax.swing.JDialog;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import org.geotools.coverage.grid.GridCoordinates2D;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.coverage.grid.InvalidGridGeometryException;
+import org.geotools.coverage.grid.GridCoverageFactory;
+import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.common.Config;
 import org.thema.common.JavaLoader;
@@ -47,6 +47,7 @@ import org.thema.common.swing.PreferencesDialog;
 import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
+import org.thema.data.feature.Feature;
 import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
@@ -57,9 +58,7 @@ import org.thema.drawshape.style.PointStyle;
 import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
-import org.thema.drawshape.ui.MapViewer;
 import org.thema.parallel.ExecutorService;
-import org.thema.pixscape.Project.Aggregate;
 import org.thema.process.Vectorizer;
 
 /**
@@ -71,7 +70,12 @@ public class MainFrame extends javax.swing.JFrame {
     private Project project;
     private DefaultGroupLayer rootLayer;
     
+    private ViewShedDialog viewshedDlg;
+    private ViewTanDialog viewtanDlg;
+    
     private final LoggingFrame logFrame;
+    
+    
     
     /**
      * Creates new form MainFrame
@@ -100,21 +104,37 @@ public class MainFrame extends javax.swing.JFrame {
         fileMenu = new javax.swing.JMenu();
         newProjectMenuItem = new javax.swing.JMenuItem();
         loadProjectMenuItem = new javax.swing.JMenuItem();
-        loadDSMMenuItem = new javax.swing.JMenuItem();
-        loadLandUseMenuItem = new javax.swing.JMenuItem();
         prefMenuItem = new javax.swing.JMenuItem();
         logMenuItem = new javax.swing.JMenuItem();
+        exitMenuItem = new javax.swing.JMenuItem();
+        dataMenu = new javax.swing.JMenu();
+        loadDSMMenuItem = new javax.swing.JMenuItem();
+        loadLandUseMenuItem = new javax.swing.JMenuItem();
+        msMenu = new javax.swing.JMenu();
+        genMSMenuItem = new javax.swing.JMenuItem();
+        addScaleMenuItem = new javax.swing.JMenuItem();
         visMenu = new javax.swing.JMenu();
         viewShedMenuItem = new javax.swing.JMenuItem();
         viewTanMenuItem = new javax.swing.JMenuItem();
-        totViewMenuItem = new javax.swing.JMenuItem();
-        totViewTanMenuItem = new javax.swing.JMenuItem();
-        pathViewMenuItem = new javax.swing.JMenuItem();
+        multiViewshedMenuItem = new javax.swing.JMenuItem();
+        jSeparator1 = new javax.swing.JPopupMenu.Separator();
+        optionsMenuItem = new javax.swing.JMenuItem();
+        metricMenu = new javax.swing.JMenu();
+        viewshedMetricMenuItem = new javax.swing.JMenuItem();
+        tanMetricMenuItem = new javax.swing.JMenuItem();
+        toolMenu = new javax.swing.JMenu();
+        pathOrienMenuItem = new javax.swing.JMenuItem();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosed(java.awt.event.WindowEvent evt) {
                 formWindowClosed(evt);
+            }
+            public void windowActivated(java.awt.event.WindowEvent evt) {
+                formWindowActivated(evt);
+            }
+            public void windowDeactivated(java.awt.event.WindowEvent evt) {
+                formWindowDeactivated(evt);
             }
         });
 
@@ -138,23 +158,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(loadProjectMenuItem);
 
-        loadDSMMenuItem.setText("Set DSM...");
-        loadDSMMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loadDSMMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(loadDSMMenuItem);
-
-        loadLandUseMenuItem.setText("Set land use...");
-        loadLandUseMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                loadLandUseMenuItemActionPerformed(evt);
-            }
-        });
-        fileMenu.add(loadLandUseMenuItem);
-
-        prefMenuItem.setText("Preferences...");
+        prefMenuItem.setText("Preferences");
         prefMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prefMenuItemActionPerformed(evt);
@@ -170,7 +174,55 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(logMenuItem);
 
+        exitMenuItem.setText("Exit");
+        exitMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                exitMenuItemActionPerformed(evt);
+            }
+        });
+        fileMenu.add(exitMenuItem);
+
         menuBar.add(fileMenu);
+
+        dataMenu.setText("Data");
+
+        loadDSMMenuItem.setText("Set DSM");
+        loadDSMMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadDSMMenuItemActionPerformed(evt);
+            }
+        });
+        dataMenu.add(loadDSMMenuItem);
+
+        loadLandUseMenuItem.setText("Set land use");
+        loadLandUseMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                loadLandUseMenuItemActionPerformed(evt);
+            }
+        });
+        dataMenu.add(loadLandUseMenuItem);
+
+        msMenu.setText("Multi scale");
+
+        genMSMenuItem.setText("Generate");
+        genMSMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                genMSMenuItemActionPerformed(evt);
+            }
+        });
+        msMenu.add(genMSMenuItem);
+
+        addScaleMenuItem.setText("Add scale");
+        addScaleMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                addScaleMenuItemActionPerformed(evt);
+            }
+        });
+        msMenu.add(addScaleMenuItem);
+
+        dataMenu.add(msMenu);
+
+        menuBar.add(dataMenu);
 
         visMenu.setText("Visibility");
 
@@ -182,7 +234,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         visMenu.add(viewShedMenuItem);
 
-        viewTanMenuItem.setText("View tan...");
+        viewTanMenuItem.setText("Tangential...");
         viewTanMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewTanMenuItemActionPerformed(evt);
@@ -190,31 +242,56 @@ public class MainFrame extends javax.swing.JFrame {
         });
         visMenu.add(viewTanMenuItem);
 
-        totViewMenuItem.setText("Global visibility");
-        totViewMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        multiViewshedMenuItem.setText("Multi Viewshed");
+        multiViewshedMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                totViewMenuItemActionPerformed(evt);
+                multiViewshedMenuItemActionPerformed(evt);
             }
         });
-        visMenu.add(totViewMenuItem);
+        visMenu.add(multiViewshedMenuItem);
+        visMenu.add(jSeparator1);
 
-        totViewTanMenuItem.setText("Global tan");
-        totViewTanMenuItem.addActionListener(new java.awt.event.ActionListener() {
+        optionsMenuItem.setText("Options");
+        optionsMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                totViewTanMenuItemActionPerformed(evt);
+                optionsMenuItemActionPerformed(evt);
             }
         });
-        visMenu.add(totViewTanMenuItem);
-
-        pathViewMenuItem.setText("Path view");
-        pathViewMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pathViewMenuItemActionPerformed(evt);
-            }
-        });
-        visMenu.add(pathViewMenuItem);
+        visMenu.add(optionsMenuItem);
 
         menuBar.add(visMenu);
+
+        metricMenu.setText("Metric");
+
+        viewshedMetricMenuItem.setText("Planimetric");
+        viewshedMetricMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                viewshedMetricMenuItemActionPerformed(evt);
+            }
+        });
+        metricMenu.add(viewshedMetricMenuItem);
+
+        tanMetricMenuItem.setText("Tangential");
+        tanMetricMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                tanMetricMenuItemActionPerformed(evt);
+            }
+        });
+        metricMenu.add(tanMetricMenuItem);
+
+        menuBar.add(metricMenu);
+
+        toolMenu.setText("Tools");
+
+        pathOrienMenuItem.setText("Set point attributes");
+        pathOrienMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                pathOrienMenuItemActionPerformed(evt);
+            }
+        });
+        toolMenu.add(pathOrienMenuItem);
+
+        menuBar.add(toolMenu);
 
         setJMenuBar(menuBar);
 
@@ -226,7 +303,7 @@ public class MainFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 382, Short.MAX_VALUE)
+            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE)
         );
 
         pack();
@@ -234,8 +311,10 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void loadProjectMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadProjectMenuItemActionPerformed
         File file = Util.getFile(".xml", "Project file");
-        if(file == null)
+        if(file == null) {
             return;
+        }
+        closeProject();
         try {
             project = Project.loadProject(file);
             rootLayer = project.getLayers();
@@ -247,29 +326,19 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_loadProjectMenuItemActionPerformed
 
     private void viewShedMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewShedMenuItemActionPerformed
-        final ViewShedDialog dlg = new ViewShedDialog(this, project, mapViewer);
-        dlg.setVisible(true);
+        if(viewshedDlg == null) {
+            viewshedDlg = new ViewShedDialog(this, project, mapViewer);
+            viewshedDlg.setLocation(getX()+getWidth(), getY());
+        }
+        viewshedDlg.setVisible(true);
         
     }//GEN-LAST:event_viewShedMenuItemActionPerformed
 
-    private void totViewMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_totViewMenuItemActionPerformed
-        final GlobalViewDialog dlg = new GlobalViewDialog(this, false, project.getCodes());
-        dlg.setVisible(true);
-        if(!dlg.isOk)
-            return;
-        
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                globalView(dlg);
-            }
-        }).start();
-    }//GEN-LAST:event_totViewMenuItemActionPerformed
-
     private void loadLandUseMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadLandUseMenuItemActionPerformed
         File file = Util.getFile(".tif|.asc", "Raster");
-        if(file == null)
+        if(file == null) {
             return;
+        }
         try {
             GridCoverage2D cov = IOImage.loadCoverage(file);
             project.setLandUse(cov);
@@ -283,8 +352,9 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void loadDSMMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadDSMMenuItemActionPerformed
         File file = Util.getFile(".tif|.asc", "Raster");
-        if(file == null)
+        if(file == null) {
             return;
+        }
         try {
             GridCoverage2D cov = IOImage.loadCoverage(file);
             project.setDSM(cov);
@@ -296,61 +366,12 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_loadDSMMenuItemActionPerformed
 
     private void viewTanMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewTanMenuItemActionPerformed
-        final ViewTanDialog dlg = new ViewTanDialog(this, mapViewer);
-        dlg.setVisible(true);
-        
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                // on attend que la boite de dialogue soit fermée
-                while(dlg.isDisplayable()) 
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException ex) {
-                        Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                if(!dlg.isOk)    
-                    return;
-                
-                try {
-                    Raster viewTan = project.calcViewTan(dlg.point, dlg.startZ, dlg.precision*Math.PI/180, 
-                            dlg.bounds);
-                    // create landuse, z and dist images.
-                    GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(dlg.point);
-                    WritableRaster viewTanZ = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                            viewTan.getWidth(), viewTan.getHeight(), 1), null);
-                    WritableRaster viewTanDist = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                            viewTan.getWidth(), viewTan.getHeight(), 1), null);
-                    WritableRaster viewTanLand = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, 
-                            viewTan.getWidth(), viewTan.getHeight(), 1), null);
-                    
-                    project.fillViewTan(c, viewTan, viewTanZ, viewTanDist, viewTanLand);
-                    
-                    DefaultGroupLayer gl = new DefaultGroupLayer("Views", true);
-                    RasterStyle s = new RasterStyle(ColorRamp.RAMP_DEM);
-                    s.setNoDataValue(-1000);
-                    Rectangle2D r = new Rectangle2D.Double(dlg.bounds.getOrientation()-dlg.bounds.getAmplitude()/2, -90, dlg.bounds.getAmplitude(), 180);
-                    gl.addLayerFirst(new RasterLayer("Elevation", new RasterShape(viewTanZ, r, s, true)));
-                    s = new RasterStyle();
-                    s.setNoDataValue(-1);
-                    gl.addLayerFirst(new RasterLayer("Distance", new RasterShape(viewTanDist, r, s, true)));
-                    if(project.hasLandUse()) {
-                        s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()));
-                        s.setNoDataValue(255);
-                        gl.addLayerFirst(new RasterLayer("Land use", new RasterShape(viewTanLand, r, s, true)));
-                    }
-                    MapViewer viewer = new MapViewer();
-                    viewer.setRootLayer(gl);
-                    viewer.setTreeLayerVisible(true);
-                    JDialog dlg = new JDialog(MainFrame.this);
-                    dlg.getContentPane().add(viewer, BorderLayout.CENTER);
-                    dlg.pack();
-                    dlg.setVisible(true);
-                } catch (InvalidGridGeometryException | TransformException ex) {
-                    Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-        }).start();
+        if(viewtanDlg == null) {
+            viewtanDlg = new ViewTanDialog(this, project, mapViewer);
+            viewtanDlg.setLocation(getX()+getWidth(), getY());
+        }
+        viewtanDlg.setVisible(true);
+
     }//GEN-LAST:event_viewTanMenuItemActionPerformed
 
     private void prefMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_prefMenuItemActionPerformed
@@ -363,37 +384,39 @@ public class MainFrame extends javax.swing.JFrame {
         logFrame.setVisible(true);
     }//GEN-LAST:event_logMenuItemActionPerformed
 
-    private void pathViewMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pathViewMenuItemActionPerformed
-        final PathViewDialog dlg = new PathViewDialog(this);
+    private void multiViewshedMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_multiViewshedMenuItemActionPerformed
+        final MultiViewshedDialog dlg = new MultiViewshedDialog(this);
         dlg.setVisible(true);
-        if(!dlg.isOk)
+        if(!dlg.isOk) {
             return;
+        }
         new Thread(new Runnable() {
             @Override
             public void run() {
-                ProgressBar progressBar = Config.getProgressBar("Path viewshed...");
+                ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
                     List<DefaultFeature> viewSheds = new ArrayList<>();
-                    Map<Object, DefaultFeature> pathMap = GlobalDataStore.createDataStore(dlg.pathFile.getParentFile()).getMapFeatures(dlg.pathFile.getName(), dlg.idField);
-                    List<DefaultFeature> path = new ArrayList<>(new TreeMap<>(pathMap).values());
-                    progressBar.setMaximum(path.size());
-                    for(int i = 0; i < path.size()-1; i++) {
-                        Point p1 = path.get(i).getGeometry().getCentroid();
-                        Point p2 = path.get(i+1).getGeometry().getCentroid();
-                        double dir = Bounds.rad2deg(Math.atan2(p2.getY()-p1.getY(), p2.getX()-p1.getX()));
-                        Raster viewShed = project.calcViewShed(new DirectPosition2D(p1.getX(), p1.getY()), dlg.startZ, -1, true, dlg.bounds.createBounds(dir));
+                    List<DefaultFeature> points = GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
+                    progressBar.setMaximum(points.size());
+                    progressBar.setProgress(0);
+                    for(Feature point : points) {
+                        Point p = point.getGeometry().getCentroid();
+                        Bounds b = dlg.bounds.updateBounds(point);
+                        Raster viewShed = project.getDefaultComputeView().calcViewShed(
+                                new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), 
+                                -1, dlg.direct, b).getView();
                         Geometry view = Vectorizer.vectorize(viewShed, 1);
                         view.apply(project.getGrid2space());
-                        viewSheds.add(new DefaultFeature(path.get(i).getId(), view));
+                        viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), view));
                         progressBar.incProgress(1);
                     }
-                    FeatureLayer l = new FeatureLayer("Path viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());
+                    FeatureLayer l = new FeatureLayer("Multi viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
-                    l = new FeatureLayer("Path", path, new PointStyle());
+                    l = new FeatureLayer("Points", points, new PointStyle());
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
-                } catch (IOException | InvalidGridGeometryException | TransformException ex) {
+                } catch (IOException | TransformException ex) {
                     Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                     JOptionPane.showMessageDialog(MainFrame.this, "An error has occured : " + ex);
                 } finally {
@@ -402,13 +425,15 @@ public class MainFrame extends javax.swing.JFrame {
             }
         }).start();
         
-    }//GEN-LAST:event_pathViewMenuItemActionPerformed
+    }//GEN-LAST:event_multiViewshedMenuItemActionPerformed
 
     private void newProjectMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newProjectMenuItemActionPerformed
         NewProjectDialog dlg = new NewProjectDialog(this, true);
         dlg.setVisible(true);
-        if(!dlg.isOk)
+        if(!dlg.isOk) {
             return;
+        }
+        closeProject();
         
         try {
             GridCoverage2D dtm = IOImage.loadCoverage(dlg.dtm);
@@ -423,66 +448,246 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_newProjectMenuItemActionPerformed
 
     private void formWindowClosed(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosed
-        if(project != null)
-            project.close();
+        closeProject();
+        logFrame.dispose();
     }//GEN-LAST:event_formWindowClosed
 
-    private void totViewTanMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_totViewTanMenuItemActionPerformed
-        final GlobalViewDialog dlg = new GlobalViewDialog(this, true, project.getCodes());
-        dlg.setVisible(true);
-        if(!dlg.isOk)
+    private void genMSMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_genMSMenuItemActionPerformed
+        double r = project.getDefaultScale().getResolution();
+        
+        String res = JOptionPane.showInputDialog(this, "Create multi scale database", (int)(r*4) + ", " + (int)(r*16) + ", " + (int)(r*64));
+        if(res == null || res.isEmpty()) {
             return;
+        }
+        NavigableSet<Double> resolutions = new TreeSet<>();
+        for(String s : res.split(",")) {
+            if(!s.trim().isEmpty()) {
+                resolutions.add(Double.parseDouble(s.trim()));
+            }
+        }
+        resolutions = resolutions.tailSet(r, false);
+        if(resolutions.isEmpty()) {
+            return;
+        }
+        
+        try {
+            project.removeScaleData();
+            
+            Raster dtm = project.getDefaultScale().getDtm();
+            Raster dsm = project.getDefaultScale().getDsm();
+            Raster land = project.getDefaultScale().getLand();
+            for(Double resol : resolutions) {
+                int scale = (int)(resol/r);
+                WritableRaster dtmSamp = sampling(dtm, scale, 0);
+                Envelope2D env = project.getDtmCov().getEnvelope2D();
+                env = new Envelope2D(env.getCoordinateReferenceSystem(), 
+                        env.x, env.y, dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
+                GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env);
+                ScaleData dataScale = new ScaleData(dtmCov, 
+                        land != null ? sampling(land, scale, 1) : null, 
+                        dsm != null ? sampling(dsm, scale, 0) : null, 
+                        1);
+                project.addScaleData(dataScale);
+            }
+            
+            rootLayer = project.getLayers();
+            mapViewer.setRootLayer(rootLayer);
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }//GEN-LAST:event_genMSMenuItemActionPerformed
+
+    private void viewshedMetricMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewshedMetricMenuItemActionPerformed
+        final ViewMetricDialog dlg = new ViewMetricDialog(this, false, project.getCodes());
+        dlg.setVisible(true);
+        if(!dlg.isOk) {
+            return;
+        }
         
         new Thread(new Runnable() {
             @Override
             public void run() {
-                globalView(dlg);
-            }
-        }).start();
-    }//GEN-LAST:event_totViewTanMenuItemActionPerformed
-
-    private void globalView(GlobalViewDialog dlg) {
-        ProgressBar progressBar = Config.getProgressBar("Visibility...");
-        RasterStyle s = new RasterStyle(ColorRamp.RAMP_INVGRAY);
-        s.setNoDataValue(-1);
-        if(dlg.from == null || (dlg.aggr == Aggregate.SUM && dlg.from.equals(project.getCodes()) && dlg.to.equals(project.getCodes()))) {
-            GlobalViewTask task = dlg.isTangent() ? new GlobalViewTask(dlg.startZ, dlg.anglePrec, dlg.bounds, dlg.sample, null, progressBar) :
-                    new GlobalViewTask(dlg.startZ, -1, dlg.direct, dlg.bounds, dlg.sample, null, progressBar);
-            ExecutorService.execute(task);
-            WritableRaster view = task.getResult();
-            RasterLayer l = new RasterLayer("Aggr. view - " + (dlg.direct?"direct":"indirect"), new RasterShape(view,
-                    project.getDtmCov().getEnvelope2D(), s, true), project.getCRS());
-            l.setRemovable(true);
-            rootLayer.addLayerFirst(l);
-        } else {
-            if(dlg.aggr == Aggregate.NONE) {
-                GlobalViewLandUseTask task = dlg.isTangent() ? new GlobalViewLandUseTask(dlg.startZ, dlg.anglePrec, dlg.bounds, dlg.from, dlg.to, dlg.sample, null, progressBar) :
-                        new GlobalViewLandUseTask(dlg.startZ, -1, dlg.direct, dlg.bounds, dlg.from, dlg.to, dlg.sample, null, progressBar);
-                ExecutorService.execute(task);
-                Map<Integer, WritableRaster> views = task.getResult();
-                for(Integer code : views.keySet()) {
-                    s = new RasterStyle(new Color[]{Color.black, project.getLandColors().get(code.doubleValue())});
-                    s.setNoDataValue(-1);
-                    RasterLayer l = new RasterLayer("Aggr. view - " + (dlg.direct?"direct":"indirect") + " for " + code,
-                            new RasterShape(views.get(code), project.getDtmCov().getEnvelope2D(), s, true), project.getCRS());
+                ProgressBar progressBar = Config.getProgressBar("Metrics...");
+                if(dlg.gridSampling) {
+                    GridMetricTask task = new GridMetricTask(project.getStartZ(), -1, 
+                            dlg.direct, dlg.bounds, dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
+                    ExecutorService.execute(task);
+                    Map<String, WritableRaster> result = task.getResult();
+                    DefaultGroupLayer gl = new DefaultGroupLayer("Metric grid result", true);
+                    gl.setRemovable(true);
+                    for(String name : result.keySet()) {
+                        RasterStyle s = new RasterStyle();
+                        s.setNoDataValue(-1);
+                        RasterLayer l = new RasterLayer(name,
+                                new RasterShape(result.get(name), project.getDtmCov().getEnvelope2D(), s, true), project.getCRS());
+                        l.setRemovable(true);
+                        gl.addLayerLast(l);
+                    }
+                    gl.setLayersVisible(false);
+                    gl.getLayerFirst().setVisible(true);
+                    rootLayer.addLayerFirst(gl);
+                } else {
+                    PointMetricTask task = new PointMetricTask(project.getStartZ(), -1, 
+                            dlg.direct, dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
+                    ExecutorService.execute(task);
+                    List<DefaultFeature> features = task.getResult();
+                    
+                    FeatureLayer l = new FeatureLayer("Metric point result", features);
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                 }
+
+                progressBar.close();
+            }
+        }).start();
+        
+    }//GEN-LAST:event_viewshedMetricMenuItemActionPerformed
+
+    private void optionsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_optionsMenuItemActionPerformed
+        new OptionDialog(this, project).setVisible(true);
+    }//GEN-LAST:event_optionsMenuItemActionPerformed
+
+    private void tanMetricMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_tanMetricMenuItemActionPerformed
+        final ViewMetricDialog dlg = new ViewMetricDialog(this, true, project.getCodes());
+        dlg.setVisible(true);
+        if(!dlg.isOk) {
+            return;
+        }
+        
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                ProgressBar progressBar = Config.getProgressBar("Metrics...");
+                if(dlg.gridSampling) {
+                    GridMetricTask task = new GridMetricTask(project.getStartZ(), dlg.bounds, 
+                            dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
+                    ExecutorService.execute(task);
+                    Map<String, WritableRaster> result = task.getResult();
+                    DefaultGroupLayer gl = new DefaultGroupLayer("Metric grid result", true);
+                    gl.setRemovable(true);
+                    for(String name : result.keySet()) {
+                        RasterStyle s = new RasterStyle();
+                        s.setNoDataValue(-1);
+                        RasterLayer l = new RasterLayer(name,
+                                new RasterShape(result.get(name), project.getDtmCov().getEnvelope2D(), s, true), project.getCRS());
+                        l.setRemovable(true);
+                        gl.addLayerLast(l);
+                    }
+                    gl.setLayersVisible(false);
+                    gl.getLayerFirst().setVisible(true);
+                    rootLayer.addLayerFirst(gl);
+                } else {
+                    PointMetricTask task = new PointMetricTask(project.getStartZ(), 
+                            dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
+                    ExecutorService.execute(task);
+                    List<DefaultFeature> features = task.getResult();
+                    FeatureLayer l = new FeatureLayer("Metric point result", features);
+                    l.setRemovable(true);
+                    rootLayer.addLayerFirst(l);
+                }
+
+                progressBar.close();
+            }
+        }).start();
+    }//GEN-LAST:event_tanMetricMenuItemActionPerformed
+
+    private void exitMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitMenuItemActionPerformed
+        setVisible(false);
+        dispose();
+    }//GEN-LAST:event_exitMenuItemActionPerformed
+
+    private void addScaleMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addScaleMenuItemActionPerformed
+        AddScaleDialog dlg = new AddScaleDialog(this, project);
+        dlg.setVisible(true);
+        
+        if(dlg.isOk) {
+            rootLayer = project.getLayers();
+            mapViewer.setRootLayer(rootLayer);
+        }
+    }//GEN-LAST:event_addScaleMenuItemActionPerformed
+
+    private void pathOrienMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pathOrienMenuItemActionPerformed
+        
+        PointAttributeDialog dlg = new PointAttributeDialog(this);
+        dlg.setVisible(true);
+        if(!dlg.isOk) {
+            return;
+        }
+        try {
+            Map<Object, DefaultFeature> pointMap = GlobalDataStore.createDataStore(dlg.pathFile.getParentFile()).getMapFeatures(dlg.pathFile.getName(), dlg.idField);
+            List<DefaultFeature> points = new ArrayList<>(new TreeMap<>(pointMap).values());
+            List<DefaultFeature> result = new ArrayList<>();
+            if(dlg.setPathOrien) {
+                for(int i = 0; i < points.size()-1; i++) {
+                    Point p1 = points.get(i).getGeometry().getCentroid();
+                    Point p2 = points.get(i+1).getGeometry().getCentroid();
+                    double dir = Bounds.rad2deg(Math.atan2(p2.getY()-p1.getY(), p2.getX()-p1.getX()));
+                    Bounds b = dlg.bounds.createBounds(dir);
+                    result.add(b.createFeatureWithBoundAttr(points.get(i).getId(), points.get(i).getGeometry()));
+                }
             } else {
-                GlobalViewTask task = dlg.isTangent() ? new GlobalViewTask(dlg.startZ, dlg.anglePrec, dlg.bounds, dlg.from, dlg.to, dlg.aggr, dlg.sample, null, progressBar) :
-                        new GlobalViewTask(dlg.startZ, -1, dlg.direct, dlg.bounds, dlg.from, dlg.to, dlg.aggr, dlg.sample, null, progressBar);
-                ExecutorService.execute(task);
-                WritableRaster view = task.getResult();
-                String name = dlg.aggr == Aggregate.SUM ? "Sum" : "Shannon"; 
-                RasterLayer l = new RasterLayer(name + " - " + (dlg.direct?"direct":"indirect") + " for " + (dlg.direct ? dlg.to : dlg.from),
-                        new RasterShape(view, project.getDtmCov().getEnvelope2D(), s, true), project.getCRS());
-                l.setRemovable(true);
-                rootLayer.addLayerFirst(l);
+                for(Feature p : points) {
+                    result.add(dlg.bounds.createFeatureWithBoundAttr(p.getId(), p.getGeometry()));
+                }
+            }
+            DefaultFeature.saveFeatures(result, new File(project.getDirectory(), dlg.outputName), GlobalDataStore.getCRS(dlg.pathFile));
+            FeatureLayer l = new FeatureLayer(dlg.outputName, result);
+            l.setRemovable(true);
+            rootLayer.addLayerFirst(l);
+        } catch (IOException | SchemaException ex) {
+            throw new RuntimeException(ex);
+        }
+        
+    }//GEN-LAST:event_pathOrienMenuItemActionPerformed
+
+    private void formWindowActivated(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowActivated
+        if(viewshedDlg != null) {
+            viewshedDlg.setAlwaysOnTop(true);
+        }
+        if(viewtanDlg != null) {
+            viewtanDlg.setAlwaysOnTop(true);
+        }
+    }//GEN-LAST:event_formWindowActivated
+
+    private void formWindowDeactivated(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowDeactivated
+        if(viewshedDlg != null) {
+            viewshedDlg.toBack();
+        }
+        if(viewtanDlg != null) {
+            viewtanDlg.toBack();
+        }
+        
+    }//GEN-LAST:event_formWindowDeactivated
+
+    private WritableRaster sampling(Raster dtm, int scale, int aggr) {
+        WritableRaster raster = dtm.createCompatibleWritableRaster(
+                (int)Math.ceil(dtm.getWidth()/(double)scale), 
+                (int)Math.ceil(dtm.getHeight()/(double)scale));
+        double [] tab = new double[scale*scale];
+        for(int y = 0; y < raster.getHeight(); y++) {
+            for(int x = 0; x < raster.getWidth(); x++) {
+                int w = Math.min(scale, raster.getWidth()-x);
+                int h = Math.min(scale, raster.getHeight()-y);
+                dtm.getSamples(x*scale, y*scale, w, h, 0, tab);
+                SummaryStatistics stats = new SummaryStatistics();
+                for(int i = 0; i < w*h; i++) {
+                    stats.addValue(tab[i]);
+                }           
+                raster.setSample(x, y, 0, aggr == 0 ? stats.getMean() : stats.getMin());
             }
         }
-        progressBar.close();
+        return raster;
     }
 
+    private void closeProject() {
+        if(project != null) {
+            project.close();
+        }
+        mapViewer.setRootLayer(new DefaultGroupLayer(""));
+        project = null;
+        viewshedDlg = null;
+        viewtanDlg = null;
+    }
     /**
      * Extract version number from manifest if exists.
      * If the manifest does not exist return "unpackage version"
@@ -507,8 +712,9 @@ public class MainFrame extends javax.swing.JFrame {
         Logger globalLogger = Logger.getLogger("");
         Handler[] handlers = globalLogger.getHandlers();
         for(Handler handler : handlers) {
-            if(handler instanceof ConsoleHandler)
+            if(handler instanceof ConsoleHandler) {
                 globalLogger.removeHandler(handler);
+            }
         }
         ConsoleHandler h = new ConsoleHandler();
         h.setFilter(new Filter() {
@@ -520,6 +726,7 @@ public class MainFrame extends javax.swing.JFrame {
         globalLogger.addHandler(h);
         
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
             public void uncaughtException(Thread t, Throwable e) {
                 Logger.getLogger("").log(Level.SEVERE, null, e);
             }
@@ -574,7 +781,8 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         
-        PreferencesDialog.initLanguage();
+        //PreferencesDialog.initLanguage();
+        Locale.setDefault(Locale.ENGLISH);
 
         try {  // Set System L&F
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -593,20 +801,30 @@ public class MainFrame extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JMenuItem addScaleMenuItem;
+    private javax.swing.JMenu dataMenu;
+    private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
+    private javax.swing.JMenuItem genMSMenuItem;
+    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JMenuItem loadDSMMenuItem;
     private javax.swing.JMenuItem loadLandUseMenuItem;
     private javax.swing.JMenuItem loadProjectMenuItem;
     private javax.swing.JMenuItem logMenuItem;
     private org.thema.drawshape.ui.MapViewer mapViewer;
     private javax.swing.JMenuBar menuBar;
+    private javax.swing.JMenu metricMenu;
+    private javax.swing.JMenu msMenu;
+    private javax.swing.JMenuItem multiViewshedMenuItem;
     private javax.swing.JMenuItem newProjectMenuItem;
-    private javax.swing.JMenuItem pathViewMenuItem;
+    private javax.swing.JMenuItem optionsMenuItem;
+    private javax.swing.JMenuItem pathOrienMenuItem;
     private javax.swing.JMenuItem prefMenuItem;
-    private javax.swing.JMenuItem totViewMenuItem;
-    private javax.swing.JMenuItem totViewTanMenuItem;
+    private javax.swing.JMenuItem tanMetricMenuItem;
+    private javax.swing.JMenu toolMenu;
     private javax.swing.JMenuItem viewShedMenuItem;
     private javax.swing.JMenuItem viewTanMenuItem;
+    private javax.swing.JMenuItem viewshedMetricMenuItem;
     private javax.swing.JMenu visMenu;
     // End of variables declaration//GEN-END:variables
 }

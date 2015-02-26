@@ -10,14 +10,18 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import org.geotools.coverage.grid.GridCoordinates2D;
-import org.thema.pixscape.view.ViewTanResult;
+import org.thema.pixscape.view.SimpleViewTanResult;
 
 /**
  *
  * @author gvuidel
  */
-class CUDAViewTanResult extends ViewTanResult {
-    ComputeViewCUDA.CUDAContext context;
+class CUDAViewTanResult extends SimpleViewTanResult {
+    
+    private final ComputeViewCUDA.CUDAContext context;
+    
+    private double count = -1;
+    private double[] countLand;
 
     CUDAViewTanResult(double ares, GridCoordinates2D cg, ComputeViewCUDA.CUDAContext context, ComputeViewCUDA compute) {
         super(ares, cg, null, compute);
@@ -25,20 +29,20 @@ class CUDAViewTanResult extends ViewTanResult {
     }
 
     @Override
-    public int[] getCountLand() {
+    public double[] getAreaLand() {
         if (countLand == null) {
-            countLand = new int[getCodes().last() + 1];
+            countLand = new double[getCodes().last() + 1];
             for (int code : getCodes()) {
-                countLand[code] = context.getSumLandViewTan((byte) code);
+                countLand[code] = context.getSumLandViewTan((byte) code) * Math.pow(getAres()*180/Math.PI, 2);
             }
         }
         return countLand;
     }
 
     @Override
-    public int getCount() {
+    public double getArea() {
         if (count == -1) {
-            count = context.getSumViewTan();
+            count = context.getSumViewTan() * Math.pow(getAres()*180/Math.PI, 2);
         }
         return count;
     }
@@ -46,8 +50,8 @@ class CUDAViewTanResult extends ViewTanResult {
     @Override
     public Raster getView() {
         if (view == null) {
-            int wa = (int) Math.ceil(2 * Math.PI / ares);
-            int ha = (int) Math.ceil(Math.PI / ares);
+            int wa = (int) Math.ceil(2 * Math.PI / getAres());
+            int ha = (int) Math.ceil(Math.PI / getAres());
             view = Raster.createBandedRaster(DataBuffer.TYPE_INT, wa, ha, 1, null);
             int[] viewBuf = ((DataBufferInt) view.getDataBuffer()).getData();
             context.getViewTan(viewBuf);

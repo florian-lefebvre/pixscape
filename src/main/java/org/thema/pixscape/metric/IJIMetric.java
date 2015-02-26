@@ -18,6 +18,10 @@ import org.thema.pixscape.view.ViewTanResult;
  */
 public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
+    public IJIMetric() {
+        super(true);
+    }
+
     @Override
     public String getShortName() {
         return "IJI";
@@ -31,26 +35,29 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
         int tot = 0;
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
-                if(view.getSample(x, y, 0) != 1)
+                if(view.getSample(x, y, 0) != 1) {
                     continue;
+                }
                 final int l = land.getSample(x, y, 0);
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
                     final int l1 = land.getSample(x+1, y, 0);
                     if(l != l1) {
-                        if(l < l1)
+                        if(l < l1) {
                             border[l][l1]++;
-                        else 
+                        } else {
                             border[l1][l]++;
+                        }
                         tot++;
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
                     final int l1 = land.getSample(x, y+1, 0);
                     if(l != l1) {
-                        if(l < l1)
+                        if(l < l1) {
                             border[l][l1]++;
-                        else 
+                        } else {
                             border[l1][l]++;
+                        }
                         tot++;
                     }
                 }
@@ -69,26 +76,29 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
                 final int ind = view.getSample(x, y, 0);
-                if(ind == -1)
+                if(ind == -1) {
                     continue;
+                }
                 final int l = land[ind];
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
                     final int l1 = land[view.getSample(x+1, y, 0)];
                     if(l != l1) {
-                        if(l < l1)
+                        if(l < l1) {
                             border[l][l1]++;
-                        else 
+                        } else {
                             border[l1][l]++;
+                        }
                         tot++;
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
                     final int l1 = land[view.getSample(x, y+1, 0)];
                     if(l != l1) {
-                        if(l < l1)
+                        if(l < l1) {
                             border[l][l1]++;
-                        else 
+                        } else {
                             border[l1][l]++;
+                        }
                         tot++;
                     }
                 }
@@ -100,15 +110,17 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
     
     private double calcIJI(ViewResult result, int[][] border, int tot) {
         int m = getCodes(result).size();
-        if(tot == 0 || m < 3)
+        if(tot == 0 || m < 3) {
             return Double.NaN;
+        }
         
         double sum = 0;
         for(int c1 : getCodes(result)) {
             for(int c2 : getCodes(result).tailSet(c1)) {
                 double val = border[c1][c2];
-                if(val > 0)
+                if(val > 0) {
                     sum += -(val / tot) * Math.log(val / tot);
+                }
             }
         }
         

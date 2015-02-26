@@ -7,38 +7,32 @@
 package org.thema.pixscape;
 
 
-import com.vividsolutions.jts.geom.Geometry;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.net.MalformedURLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import org.geotools.data.shapefile.ShapefileDataStore;
-import org.opengis.feature.simple.SimpleFeatureType;
-import org.opengis.feature.type.AttributeType;
 
 /**
  *
  * @author gvuidel
  */
-public class PathViewDialog extends javax.swing.JDialog {
+public class PointAttributeDialog extends javax.swing.JDialog {
 
     public boolean isOk = false;
     public File pathFile;
     public String idField;
-    public double startZ;
+    public boolean setPathOrien;
     public Bounds bounds;
     
+    public String outputName;
+    
     /** Creates new form PathViewDialog */
-    public PathViewDialog(java.awt.Frame parent) {
+    public PointAttributeDialog(java.awt.Frame parent) {
         super(parent, true);
         initComponents();
         setLocationRelativeTo(parent);
@@ -49,6 +43,7 @@ public class PathViewDialog extends javax.swing.JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 doClose();
             }
@@ -67,14 +62,13 @@ public class PathViewDialog extends javax.swing.JDialog {
 
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        pathSelectFilePanel = new org.thema.common.swing.SelectFilePanel();
-        jLabel1 = new javax.swing.JLabel();
-        idComboBox = new javax.swing.JComboBox();
         boundsButton = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        zEyeTextField = new javax.swing.JTextField();
+        pointShpPanel = new org.thema.pixscape.PointShpPanel();
+        pathOrienCheckBox = new javax.swing.JCheckBox();
+        jLabel1 = new javax.swing.JLabel();
+        outputNameTextField = new javax.swing.JTextField();
 
-        setTitle("Path view");
+        setTitle("Set point attributes");
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
@@ -95,17 +89,6 @@ public class PathViewDialog extends javax.swing.JDialog {
             }
         });
 
-        pathSelectFilePanel.setDescription("Path points");
-        pathSelectFilePanel.setFileDesc("Shapefile");
-        pathSelectFilePanel.setFileExts(".shp");
-        pathSelectFilePanel.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                pathSelectFilePanelActionPerformed(evt);
-            }
-        });
-
-        jLabel1.setText("Id");
-
         boundsButton.setText("Bounds...");
         boundsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -113,9 +96,11 @@ public class PathViewDialog extends javax.swing.JDialog {
             }
         });
 
-        jLabel2.setText("Z eye");
+        pathOrienCheckBox.setText("Set path orientation");
 
-        zEyeTextField.setText("1.8");
+        jLabel1.setText("Output shapefile");
+
+        outputNameTextField.setText("pointfile.shp");
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -124,28 +109,21 @@ public class PathViewDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(12, 12, 12)
-                        .add(jLabel1)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(idComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 163, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .add(layout.createSequentialGroup()
+                        .add(pathOrienCheckBox)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .add(0, 238, Short.MAX_VALUE)
                                 .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cancelButton))
-                            .add(pathSelectFilePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                        .addContainerGap())
+                            .add(org.jdesktop.layout.GroupLayout.TRAILING, boundsButton)))
                     .add(layout.createSequentialGroup()
-                        .add(jLabel2)
+                        .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(boundsButton)
-                        .add(0, 0, Short.MAX_VALUE))))
+                        .add(outputNameTextField)))
+                .addContainerGap())
         );
 
         layout.linkSize(new java.awt.Component[] {cancelButton, okButton}, org.jdesktop.layout.GroupLayout.HORIZONTAL);
@@ -154,19 +132,16 @@ public class PathViewDialog extends javax.swing.JDialog {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(pathSelectFilePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(pointShpPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(boundsButton)
+                    .add(pathOrienCheckBox))
+                .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(idComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(18, 18, 18)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(jLabel2)
-                        .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                        .add(boundsButton)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(outputNameTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 32, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cancelButton)
                     .add(okButton))
@@ -179,11 +154,16 @@ public class PathViewDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        pathFile = pathSelectFilePanel.getSelectedFile();
-        idField = idComboBox.getSelectedItem().toString();
-        startZ = Double.parseDouble(zEyeTextField.getText());
-        if(bounds == null)
+        pathFile = pointShpPanel.getPointFile();
+        idField = pointShpPanel.getIdField();
+        setPathOrien = pathOrienCheckBox.isSelected();
+        if(bounds == null) {
             bounds = new Bounds();
+        }
+        outputName = outputNameTextField.getText();
+        if(!outputName.endsWith(".shp")) {
+            outputName += ".shp";
+        }
         isOk = true;
         doClose();
     }//GEN-LAST:event_okButtonActionPerformed
@@ -200,24 +180,10 @@ public class PathViewDialog extends javax.swing.JDialog {
     private void boundsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_boundsButtonActionPerformed
         BoundsDialog dlg = new BoundsDialog((Frame) this.getParent(), bounds == null ? new Bounds() : bounds);
         dlg.setVisible(true);
-        if(dlg.isOk)
+        if(dlg.isOk) {
             bounds = dlg.bounds;
-    }//GEN-LAST:event_boundsButtonActionPerformed
-
-    private void pathSelectFilePanelActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pathSelectFilePanelActionPerformed
-        try {
-            DefaultComboBoxModel model = new DefaultComboBoxModel();
-            ShapefileDataStore datastore = new ShapefileDataStore(pathSelectFilePanel.getSelectedFile().toURI().toURL(),null);
-            SimpleFeatureType schema = datastore.getSchema();
-            for(AttributeType type : schema.getTypes()) {
-                if(!Geometry.class.isAssignableFrom(type.getBinding()))
-                    model.addElement(type.getName().getLocalPart());
-            }
-            idComboBox.setModel(model);
-        } catch (Exception ex) {
-            Logger.getLogger(PathViewDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }//GEN-LAST:event_pathSelectFilePanelActionPerformed
+    }//GEN-LAST:event_boundsButtonActionPerformed
 
     private void doClose() {
         setVisible(false);
@@ -228,12 +194,11 @@ public class PathViewDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton boundsButton;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JComboBox idComboBox;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JButton okButton;
-    private org.thema.common.swing.SelectFilePanel pathSelectFilePanel;
-    private javax.swing.JTextField zEyeTextField;
+    private javax.swing.JTextField outputNameTextField;
+    private javax.swing.JCheckBox pathOrienCheckBox;
+    private org.thema.pixscape.PointShpPanel pointShpPanel;
     // End of variables declaration//GEN-END:variables
 
 }

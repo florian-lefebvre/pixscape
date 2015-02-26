@@ -19,6 +19,10 @@ import org.thema.pixscape.view.ViewTanResult;
  */
 public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
+    public CONTAGMetric() {
+        super(true);
+    }
+
     @Override
     public String getShortName() {
         return "CONTAG";
@@ -33,8 +37,9 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
 
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
-                if(view.getSample(x, y, 0) != 1)
+                if(view.getSample(x, y, 0) != 1) {
                     continue;
+                }
                 final int l = land.getSample(x, y, 0);
                 count[l]++;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
@@ -69,8 +74,9 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
                 final int ind = view.getSample(x, y, 0);
-                if(ind == -1)
+                if(ind == -1) {
                     continue;
+                }
                 final int l = land[ind];
                 count[l]++;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
@@ -98,12 +104,14 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
     private double calcCONTAG(ViewResult result, int[][] border, int [] count) {
         final SortedSet<Integer> codes = getCodes(result);
         final int m = codes.size();
-        if(m < 2)
+        if(m < 2) {
             return Double.NaN;
+        }
         
         double tot = 0;
-        for(int nb : count)
+        for(int nb : count) {
             tot += nb;
+        }
         
         int[] sumBorder = new int[256];
         for(int c1 : codes) {
@@ -119,8 +127,9 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
         for(int c1 : codes) {
             for(int c2 : codes) {
                 double val = count[c1]/tot * border[c1][c2];
-                if(val > 0)
+                if(val > 0) {
                     sum += (val / sumBorder[c1]) * Math.log(val / sumBorder[c1]);
+                }
             }
         }
         
