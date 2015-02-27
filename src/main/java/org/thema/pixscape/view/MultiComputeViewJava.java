@@ -1,13 +1,13 @@
 package org.thema.pixscape.view;
 
 import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.Arrays;
 import java.util.TreeMap;
+import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -18,90 +18,121 @@ import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
 
 /**
- *
+ * ComputeView using multiscale datas in Java.
  * 
- * @author gvuidel
+ * @author Gilles Vuidel
  */
-public class MultiComputeViewJava  extends ComputeView {
+public class MultiComputeViewJava extends ComputeView {
     
     private final TreeMap<Double, ScaleData> datas;
     private int distMin;
     
-
+    /**
+     * Creates a new MultiComputeViewJava
+     * @param datas the data at each scale
+     * @param distMin the minimal distance (in data unit) before changing scale
+     * @param aPrec the precision in degree for tangential view
+     */
     public MultiComputeViewJava(TreeMap<Double, ScaleData> datas, int distMin, double aPrec) {
         super(aPrec);
         this.datas = datas;
         this.distMin = distMin;
     }
 
+    /**
+     * @return the minimal distance (in data unit) before changing scale
+     */
     public int getDistMin() {
         return distMin;
     }
 
+    /**
+     * Sets the minimal distance (in data unit) before changing scale
+     * @param distMin the minimal distance (in data unit) before changing scale
+     */
     public void setDistMin(int distMin) {
         this.distMin = distMin;
     }
 
+    /**
+     * @return the data at each scale
+     */
     public TreeMap<Double, ScaleData> getDatas() {
         return datas;
     }
 
     @Override
-    public MultiViewShedResult calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds) throws TransformException {
-        
+    public MultiViewShedResult calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds)  {
+        long time = System.currentTimeMillis();
         TreeMap<Double, byte[]> viewBufs = new TreeMap<>();
         TreeMap<Double, Raster> viewRasters = new TreeMap<>();
-        
-        for(ScaleData data : datas.values()) {
-            WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, data.getDtm().getWidth(), data.getDtm().getHeight(), 1, null);
-            viewRasters.put(data.getResolution(), view);
-            byte[] buf = ((DataBufferByte)view.getDataBuffer()).getData();
-            viewBufs.put(data.getResolution(), buf);
-            Arrays.fill(buf, (byte)-1);
-        }
-        Rectangle largestZone = new Rectangle(0, 0, -1, -1);
-        TreeMap<Double, GridEnvelope2D> viewZones = new TreeMap<>();
-        for(ScaleData data : datas.values()) {
-            GridGeometry2D grid = data.getGridGeometry();
-            GridCoordinates2D c0 = grid.worldToGrid(c);
-            Rectangle rect = data.getDtm().getBounds();
-            if(data != datas.lastEntry().getValue()) {
-                GridEnvelope2D rLim = new GridEnvelope2D(new Rectangle(c0.x-distMin, c0.y-distMin, 2*distMin+1, 2*distMin+1).intersection(rect));
-                // adapt the envelope to match pixel border of upper scale
-                // TODO  increase the size when rect is truncate
-                GridGeometry2D gridUpper = datas.higherEntry(data.getResolution()).getValue().getDtmCov().getGridGeometry();
-                rLim = grid.worldToGrid(gridUpper.gridToWorld(gridUpper.worldToGrid(grid.gridToWorld(rLim))));
-                rect = rect.intersection(rLim);
-                rect.add(c0); // ensure point is in zone
+        try {
+            for(ScaleData data : datas.values()) {
+                WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, data.getDtm().getWidth(), data.getDtm().getHeight(), 1, null);
+                viewRasters.put(data.getResolution(), view);
+                byte[] buf = ((DataBufferByte)view.getDataBuffer()).getData();
+                viewBufs.put(data.getResolution(), buf);
+                Arrays.fill(buf, (byte)-1);
             }
-            largestZone = largestZone.union(new Rectangle(rect.x-c0.x, rect.y-c0.y, rect.width, rect.height));
-            viewZones.put(data.getResolution(), new GridEnvelope2D(rect));
-        }
-        
-        for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
-            double a = Math.atan2(-largestZone.getMinY(), x);
-            if(bounds.isAlphaIncluded(a)) {
-                calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+            Rectangle largestZone = new Rectangle(0, 0, -1, -1);
+            TreeMap<Double, GridEnvelope2D> viewZones = new TreeMap<>();
+            for(ScaleData data : datas.values()) {
+                GridGeometry2D grid = data.getGridGeometry();
+                GridCoordinates2D c0 = grid.worldToGrid(c);
+                Rectangle rect = data.getDtm().getBounds();
+                if(data != datas.lastEntry().getValue()) {
+                    GridEnvelope2D rLim = new GridEnvelope2D(new Rectangle(c0.x-distMin, c0.y-distMin, 2*distMin+1, 2*distMin+1).intersection(rect));
+                    // adapt the envelope to match pixel border of upper scale
+                    // TODO  increase the size when rect is truncate
+                    GridGeometry2D gridUpper = datas.higherEntry(data.getResolution()).getValue().getDtmCov().getGridGeometry();
+                    rLim = grid.worldToGrid(gridUpper.gridToWorld(gridUpper.worldToGrid(grid.gridToWorld(rLim))));
+                    rect = rect.intersection(rLim);
+                    rect.add(c0); // ensure point is in zone
+                }
+                largestZone = largestZone.union(new Rectangle(rect.x-c0.x, rect.y-c0.y, rect.width, rect.height));
+                viewZones.put(data.getResolution(), new GridEnvelope2D(rect));
             }
-            a = Math.atan2(-(largestZone.getMaxY()-1), x);
-            if(bounds.isAlphaIncluded(a)) {
-                calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
-            }
-        }
-        for(int y = largestZone.y+1; y < largestZone.getMaxY()-1; y++) {
-            double a = Math.atan2(-y, largestZone.getMinX());
-            if(bounds.isAlphaIncluded(a)) {
-                calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
-            }
-            a = Math.atan2(-y, largestZone.getMaxX()-1);
-            if(bounds.isAlphaIncluded(a)) {
-                calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
-            }
-        }
 
-        return new MultiViewShedResult(datas.firstEntry().getValue().getGridGeometry().worldToGrid(c), viewRasters, viewZones, this);
+            for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
+                double a = Math.atan2(-largestZone.getMinY(), x);
+                if(bounds.isAlphaIncluded(a)) {
+                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                }
+                a = Math.atan2(-(largestZone.getMaxY()-1), x);
+                if(bounds.isAlphaIncluded(a)) {
+                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                }
+            }
+            for(int y = largestZone.y+1; y < largestZone.getMaxY()-1; y++) {
+                double a = Math.atan2(-y, largestZone.getMinX());
+                if(bounds.isAlphaIncluded(a)) {
+                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                }
+                a = Math.atan2(-y, largestZone.getMaxX()-1);
+                if(bounds.isAlphaIncluded(a)) {
+                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                }
+            }
+            Logger.getLogger(MultiComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
+            return new MultiViewShedResult(datas.firstEntry().getValue().getGridGeometry().worldToGrid(c), viewRasters, viewZones, this);
+        } catch(TransformException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
     
+    /**
+     * Calculates the ray starting from p0 with angle a, at several scales.
+     * Set view to 1 when the pixel is seen from the point of view (direct) or sees the observed point (indirect).
+     * @param direct
+     * @param p0 the point of view if direct = true, the observed point otherwise, in world coordinate
+     * @param startZ the height of the eye
+     * @param destZ the eight of the observed point or -1
+     * @param bounds the limits of the view
+     * @param views the resulting viewsheds at every scale
+     * @param a the angle of the ray
+     * @param zones the boundary of the view for each scale
+     * @throws TransformException 
+     */
     private void calcRay(final boolean direct, final DirectPosition2D p0, final double startZ, 
             final double destZ, Bounds bounds, final TreeMap<Double, byte[]> views, double a, 
             final TreeMap<Double, GridEnvelope2D> zones) throws TransformException {
@@ -145,19 +176,18 @@ public class MultiComputeViewJava  extends ComputeView {
     }
     
     /**
-     * 
-     * @param x0
-     * @param y0
-     * @param x1
-     * @param y1
-     * @param destZ
-     * @param bounds
-     * @param data
-     * @param view
-     * @param z0
-     * @param dist
-     * @param slope2
-     * @return the new slope2
+     * Calculates the ray from c0 to c1.
+     * Set view to 1 when the pixel is seen from the point of view.
+     * @param c0 the starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * @param data the data of the current scale
+     * @param view the result view (buffer of the size of dtm data)
+     * @param z0 the elevation of the point of view
+     * @param dist the distance between the point of view and c0
+     * @param slope2 the current max slope^2
+     * @return the new slope^2
      */
     private double calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, 
             final double destZ, Bounds bounds, ScaleData data, final byte[] view, double z0, double dist, double slope2) {
@@ -249,6 +279,20 @@ public class MultiComputeViewJava  extends ComputeView {
         return maxSlope;
     }
     
+    /**
+     * Calculates the ray from c0 to c1.
+     * Set view to 1 when the pixel sees the observed point.
+     * @param c0 the starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the point of view
+     * @param bounds the limits of the view
+     * @param data the data of the current scale
+     * @param view the result view (buffer of the size of dtm data)
+     * @param z0 the elevation of the observed point
+     * @param dist the distance between the observed point and c0
+     * @param slope2 the current max slope^2
+     * @return the new slope^2
+     */
     private double calcRayIndirect(final GridCoordinates2D c0, final GridCoordinates2D c1, 
             final double startZ, Bounds bounds, ScaleData data, final byte[] view, double z0, double dist, double slope2) {
         final Raster dtm = data.getDtm();
@@ -326,6 +370,14 @@ public class MultiComputeViewJava  extends ComputeView {
         return maxSlope;
     }
 
+    /**
+     * Calculates the intersection point between the rectangle and the half straight defined by p0 and the angle a.
+     * p0 must be within rect.
+     * @param p0 the start point of the half straight
+     * @param a the angle of the half straight
+     * @param rect the rectangle
+     * @return the point intersecting rect with the half straight
+     */
     private static GridCoordinates2D calcIntersects(GridCoordinates2D p0, double a, Rectangle rect) {
         if(a == Math.PI/2) {
             return new GridCoordinates2D(p0.x, (int) rect.getMinY());
@@ -351,25 +403,9 @@ public class MultiComputeViewJava  extends ComputeView {
         }    
         return new GridCoordinates2D(x1, y1);
     }
-    
-    private static DirectPosition2D calcIntersects(DirectPosition2D p0, double a, Rectangle2D rect) {
-        double y1 = (a >= 0 && a < Math.PI ? rect.getMinY() : rect.getMaxY()); // haut ou bas ?
-        double x1 = (a >= Math.PI/2 && a < 1.5*Math.PI ? rect.getMinX() : rect.getMaxX()); // droite ou gauche ?
-        int sens = x1 == 0 ? -1 : +1;
-
-        double ddy = -(Math.tan(a) * Math.abs(x1-p0.x));
-        double y = p0.y + sens * ddy;   
-        if(y >= rect.getMinY() && y <= rect.getMaxY()) {
-            y1 = y;   
-        } else {
-            double ddx = Math.abs(Math.tan(a+Math.PI/2) * Math.abs(y1-p0.y));
-            x1 = p0.x + sens * ddx;
-        }    
-        return new DirectPosition2D(x1, y1);
-    }
 
     @Override
-    public ViewTanResult calcViewTan(DirectPosition2D cg, double startZ, Bounds bounds) throws TransformException {
+    public ViewTanResult calcViewTan(DirectPosition2D cg, double startZ, Bounds bounds)  {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view;
 
@@ -21,8 +16,9 @@ import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.ScaleData;
 
 /**
- *
- * @author gvuidel
+ * Base class for ViewResult with several scales.
+ * 
+ * @author Gilles Vuidel
  */
 public abstract class MultiViewResult extends AbstractViewResult {
 
@@ -34,6 +30,14 @@ public abstract class MultiViewResult extends AbstractViewResult {
     
     protected WritableRaster view, land;
 
+    /**
+     * Creates a new MultiViewResult.
+     * 
+     * @param cg the point of view or observed point in grid coordinate
+     * @param views the viewfor each scale
+     * @param zones the zone where viewshed has been calculated for each scale
+     * @param compute the compute view used
+     */
     public MultiViewResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
         super(cg);
         this.compute = compute;
@@ -50,18 +54,31 @@ public abstract class MultiViewResult extends AbstractViewResult {
         }
     }
 
+    /**
+     * @return the viewshed for each scale
+     */
     public final TreeMap<Double, Raster> getViews() {
         return views;
     }
 
+    /**
+     * @return the zone where viewshed has been calculated for each scale
+     */
     public final TreeMap<Double, GridEnvelope2D> getZones() {
         return zones;
     }
 
+    /**
+     * @return the data for each scale
+     */
     public final TreeMap<Double, ScaleData> getDatas() {
         return compute.getDatas();
     }
     
+    /**
+     * Returns the view in the first scale grid geometry.
+     * {@inheritDoc }
+     */
     @Override
     public final synchronized Raster getView() {
         if(view == null) {
@@ -70,6 +87,10 @@ public abstract class MultiViewResult extends AbstractViewResult {
         return view;
     }
 
+    /**
+     * Returns the landuse in the first scale grid geometry.
+     * {@inheritDoc }
+     */
     @Override
     public final synchronized Raster getLanduse() {
         if(land == null) {
@@ -97,8 +118,21 @@ public abstract class MultiViewResult extends AbstractViewResult {
         return codes;
     }
     
+    /**
+     * Calculates the viewshed and the landuse at the first scale and stores them into view and land.
+     */
     protected abstract void calcViewLand();
 
+    /**
+     * Calculates the distance between the point of view and (x, y), and checks if it is in the interval [dmin dmax[.
+     * 
+     * @param res the resolution of the data
+     * @param x x grid coordinate at scale res
+     * @param y y grid coordinate at scale res
+     * @param dmin the minimal distance
+     * @param dmax the maximal distance
+     * @return true if the distance to the point (x, y) is in the interval [dmin dmax[
+     */
     protected final boolean isInside(double res, int x, int y, double dmin, double dmax) {
         final Point2D p = coords.get(res);
         double d2 = res*res * (Math.pow(x-p.getX(), 2) + Math.pow(y-p.getY(), 2));

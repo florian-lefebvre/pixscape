@@ -1,17 +1,23 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view;
 
+import com.vividsolutions.jts.geom.Geometry;
+
 /**
- *
- * @author gvuidel
+ * Results from viewshed computation.
+ * 
+ * @author Gilles Vuidel
  */
 public interface ViewShedResult extends ViewResult {
  
+    /**
+     * @return the full perimeter (including holes) of the viewshed in data unit
+     */
     public double getPerimeter();
     
+    /**
+     * 
+     * @return the viewshed in vector geometry
+     */
+    public Geometry getPolygon();
 }

@@ -9,6 +9,9 @@ package org.thema.pixscape;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 import java.awt.Color;
+import java.awt.GraphicsEnvironment;
+import java.awt.SplashScreen;
+import java.awt.Toolkit;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -21,7 +24,6 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.concurrent.CancellationException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Filter;
 import java.util.logging.Handler;
@@ -29,20 +31,17 @@ import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.referencing.operation.TransformException;
 import org.thema.common.Config;
 import org.thema.common.JavaLoader;
 import org.thema.common.ProgressBar;
 import org.thema.common.Util;
-import org.thema.common.swing.LoggingFrame;
+import org.thema.common.swing.LoggingDialog;
 import org.thema.common.swing.PreferencesDialog;
 import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
@@ -59,7 +58,6 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
-import org.thema.process.Vectorizer;
 
 /**
  *
@@ -73,21 +71,19 @@ public class MainFrame extends javax.swing.JFrame {
     private ViewShedDialog viewshedDlg;
     private ViewTanDialog viewtanDlg;
     
-    private final LoggingFrame logFrame;
-    
-    
+    private final LoggingDialog logFrame;
     
     /**
      * Creates new form MainFrame
      */
     public MainFrame() {
-        //setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/thema/pixscape/ressources/ico64_graphab.png")));
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/thema/pixscape/icone64.png")));
         initComponents();
         setLocationRelativeTo(null);
-        setTitle("PixScape - " + getVersion());
+        setTitle("PixScape - " + JavaLoader.getVersion(MainFrame.class));
         mapViewer.putAddLayerButton();
         Config.setProgressBar(mapViewer.getProgressBar());
-        logFrame = new LoggingFrame();
+        logFrame = new LoggingDialog(this);
     }
 
     /**
@@ -299,11 +295,11 @@ public class MainFrame extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 591, Short.MAX_VALUE)
+            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 692, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 384, Short.MAX_VALUE)
+            .addComponent(mapViewer, javax.swing.GroupLayout.DEFAULT_SIZE, 469, Short.MAX_VALUE)
         );
 
         pack();
@@ -402,11 +398,9 @@ public class MainFrame extends javax.swing.JFrame {
                     for(Feature point : points) {
                         Point p = point.getGeometry().getCentroid();
                         Bounds b = dlg.bounds.updateBounds(point);
-                        Raster viewShed = project.getDefaultComputeView().calcViewShed(
+                        Geometry view = project.getDefaultComputeView().calcViewShed(
                                 new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), 
-                                -1, dlg.direct, b).getView();
-                        Geometry view = Vectorizer.vectorize(viewShed, 1);
-                        view.apply(project.getGrid2space());
+                                -1, dlg.direct, b).getPolygon();
                         viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), view));
                         progressBar.incProgress(1);
                     }
@@ -416,7 +410,7 @@ public class MainFrame extends javax.swing.JFrame {
                     l = new FeatureLayer("Points", points, new PointStyle());
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
-                } catch (IOException | TransformException ex) {
+                } catch (IOException ex) {
                     Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
                     JOptionPane.showMessageDialog(MainFrame.this, "An error has occured : " + ex);
                 } finally {
@@ -647,6 +641,7 @@ public class MainFrame extends javax.swing.JFrame {
         if(viewtanDlg != null) {
             viewtanDlg.setAlwaysOnTop(true);
         }
+        logFrame.setAlwaysOnTop(true);
     }//GEN-LAST:event_formWindowActivated
 
     private void formWindowDeactivated(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowDeactivated
@@ -656,7 +651,7 @@ public class MainFrame extends javax.swing.JFrame {
         if(viewtanDlg != null) {
             viewtanDlg.toBack();
         }
-        
+        logFrame.toBack();
     }//GEN-LAST:event_formWindowDeactivated
 
     private WritableRaster sampling(Raster dtm, int scale, int aggr) {
@@ -688,21 +683,9 @@ public class MainFrame extends javax.swing.JFrame {
         viewshedDlg = null;
         viewtanDlg = null;
     }
-    /**
-     * Extract version number from manifest if exists.
-     * If the manifest does not exist return "unpackage version"
-     * @return the version of th software contained in jar file manifest
-     */
-    public static String getVersion() {
-        String version = MainFrame.class.getPackage().getImplementationVersion();
-        if(version == null) {
-            return "unpackage version";
-        } else {
-            return version;
-        }
-    }
     
     /**
+     * Main program entry point.
      * @param args the command line arguments
      */
     public static void main(String args[]) throws Exception {
@@ -710,8 +693,7 @@ public class MainFrame extends javax.swing.JFrame {
         // Disable logging of FileSystemPreferences
         // Causes a lot of logs in parallel environments
         Logger globalLogger = Logger.getLogger("");
-        Handler[] handlers = globalLogger.getHandlers();
-        for(Handler handler : handlers) {
+        for(Handler handler : globalLogger.getHandlers()) {
             if(handler instanceof ConsoleHandler) {
                 globalLogger.removeHandler(handler);
             }
@@ -725,6 +707,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         globalLogger.addHandler(h);
         
+        // log all uncaught exception
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
             public void uncaughtException(Thread t, Throwable e) {
@@ -733,71 +716,23 @@ public class MainFrame extends javax.swing.JFrame {
         });
         
         Config.setNodeClass(MainFrame.class);
+        Locale.setDefault(Locale.ENGLISH);
         
         // MPI Execution
         if(args.length > 0 && args[0].equals("-mpi")) {
-            try {
-                new MpiLauncher(Arrays.copyOfRange(args, 1, args.length)).run();
-                System.exit(0);
-            } catch (Exception ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                System.exit(1);
-            }
+            new MpiLauncher(Arrays.copyOfRange(args, 1, args.length)).run();
+            System.exit(0);
         }
 
         // CLI execution
         if(args.length > 0 && !args[0].equals(JavaLoader.NOFORK)) {        
-            try {
-                new CLITools().execute(args);
-            } catch (Throwable ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-                System.exit(1);
+            if(!GraphicsEnvironment.isHeadless() && SplashScreen.getSplashScreen() != null) {
+                SplashScreen.getSplashScreen().close();
             }
-            System.exit(0);
+            new CLITools().execute(args);
+        } else { // UI execution
+            JavaLoader.launchGUI(MainFrame.class, args.length == 0, 2048);
         }
-        
-        // UI execution
-        // Relaunch java with preferences memory
-        try {
-            if(args.length == 0) {
-                if(JavaLoader.launchApp(MainFrame.class, 2048)) {
-                    System.exit(0);
-                }
-            }
-        } catch (Exception ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-        }
-        
-        // Default execution    
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                if(e instanceof CancellationException) {
-                    JOptionPane.showMessageDialog(null, "Execution has been cancelled");
-                } else {
-                    Logger.getLogger("").log(Level.SEVERE, null, e);
-                    JOptionPane.showMessageDialog(null, "An error has occurred : " + e);
-                }
-            }
-        });
-        
-        //PreferencesDialog.initLanguage();
-        Locale.setDefault(Locale.ENGLISH);
-
-        try {  // Set System L&F
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        }
-        catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException e) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.WARNING, null, e);
-        }
-
-        java.awt.EventQueue.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                new MainFrame().setVisible(true);
-            }
-        });
-        
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

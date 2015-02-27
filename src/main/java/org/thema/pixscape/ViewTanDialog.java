@@ -305,58 +305,54 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
         centreShape.setPoint2D(p);
         mapViewer.getMap().fullRepaint();
         
-        try {
-            if(viewshedCheckBox.isSelected()) {
-                if(viewshed != null) {
-                    mapViewer.getMap().removeShapes(Arrays.asList(viewshed));
-                }
-                Raster view = project.getDefaultComputeView().calcViewShed(
-                        new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, true, bounds).getView();
-                viewshed = new RasterShape(view,
-                        project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle(
-                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true);
-                mapViewer.getMap().addShape(viewshed);
+        if(viewshedCheckBox.isSelected()) {
+            if(viewshed != null) {
+                mapViewer.getMap().removeShapes(Arrays.asList(viewshed));
             }
-            
-            ViewTanResult result = project.getDefaultComputeView().calcViewTan(
-                    new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), bounds);
-           
-            Rectangle2D r = new Rectangle2D.Double(bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
-            DefaultGroupLayer gl = new DefaultGroupLayer("Tangential view", true);
-            if(zRadioButton.isSelected()) {
-                RasterStyle s = new RasterStyle(ColorRamp.RAMP_DEM);
-//                s.setNoDataValue(-1000);
-                gl.addLayerFirst(new RasterLayer("Elevation", new RasterShape(result.getElevationView(), r, s, true)));
-            }
-            if(distRadioButton.isSelected()) {
-                RasterStyle s = new RasterStyle();
-//                s.setNoDataValue(-1);
-                gl.addLayerFirst(new RasterLayer("Distance", new RasterShape(result.getDistanceView(), r, s, true)));
-            }
-            if(project.hasLandUse() && landRadioButton.isSelected()) {
-                RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()));
-                s.setNoDataValue(255);
-                gl.addLayerFirst(new RasterLayer("Land use", new RasterShape(result.getLanduseView(), r, s, true)));
-            }
-            
-            if(viewFrame == null) {
-                viewMapViewer = new MapViewer();
-                viewMapViewer.setTreeLayerVisible(true);
-                viewFrame = new JDialog(this);
-                viewFrame.setAlwaysOnTop(false);
-                viewFrame.setTitle("Tangential view");
-                viewFrame.getContentPane().add(viewMapViewer, BorderLayout.CENTER);
-                viewFrame.pack();
-                viewFrame.setLocationRelativeTo(null);
-                viewFrame.setDefaultCloseOperation(HIDE_ON_CLOSE);
-            }
-            viewFrame.setVisible(true);
-            viewMapViewer.setRootLayer(gl);
-            
-            metricDlg.setResult(result);
-        } catch (InvalidGridGeometryException | TransformException ex) {
-            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+            Raster view = project.getDefaultComputeView().calcViewShed(
+                    new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, true, bounds).getView();
+            viewshed = new RasterShape(view,
+                    project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle(
+                            new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true);
+            mapViewer.getMap().addShape(viewshed);
         }
+
+        ViewTanResult result = project.getDefaultComputeView().calcViewTan(
+                new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), bounds);
+
+        Rectangle2D r = new Rectangle2D.Double(bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
+        DefaultGroupLayer gl = new DefaultGroupLayer("Tangential view", true);
+        if(zRadioButton.isSelected()) {
+            RasterStyle s = new RasterStyle(ColorRamp.RAMP_DEM);
+//                s.setNoDataValue(-1000);
+            gl.addLayerFirst(new RasterLayer("Elevation", new RasterShape(result.getElevationView(), r, s, true)));
+        }
+        if(distRadioButton.isSelected()) {
+            RasterStyle s = new RasterStyle();
+//                s.setNoDataValue(-1);
+            gl.addLayerFirst(new RasterLayer("Distance", new RasterShape(result.getDistanceView(), r, s, true)));
+        }
+        if(project.hasLandUse() && landRadioButton.isSelected()) {
+            RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()));
+            s.setNoDataValue(255);
+            gl.addLayerFirst(new RasterLayer("Land use", new RasterShape(result.getLanduseView(), r, s, true)));
+        }
+
+        if(viewFrame == null) {
+            viewMapViewer = new MapViewer();
+            viewMapViewer.setTreeLayerVisible(true);
+            viewFrame = new JDialog(this);
+            viewFrame.setAlwaysOnTop(false);
+            viewFrame.setTitle("Tangential view");
+            viewFrame.getContentPane().add(viewMapViewer, BorderLayout.CENTER);
+            viewFrame.pack();
+            viewFrame.setLocationRelativeTo(null);
+            viewFrame.setDefaultCloseOperation(HIDE_ON_CLOSE);
+        }
+        viewFrame.setVisible(true);
+        viewMapViewer.setRootLayer(gl);
+
+        metricDlg.setResult(result);
     }
     
     private void doClose() {

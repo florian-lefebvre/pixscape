@@ -27,6 +27,9 @@ public class ShanDistMetric extends AbstractMetric implements ViewTanMetric {
             int dist = (int) result.getMaxDistance(t);
             distances.putValue(dist, dist);
         }
+        if(distances.size() < 2) {
+            return new Double[]{ 0.0 };
+        }
         double shannon = 0;
         double sum = 0;
         for(List<Integer> lst : distances.values()) {
@@ -36,6 +39,7 @@ public class ShanDistMetric extends AbstractMetric implements ViewTanMetric {
             int nb = lst.size();
             shannon += - nb/sum * Math.log(nb/sum);
         }
+
         return new Double[]{ shannon/Math.log(distances.size()) };
     }
 

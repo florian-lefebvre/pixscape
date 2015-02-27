@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view;
 
@@ -14,14 +9,22 @@ import java.awt.image.WritableRaster;
 import org.geotools.coverage.grid.GridCoordinates2D;
 
 /**
- *
- * @author gvuidel
+ * ViewTanResult implementation for monoscale computation.
+ * 
+ * @author Gilles Vuidel
  */
 public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResult {
     private final double ares;
     
     private WritableRaster elevation, distance, landuse;
 
+    /**
+     * Creates a new SimpleViewTanResult
+     * @param ares the angular resolution in radian
+     * @param cg the point of view in grid coordinate
+     * @param view the resulting view, may be null
+     * @param compute the compute view used
+     */
     public SimpleViewTanResult(double ares, GridCoordinates2D cg, Raster view, SimpleComputeView compute) {
         super(cg, view, compute);
         this.ares = ares;
@@ -122,17 +125,11 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
                 view.getWidth(), view.getHeight(), 1), null);
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
-//                if(view.getSample(x, y, 0) == -1) {
-//                    elevation.setSample(x, y, 0, -1000);
-//                    distance.setSample(x, y, 0, -1);
-//                    landuse.setSample(x, y, 0, 255);
-//                } else {
-                    elevation.setSample(x, y, 0, getElevation(x, y));
-                    distance.setSample(x, y, 0, getDistance(x, y));
-                    if(getLanduse() != null) {
-                        landuse.setSample(x, y, 0, getLandUse(x, y));
-                    }
-//                }
+                elevation.setSample(x, y, 0, getElevation(x, y));
+                distance.setSample(x, y, 0, getDistance(x, y));
+                if(getLanduse() != null) {
+                    landuse.setSample(x, y, 0, getLandUse(x, y));
+                }
             }
         }
     }

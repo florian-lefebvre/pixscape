@@ -16,11 +16,7 @@ import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.geometry.DirectPosition2D;
-import org.opengis.referencing.operation.TransformException;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
@@ -345,37 +341,33 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
 
     @Override
     public void mouseClicked(Point2D p, List<SelectableShape> shapes, MouseEvent sourceEvent, int cursorMode) {
-        try {
-            pointTextField.setText(p.getX() + "," + p.getY());
-            centreShape.setPoint2D(p);
-            for(Layer l : new ArrayList<>(layers.getLayers())) {
-                if(!(l instanceof DefaultLayer)) {
-                    layers.removeLayer(l);
-                }
+        pointTextField.setText(p.getX() + "," + p.getY());
+        centreShape.setPoint2D(p);
+        for(Layer l : new ArrayList<>(layers.getLayers())) {
+            if(!(l instanceof DefaultLayer)) {
+                layers.removeLayer(l);
             }
-            ViewResult result;
-            Raster viewShed;
-            if(multiScaleCheckBox.isSelected()) {
-                MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
-                        .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
-                                Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-                for(double res : multiResult.getViews().keySet()) {
-                    addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
-                }
-//                addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
-                result = multiResult;
-            } else {
-                result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
-                    Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-                viewShed = result.getView();
-                addViewShedLayer(viewShed, project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
-            }
-            
-            metricDlg.setResult(result);
-            mapViewer.getMap().fullRepaint(); // normalement pas utile mais par moment bug du rafraichissement...
-        } catch (InvalidGridGeometryException | TransformException ex) {
-            Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
         }
+        ViewResult result;
+        Raster viewShed;
+        if(multiScaleCheckBox.isSelected()) {
+            MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
+                    .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
+                            Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+            for(double res : multiResult.getViews().keySet()) {
+                addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+            }
+//                addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+            result = multiResult;
+        } else {
+            result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
+                Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+            viewShed = result.getView();
+            addViewShedLayer(viewShed, project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+        }
+
+        metricDlg.setResult(result);
+        mapViewer.getMap().fullRepaint(); // normalement pas utile mais par moment bug du rafraichissement...
     }
     
     private void addViewShedLayer(Raster view, double res, String name) {

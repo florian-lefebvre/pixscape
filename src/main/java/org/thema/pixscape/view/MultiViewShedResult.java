@@ -1,28 +1,37 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.thema.pixscape.view;
 
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import java.awt.Rectangle;
 import java.awt.image.Raster;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.TreeMap;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.ScaleData;
+import org.thema.process.Vectorizer;
 
 /**
- *
- * @author gvuidel
+ * ViewShedResult implementation for multiscale computation.
+ * 
+ * @author Gilles Vuidel
  */
 public class MultiViewShedResult extends MultiViewResult implements ViewShedResult {
 
-    
-    public MultiViewShedResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
+    /**
+     * Creates a new MultiViewShedResult.
+     * 
+     * @param cg the point of view or observed point in grid coordinate
+     * @param views the viewshed for each scale
+     * @param zones the zone where viewshed has been calculated for each scale
+     * @param compute the compute view used
+     */
+    MultiViewShedResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
         super(cg, views, zones, compute);
     }
 
@@ -111,4 +120,13 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
         
     }
     
+    @Override
+    public Geometry getPolygon() {
+        List<Geometry> geoms = new ArrayList<>();
+        for(double res : getViews().keySet()) {
+            Geometry poly = Vectorizer.vectorize(getViews().get(res), 1);
+            poly.apply(getDatas().get(res).getGrid2Space());
+        }
+        return new GeometryFactory().buildGeometry(geoms);
+    }
 }

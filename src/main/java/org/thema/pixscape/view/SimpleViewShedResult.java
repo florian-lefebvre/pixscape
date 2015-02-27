@@ -1,25 +1,29 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view;
 
+import com.vividsolutions.jts.geom.Geometry;
 import java.awt.Rectangle;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
+import org.thema.process.Vectorizer;
 
 /**
- *
- * @author gvuidel
+ * ViewShedResult implementation for monoscale computation.
+ * 
+ * @author Gilles Vuidel
  */
 public class SimpleViewShedResult extends SimpleViewResult implements ViewShedResult {
     
     private double perim = -1;
 
+    /**
+     * Creates a new SimpleViewShedResult
+     * @param cg the point of view or observed point in grid coordinate
+     * @param view the resulting viewshed, may be null
+     * @param compute the compute view used
+     */
     public SimpleViewShedResult(GridCoordinates2D cg, Raster view, SimpleComputeView compute) {
         super(cg, view, compute);
     }
@@ -113,6 +117,13 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         }
         
         return nb * getRes2D()*getRes2D();
+    }
+
+    @Override
+    public Geometry getPolygon() {
+        Geometry poly = Vectorizer.vectorize(getView(), 1);
+        poly.apply(getData().getGrid2Space());
+        return poly;
     }
 
 }

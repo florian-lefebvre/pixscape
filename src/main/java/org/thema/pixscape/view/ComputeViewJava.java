@@ -7,15 +7,16 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.util.Arrays;
+import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
 
 /**
- *
+ * Default implementation of SimpleComputeView in Java.
  * 
- * @author gvuidel
+ * @author Gilles Vuidel
  */
 public class ComputeViewJava extends SimpleComputeView {
     
@@ -23,6 +24,11 @@ public class ComputeViewJava extends SimpleComputeView {
     private DataBuffer dsmBuf;
     private Raster dtm;
     
+    /**
+     * Creates a new ComputeViewJava.
+     * @param data the data for this resolution
+     * @param aPrec the precision in degree for tangential view
+     */
     public ComputeViewJava(ScaleData data, double aPrec) {
         super(data, aPrec);
         this.dtm = data.getDtm();
@@ -34,76 +40,85 @@ public class ComputeViewJava extends SimpleComputeView {
     
     @Override
     public ViewShedResult calcViewShed(DirectPosition2D p, double startZ, double destZ, boolean direct, Bounds bounds)  {
+        long time = System.currentTimeMillis();
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
         byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
         GridCoordinates2D cg = getWorld2Grid(p);
-//        long time = System.currentTimeMillis();
-        for(int x = 0; x < dtm.getWidth(); x++) {
-            if(bounds.isAlphaIncluded(Math.atan2(cg.y, x-cg.x))) {
-                calcRay(direct, cg.x, cg.y, x, 0, startZ, destZ, bounds, viewBuf);
-            }
-            if(bounds.isAlphaIncluded(Math.atan2(cg.y-(dtm.getHeight()-1), x-cg.x))) {
-                calcRay(direct, cg.x, cg.y, x, dtm.getHeight()-1, startZ, destZ, bounds, viewBuf);
-            }
+        GridCoordinates2D c = new GridCoordinates2D();
+        for(c.x = 0; c.x < dtm.getWidth(); c.x++) {
+            c.y = 0;
+            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            c.y = dtm.getHeight()-1;
+            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
         }
-        for(int y = 1; y < dtm.getHeight()-1; y++) {
-            if(bounds.isAlphaIncluded(Math.atan2(cg.y-y, -cg.x))) {
-                calcRay(direct, cg.x, cg.y, 0, y, startZ, destZ, bounds, viewBuf);
-            }
-            if(bounds.isAlphaIncluded(Math.atan2(cg.y-y, dtm.getWidth()-1-cg.x))) {
-                calcRay(direct, cg.x, cg.y, dtm.getWidth()-1, y, startZ, destZ, bounds, viewBuf);
-            }
+        for(c.y = 1; c.y < dtm.getHeight()-1; c.y++) {
+            c.x = 0;
+            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            c.x = dtm.getWidth()-1;
+            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
         }
-//        System.out.println((System.currentTimeMillis()-time) + " ms");
+        Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         return new SimpleViewShedResult(cg, view, this);
     }
     
     @Override
     public ViewTanResult calcViewTan(DirectPosition2D p, double startZ, Bounds bounds)  {
+        long time = System.currentTimeMillis();
         int n = (int)Math.ceil(bounds.getAmplitudeRad()/aPrec);
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/aPrec), 1, null);
         int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
         Arrays.fill(viewBuf, -1);
         GridCoordinates2D cg = getWorld2Grid(p);
         double aStart = bounds.getAlphaleft();
-        long time = System.currentTimeMillis();
         for(int ax = 0; ax < n; ax++) {
             double a = (aStart - ax*aPrec + 2*Math.PI) % (2*Math.PI);
             if(bounds.isAlphaIncluded(a)) {
-                calcRayTan(cg.x, cg.y, startZ, bounds, viewBuf, a, n, ax, aPrec);
+                calcRayTan(cg, startZ, bounds, viewBuf, a, n, ax, aPrec);
             }
         }
-        System.out.println((System.currentTimeMillis()-time) + " ms");
+        Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         return new SimpleViewTanResult(aPrec, cg, view, this);
     }
     
-    private void calcRayTan(final int x0, final int y0, final double startZ, Bounds bounds, final int[] view, final double a, final int wa, final int ax, final double ares) {
-        
+    /**
+     * Calculates the ray from c0 with angle a.
+     * Set the pixel index in view when the pixel is viewed from c0
+     * @param c0 the point of view
+     * @param startZ the height of the eye
+     * @param bounds the limits of the view
+     * @param view the resulting tangential view
+     * @param a the horizontal angle of the ray
+     * @param wa the width of the view buffer
+     * @param ax the x index in the view buffer for this ray
+     * @param ares the resolution (in degree) of the view
+     */
+    private void calcRayTan(final GridCoordinates2D c0, final double startZ, final Bounds bounds, final int[] view, 
+            final double a, final int wa, final int ax, final double ares) {
         final int w = dtm.getWidth();
         final int h = dtm.getHeight();
         int y1 = a >= 0 && a < Math.PI ? 0 : h-1; // haut ou bas ?
         int x1 = a >= Math.PI/2 && a < 1.5*Math.PI ? 0 : w-1; // droite ou gauche ?
         int sens = x1 == 0 ? -1 : +1;
 
-        int ddy = (int) -Math.round(Math.tan(a) * Math.abs(x1-x0));
-        int y = y0 + sens * ddy;   
+        int ddy = (int) -Math.round(Math.tan(a) * Math.abs(x1-c0.x));
+        int y = c0.y + sens * ddy;   
         if(y >= 0 && y < h) {
             y1 = y;   
         } else {
-            int ddx = (int) Math.abs(Math.round(Math.tan(a+Math.PI/2) * Math.abs(y1-y0)));
-            x1 = x0 + sens * ddx;
+            int ddx = (int) Math.abs(Math.round(Math.tan(a+Math.PI/2) * Math.abs(y1-c0.y)));
+            x1 = c0.x + sens * ddx;
         }        
         
-        final double z0 = dtm.getSample(x0, y0, 0) + startZ;
+        final double z0 = dtm.getSample(c0.x, c0.y, 0) + startZ;
         
-        final int dx = Math.abs(x1-x0);
-        final int dy = Math.abs(y1-y0);
-        final int sx = x0 < x1 ? 1 : -1;
-        final int sy = y0 < y1 ? 1 : -1;
+        final int dx = Math.abs(x1-c0.x);
+        final int dy = Math.abs(y1-c0.y);
+        final int sx = c0.x < x1 ? 1 : -1;
+        final int sy = c0.y < y1 ? 1 : -1;
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = x0 + y0*w;
+        int ind = c0.x + c0.y*w;
         final int ind1 = x1 + y1*w;
         
         if(bounds.getDmin() == 0) {
@@ -164,27 +179,51 @@ public class ComputeViewJava extends SimpleComputeView {
    
     }
     
-    private void calcRay(final boolean direct, final int x0, final int y0, final int x1, final int y1, final double startZ, final double destZ, Bounds bounds, final byte[] view) {
-        if(direct) {
-            calcRayDirect(x0, y0, x1, y1, startZ, destZ, bounds, view);
-        } else {
-            calcRayIndirect(x0, y0, x1, y1, startZ, destZ, bounds, view);
+    /**
+     * Calculates the ray starting from c0 to c1.
+     * Set view to 1 when the pixel is seen from the point of view (direct) or sees the observed point (indirect).
+     * @param direct
+     * @param c0 the point of view if direct = true, the observed point otherwise, in grid coordinate
+     * @param c1 the end point of the ray, in grid coordinate
+     * @param startZ the height of the eye
+     * @param destZ the eight of the observed point or -1
+     * @param bounds the limits of the view
+     * @param view the resulting viewshed (buffer of the size of dtm data)
+     */
+    private void calcRay(final boolean direct, final GridCoordinates2D c0, final GridCoordinates2D c1, 
+            final double startZ, final double destZ, Bounds bounds, final byte[] view) {
+        if(bounds.isAlphaIncluded(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
+            if(direct) {
+                calcRayDirect(c0, c1, startZ, destZ, bounds, view);
+            } else {
+                calcRayIndirect(c0, c1, startZ, destZ, bounds, view);
+            }
         }
     }
     
-    private void calcRayDirect(final int x0, final int y0, final int x1, final int y1, final double startZ, final double destZ, Bounds bounds, final byte[] view) {
+    /**
+     * Calculates the ray from c0 to c1.
+     * Set view to 1 when the pixel is seen from the point of view c0.
+     * @param c0 the point of view, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the eye
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * @param view the result view (buffer of the size of dtm data)
+     */
+    private void calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, final double destZ, Bounds bounds, final byte[] view) {
         final double res2D2 = getData().getResolution()*getData().getResolution();
-        final double z0 = dtm.getSampleDouble(x0, y0, 0) + startZ;
+        final double z0 = dtm.getSampleDouble(c0.x, c0.y, 0) + startZ;
         final int w = dtm.getWidth();
-        final int dx = Math.abs(x1-x0);
-        final int dy = Math.abs(y1-y0);
-        final int sx = x0 < x1 ? 1 : -1;
-        final int sy = y0 < y1 ? 1 : -1;
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = x0 + y0*w;
-        final int ind1 = x1 + y1*w;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
         
         if(bounds.getSlopemin() == Double.NEGATIVE_INFINITY && bounds.getDmin() == 0) {
             view[ind] = 1;
@@ -246,22 +285,32 @@ public class ComputeViewJava extends SimpleComputeView {
    
     }
     
-    private void calcRayIndirect(final int x0, final int y0, final int x1, final int y1, final double startZ, double destZ, Bounds bounds, final byte[] view) {
-        final double dsmZ = (getData().getDsm()!= null ? getData().getDsm().getSampleDouble(x0, y0, 0) : 0);
+    /**
+     * Calculates the ray from c0 to c1.
+     * Set view to 1 when the pixel sees the observed point c0.
+     * @param c0 the observed point, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the point of view
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * @param view the result view (buffer of the size of dtm data)
+     */
+    private void calcRayIndirect(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, double destZ, Bounds bounds, final byte[] view) {
+        final double dsmZ = (getData().getDsm()!= null ? getData().getDsm().getSampleDouble(c0.x, c0.y, 0) : 0);
         if(destZ != -1 && destZ < dsmZ) {
             return;
         }
-        final double z0 = dtm.getSampleDouble(x0, y0, 0) + (destZ != -1 ? destZ : dsmZ);
+        final double z0 = dtm.getSampleDouble(c0.x, c0.y, 0) + (destZ != -1 ? destZ : dsmZ);
         final int w = dtm.getWidth();
-        final int dx = Math.abs(x1-x0);
-        final int dy = Math.abs(y1-y0);
-        final int sx = x0 < x1 ? 1 : -1;
-        final int sy = y0 < y1 ? 1 : -1;
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = x0 + y0*w;
-        final int ind1 = x1 + y1*w;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
         
         if(bounds.getSlopemin() == Double.NEGATIVE_INFINITY && bounds.getDmin() == 0) {
             view[ind] = 1;
@@ -312,9 +361,4 @@ public class ComputeViewJava extends SimpleComputeView {
         }
    
     }
-
-    @Override
-    public void dispose() {
-    }
-
 }

@@ -113,6 +113,11 @@ public class MetricResultDialog extends javax.swing.JDialog {
         });
 
         remButton.setText("Remove");
+        remButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                remButtonActionPerformed(evt);
+            }
+        });
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -157,6 +162,15 @@ public class MetricResultDialog extends javax.swing.JDialog {
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
        updateMetric();
     }//GEN-LAST:event_formComponentShown
+
+    private void remButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_remButtonActionPerformed
+        for(int i = table.getRowCount()-1; i >= 0; i--) {
+            if(table.getSelectionModel().isSelectedIndex(i)) {
+                ((DefaultTableModel)table.getModel()).removeRow(i);
+            }
+        }
+        
+    }//GEN-LAST:event_remButtonActionPerformed
 
     
    

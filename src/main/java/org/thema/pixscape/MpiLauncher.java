@@ -25,7 +25,7 @@ public class MpiLauncher extends MainMPI {
     public void master() {
         try {
             new CLITools().execute(args);
-        } catch (Throwable ex) {
+        } catch (IOException ex) {
             Logger.getLogger(MpiLauncher.class.getName()).log(Level.SEVERE, null, ex);
         }
     }

@@ -6,7 +6,6 @@ import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -51,8 +50,9 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * CUDA implementation of SimpleComputeView.
+ * 
+ * @author Gilles Vuidel
  */
 public class ComputeViewCUDA extends SimpleComputeView {
     
@@ -114,9 +114,6 @@ public class ComputeViewCUDA extends SimpleComputeView {
         
         // Enable exceptions and omit all subsequent error checks
         JCudaDriver.setExceptionsEnabled(true);
-        // Create the PTX file by calling the NVCC
-        //ptxFileName = preparePtxFile("/home/gvuidel/Documents/PImage/pimage/target/classes/view_kernel.cu");
-//        preparePtxFile("/home/gvuidel/Documents/PImage/pimage/target/classes/view_kernel.cu");
         ptxFile = File.createTempFile("view_kernel", ".ptx");
         extract("/view_kernel.ptx", ptxFile);
         // Initialize the driver 
@@ -137,6 +134,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
         CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
+                long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.clearView();
                 cuCtxSynchronize();
@@ -149,6 +147,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
                 for(ViewShedMetric m : metrics) {
                     results.add(m.calcMetric(view));
                 }
+                Logger.getLogger(ComputeViewCUDA.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
                 return results;
             }
         };
@@ -168,22 +167,16 @@ public class ComputeViewCUDA extends SimpleComputeView {
         CUDARunnable<ViewShedResult> r = new CUDARunnable<ViewShedResult>() {
             @Override
             public ViewShedResult run(CUDAContext cudaContext) {
+                long time = System.currentTimeMillis();
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
                 byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
-                //long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.clearView();
                 cuCtxSynchronize();
-
                 cudaContext.viewShed(cg, (float) startZ, (float) destZ, direct, bounds);
                 cuCtxSynchronize();
-
-                //System.out.println("Nb : " + cudaContext.getSumView());
-
-                 cudaContext.getView(viewBuf);
-                
-
-                //System.out.println((System.currentTimeMillis()-time) + " ms");
+                cudaContext.getView(viewBuf);
+                Logger.getLogger(ComputeViewCUDA.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
                 return new SimpleViewShedResult(cg, view, ComputeViewCUDA.this);
             }
         };
@@ -203,6 +196,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
         CUDARunnable<List<Double[]>> r = new CUDARunnable<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
+                long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.viewTan(cg, (float) startZ, (float) aPrec, bounds);
 
@@ -211,6 +205,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
                 for(ViewTanMetric m : metrics) {
                     results.add(m.calcMetric(view));
                 }
+                Logger.getLogger(ComputeViewCUDA.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
                 return results;
             }
         };
@@ -229,17 +224,15 @@ public class ComputeViewCUDA extends SimpleComputeView {
         CUDARunnable<ViewTanResult> r = new CUDARunnable<ViewTanResult>() {
             @Override
             public ViewTanResult run(CUDAContext cudaContext) {
-               
-                //long time = System.currentTimeMillis();
+                long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
                 cudaContext.viewTan(cg, (double) startZ, (double) aPrec, bounds);
 
-                //System.out.println("Nb : " + cudaContext.getSumView());
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, cudaContext.getWa(), cudaContext.getHa(), 1, null);
                 int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
                 cudaContext.getViewTan(viewBuf);
 
-                //System.out.println((System.currentTimeMillis()-time) + " ms");
+                Logger.getLogger(ComputeViewCUDA.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
                 return new SimpleViewTanResult(aPrec, cg, view, ComputeViewCUDA.this);
             }
         };
@@ -252,74 +245,6 @@ public class ComputeViewCUDA extends SimpleComputeView {
         }
     }
     
-
-    /**
-     * The extension of the given file name is replaced with "ptx".
-     * If the file with the resulting name does not exist, it is
-     * compiled from the given file using NVCC. The name of the
-     * PTX file is returned.
-     *
-     * @param cuFileName The name of the .CU file
-     * @return The name of the PTX file
-     * @throws IOException If an I/O error occurs
-     */
-    private static String preparePtxFile(String cuFileName) throws IOException
-    {
-        int endIndex = cuFileName.lastIndexOf('.');
-        if (endIndex == -1)
-        {
-            endIndex = cuFileName.length()-1;
-        }
-        String ptxFileName = cuFileName.substring(0, endIndex+1)+"ptx";
-        File ptxFile = new File(ptxFileName);
-        if (ptxFile.exists())
-        {
-            return ptxFileName;
-        }
-
-        File cuFile = new File(cuFileName);
-        if (!cuFile.exists())
-        {
-            throw new IOException("Input file not found: "+cuFileName);
-        }
-        String modelString = "-m"+System.getProperty("sun.arch.data.model");
-        String command =
-            "nvcc " + modelString + " -ptx "+
-            cuFile.getPath()+" -o "+ptxFileName;
-
-        System.out.println("Executing\n"+command);
-        Process process = Runtime.getRuntime().exec(command);
-
-        String errorMessage =
-            new String(toByteArray(process.getErrorStream()));
-        String outputMessage =
-            new String(toByteArray(process.getInputStream()));
-        int exitValue = 0;
-        try
-        {
-            exitValue = process.waitFor();
-        }
-        catch (InterruptedException e)
-        {
-            Thread.currentThread().interrupt();
-            throw new IOException(
-                "Interrupted while waiting for nvcc output", e);
-        }
-
-        if (exitValue != 0)
-        {
-            System.out.println("nvcc process exitValue "+exitValue);
-            System.out.println("errorMessage:\n"+errorMessage);
-            System.out.println("outputMessage:\n"+outputMessage);
-            throw new IOException(
-                "Could not create .ptx file: "+errorMessage);
-        }
-
-        System.out.println("Finished creating PTX file");
-        return ptxFileName;
-    }
-    
-    
     private static void extract(String jarpath, File file) throws IOException {      
         byte [] buf = new byte[8192];
         try (InputStream stream = ComputeViewCUDA.class.getResourceAsStream(jarpath); FileOutputStream fout = new FileOutputStream(file)) {
@@ -330,36 +255,13 @@ public class ComputeViewCUDA extends SimpleComputeView {
         }
     }
 
-    /**
-     * Fully reads the given InputStream and returns it as a byte array
-     *
-     * @param inputStream The input stream to read
-     * @return The byte array containing the data from the input stream
-     * @throws IOException If an I/O error occurs
-     */
-    private static byte[] toByteArray(InputStream inputStream)
-        throws IOException
-    {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte buffer[] = new byte[8192];
-        while (true)
-        {
-            int read = inputStream.read(buffer);
-            if (read == -1)
-            {
-                break;
-            }
-            baos.write(buffer, 0, read);
-        }
-        return baos.toByteArray();
-    }
-
     @Override
     public void dispose() {
         try {
             // for stoping CUDAThreads
-            for(int dev = 0; dev < nbDev; dev++)
+            for(int dev = 0; dev < nbDev; dev++) {
                 queue.put(CUDARunnable.END);
+            }
         } catch (InterruptedException ex) {
             Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -441,8 +343,9 @@ public class ComputeViewCUDA extends SimpleComputeView {
             if(dsmBuf != null) {
                 cuMemAlloc(dsmDev, size * Sizeof.FLOAT);
                 cuMemcpyHtoD(dsmDev, Pointer.to(dsmBuf), size * Sizeof.FLOAT);
-            } else
+            } else {
                 cuMemAlloc(dsmDev, 1 * Sizeof.FLOAT);
+            }
             
             sumDev = new CUdeviceptr();
             cuMemAlloc(sumDev, sumSize * Sizeof.INT);
@@ -690,14 +593,16 @@ public class ComputeViewCUDA extends SimpleComputeView {
         }
 
         void getView(byte[] viewBuf) {
-            if(viewBuf.length != size)
+            if(viewBuf.length != size) {
                 throw new IllegalArgumentException("Bad size buffer");
+            }
             cuMemcpyDtoH(Pointer.to(viewBuf), viewDev, size * Sizeof.CHAR);
         }
         
         void getViewTan(int[] viewBuf) {
-            if(viewBuf.length != wa*ha)
+            if(viewBuf.length != wa*ha) {
                 throw new IllegalArgumentException("Bad size buffer");
+            }
             cuMemcpyDtoH(Pointer.to(viewBuf), viewTanDev, wa*ha * Sizeof.INT);
         }
 
@@ -727,8 +632,9 @@ public class ComputeViewCUDA extends SimpleComputeView {
                 do {
                     list.clear();
                     queue.drainTo(list);
-                    if(list.isEmpty())
-                        list.add(queue.take());  
+                    if(list.isEmpty()) {
+                        list.add(queue.take());
+                    }  
                     for(CUDARunnable run : list) {
                         if(run == CUDARunnable.END) {
                             end = true;

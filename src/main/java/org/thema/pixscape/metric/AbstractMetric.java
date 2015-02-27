@@ -61,8 +61,7 @@ public abstract class AbstractMetric implements Metric {
     
     public String getName() {
         try {
-            return java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle").getString(getShortName())
-                    + " -" + getCodeName();
+            return getCodeName() + " - " + java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle").getString(getShortName());
         } catch(MissingResourceException e) {
             return getCodeName();
         }

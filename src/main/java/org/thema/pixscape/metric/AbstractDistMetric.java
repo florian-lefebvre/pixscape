@@ -6,6 +6,7 @@
 package org.thema.pixscape.metric;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -93,5 +94,12 @@ public abstract class AbstractDistMetric extends AbstractMetric {
         return names.toArray(new String[names.size()]);
     }
     
-    
+    @Override
+    public String toString() {
+        String s =  super.toString();
+        if(!distances.isEmpty()) {
+            s += " " + Arrays.deepToString(distances.toArray());
+        }
+        return s;
+    }
 }

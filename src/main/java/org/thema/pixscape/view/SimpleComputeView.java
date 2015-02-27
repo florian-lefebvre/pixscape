@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view;
 
@@ -12,22 +7,37 @@ import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.ScaleData;
 
 /**
- *
- * @author gvuidel
+ * ComputeView for only one scale (resolution)
+ * 
+ * @author Gilles Vuidel
  */
 public abstract class SimpleComputeView extends ComputeView {
     
     private final ScaleData data;
 
+    /**
+     * Creates a new SimpleComputeView.
+     * @param data the data for this resolution
+     * @param aPrec the precision in degree for tangential view
+     */
     public SimpleComputeView(ScaleData data, double aPrec) {
         super(aPrec);
         this.data = data;
     }
 
+    /**
+     * 
+     * @return the data for this scale
+     */
     public final ScaleData getData() {
         return data;
     }
     
+    /**
+     * Transform a point from world coordinate to grid coordinate
+     * @param p the point in world coordinate
+     * @return the point in grid coordinate
+     */
     protected final GridCoordinates2D getWorld2Grid(DirectPosition2D p) {
         try {
             return data.getGridGeometry().worldToGrid(p);

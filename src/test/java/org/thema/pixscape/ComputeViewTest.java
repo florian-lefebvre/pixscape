@@ -39,7 +39,11 @@ import org.junit.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.AreaMetric;
+import org.thema.pixscape.metric.ViewShedMetric;
+import org.thema.pixscape.metric.ViewTanMetric;
 import org.thema.pixscape.view.MultiComputeViewJava;
+import org.thema.pixscape.view.ViewShedResult;
+import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *
@@ -271,7 +275,8 @@ public class ComputeViewTest {
                             test[i*5+j] = Byte.parseByte(values[j]);
                         }
                     }
-                    Raster result = compute.calcViewShed(p, startZ, destZ, direct, bounds).getView(); 
+                    ViewShedResult viewshedResult = compute.calcViewShed(p, startZ, destZ, direct, bounds); 
+                    Raster result = viewshedResult.getView();
                     printArray(((DataBufferByte)result.getDataBuffer()).getData());
                     Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     if(destZ == -1) {
@@ -287,6 +292,14 @@ public class ComputeViewTest {
                             result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView();  
                             Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         }
+                    }
+                    //test metrics
+                    line = r.readLine();
+                    while(line != null && !line.trim().isEmpty()) {
+                        tokens = line.split("=");
+                        double res = ((ViewShedMetric)Project.getMetric(tokens[0])).calcMetric(viewshedResult)[0];
+                        Assert.assertEquals(Double.parseDouble(tokens[1]), res, 1e-10);
+                        line = r.readLine();
                     }
                 }
                 
@@ -350,10 +363,19 @@ public class ComputeViewTest {
                         }
                     }
                     compute.setaPrec(ares);
-                    Raster result = compute.calcViewTan(p, startZ, bounds).getView();    
+                    ViewTanResult viewtanResult = compute.calcViewTan(p, startZ, bounds);    
+                    Raster result = viewtanResult.getView();
                     printArray(((DataBufferInt)result.getDataBuffer()).getData(), n, n/2);
                     Assert.assertArrayEquals(test, ((DataBufferInt)result.getDataBuffer()).getData());
                     
+                    //test metrics
+                    line = r.readLine();
+                    while(line != null && !line.trim().isEmpty()) {
+                        tokens = line.split("=");
+                        double res = ((ViewTanMetric)Project.getMetric(tokens[0])).calcMetric(viewtanResult)[0];
+                        Assert.assertEquals(Double.parseDouble(tokens[1]), res, 1e-10);
+                        line = r.readLine();
+                    }
                 }
                 
                 line = r.readLine();

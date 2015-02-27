@@ -6,8 +6,6 @@
 
 package org.thema.pixscape;
 
-import java.awt.image.BandedSampleModel;
-import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -49,7 +47,7 @@ public class CLITools {
     private File pointFile = null;
     private String idField = null;
     
-    public void execute(String [] arg) throws Throwable {
+    public void execute(String [] arg) throws IOException {
         if(arg[0].equals("--help")) {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
                     "java -jar pixscape.jar [-mpi | -proc n | -cuda n]\n"  +
@@ -95,7 +93,6 @@ public class CLITools {
             throw new IllegalArgumentException("Need --project");
         }
         
-        //project = createProject(args);
         args.remove(0);
         project = Project.loadProject(new File(args.remove(0)));
         project.setUseCUDA(useCUDA);
@@ -193,7 +190,7 @@ public class CLITools {
         }
     }
 
-    private void viewShed(List<String> args) throws IOException, TransformException {
+    private void viewShed(List<String> args) throws IOException {   
         if(args.size() < 2) {
             throw new IllegalArgumentException("viewshed command needs at least 2 parameters");
         }
@@ -202,13 +199,16 @@ public class CLITools {
             direct = false;
             args.remove(0);
         }
+
         DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
         Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, direct, bounds).getView();
         new GeoTiffWriter(new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif")).write(
                 new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()), null);
+
     }
     
-    private void viewTan(List<String> args) throws IOException, TransformException {
+    private void viewTan(List<String> args) throws IOException {
+        
         if(args.size() < 2) {
             throw new IllegalArgumentException("viewtan command needs at least 2 parameters");
         }
@@ -217,11 +217,16 @@ public class CLITools {
             double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
             project.setaPrec(aPrec);
         }
-
+   
         DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
         ViewTanResult result = project.getDefaultComputeView().calcViewTan(p, zEye, bounds);
 
-        GridCoordinates2D c = project.getDtmCov().getGridGeometry().worldToGrid(p);
+        GridCoordinates2D c;
+        try {
+            c = project.getDtmCov().getGridGeometry().worldToGrid(p);
+        } catch (TransformException ex) {
+            throw new IllegalArgumentException(ex);
+        }
         Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
         new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-elev.tif")).write(
                 new GridCoverageFactory().create("view", result.getElevationView(), env), null);
@@ -231,6 +236,7 @@ public class CLITools {
             new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-land.tif")).write(
                     new GridCoverageFactory().create("view", result.getLanduseView(), env), null);
         }
+
     }
 
     private void viewMetric(List<String> args) throws IOException {
@@ -308,7 +314,7 @@ public class CLITools {
     private void showMetrics() {
         System.out.println("===== Metrics =====");
         for(Metric indice : Project.getMetrics(Metric.class)) {
-            System.out.println(indice.getShortName());
+            System.out.println(indice.toString());
         }
        
     }
