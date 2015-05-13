@@ -41,6 +41,7 @@ public class NewProjectDialog extends javax.swing.JDialog {
         inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), cancelName);
         ActionMap actionMap = getRootPane().getActionMap();
         actionMap.put(cancelName, new AbstractAction() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 doClose();
             }
@@ -195,8 +196,9 @@ public class NewProjectDialog extends javax.swing.JDialog {
         JFileChooser fileDlg = new JFileChooser(prjPathTextField.getText());
         fileDlg.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-        if(fileDlg.showOpenDialog(this) == JFileChooser.CANCEL_OPTION)
+        if(fileDlg.showOpenDialog(this) == JFileChooser.CANCEL_OPTION) {
             return;
+        }
 
         prjPathTextField.setText(fileDlg.getSelectedFile().getPath() + File.separator + prjNameTextField.getText());
     }//GEN-LAST:event_selectPathButtonActionPerformed

@@ -1,6 +1,7 @@
 package org.thema.pixscape.view;
 
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
@@ -30,7 +31,7 @@ public class MultiComputeViewJava extends ComputeView {
     /**
      * Creates a new MultiComputeViewJava
      * @param datas the data at each scale
-     * @param distMin the minimal distance (in data unit) before changing scale
+     * @param distMin the minimal distance (in pixel) before changing scale
      * @param aPrec the precision in degree for tangential view
      */
     public MultiComputeViewJava(TreeMap<Double, ScaleData> datas, int distMin, double aPrec) {
@@ -40,15 +41,15 @@ public class MultiComputeViewJava extends ComputeView {
     }
 
     /**
-     * @return the minimal distance (in data unit) before changing scale
+     * @return the minimal distance (in pixel) before changing scale
      */
     public int getDistMin() {
         return distMin;
     }
 
     /**
-     * Sets the minimal distance (in data unit) before changing scale
-     * @param distMin the minimal distance (in data unit) before changing scale
+     * Sets the minimal distance (in pixel) before changing scale
+     * @param distMin the minimal distance before changing scale
      */
     public void setDistMin(int distMin) {
         this.distMin = distMin;
@@ -79,6 +80,7 @@ public class MultiComputeViewJava extends ComputeView {
             for(ScaleData data : datas.values()) {
                 GridGeometry2D grid = data.getGridGeometry();
                 GridCoordinates2D c0 = grid.worldToGrid(c);
+//                Point2D c0 = grid.getCRSToGrid2D().transform((Point2D)c, null);
                 Rectangle rect = data.getDtm().getBounds();
                 if(data != datas.lastEntry().getValue()) {
                     GridEnvelope2D rLim = new GridEnvelope2D(new Rectangle(c0.x-distMin, c0.y-distMin, 2*distMin+1, 2*distMin+1).intersection(rect));
@@ -92,7 +94,7 @@ public class MultiComputeViewJava extends ComputeView {
                 largestZone = largestZone.union(new Rectangle(rect.x-c0.x, rect.y-c0.y, rect.width, rect.height));
                 viewZones.put(data.getResolution(), new GridEnvelope2D(rect));
             }
-
+//            largestZone.grow(distMin, distMin);
             for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
                 double a = Math.atan2(-largestZone.getMinY(), x);
                 if(bounds.isAlphaIncluded(a)) {
@@ -156,6 +158,7 @@ public class MultiComputeViewJava extends ComputeView {
         for(ScaleData data : datas.values()) {
             GridGeometry2D grid = data.getDtmCov().getGridGeometry();
             c0 = grid.worldToGrid(p0);
+//            Point2D d0 = grid.getCRSToGrid2D().transform((Point2D)p0, null);
             Rectangle rect = zones.get(data.getResolution());
             GridCoordinates2D c1 = calcIntersects(c0, a, rect);
             double dist = 0;
@@ -378,11 +381,11 @@ public class MultiComputeViewJava extends ComputeView {
      * @param rect the rectangle
      * @return the point intersecting rect with the half straight
      */
-    private static GridCoordinates2D calcIntersects(GridCoordinates2D p0, double a, Rectangle rect) {
+    private static GridCoordinates2D calcIntersects(Point2D p0, double a, Rectangle rect) {
         if(a == Math.PI/2) {
-            return new GridCoordinates2D(p0.x, (int) rect.getMinY());
+            return new GridCoordinates2D((int) p0.getX(), (int) rect.getMinY());
         } else if(a == -Math.PI/2) {
-            return new GridCoordinates2D(p0.x, (int) rect.getMaxY()-1);
+            return new GridCoordinates2D((int) p0.getX(), (int) rect.getMaxY()-1);
         } 
         
         if(a < 0) {
@@ -393,13 +396,13 @@ public class MultiComputeViewJava extends ComputeView {
         int x1 = (int)(a >= Math.PI/2 && a < 1.5*Math.PI ? rect.getMinX() : rect.getMaxX()-1); // droite ou gauche ?
         int sens = x1 == rect.getMinX() ? -1 : +1;
 
-        int ddy = (int) -Math.round(Math.tan(a) * Math.abs(x1-p0.x));
-        int y = p0.y + sens * ddy;   
+        double ddy = -(Math.tan(a) * Math.abs(x1-p0.getX()));
+        double y = Math.round(p0.getY() + sens * ddy);   
         if(y >= rect.getMinY() && y < rect.getMaxY()) {
-            y1 = y;   
+            y1 = (int)y;   
         } else {
-            int ddx = (int) Math.abs(Math.round(Math.tan(a+Math.PI/2) * Math.abs(y1-p0.y)));
-            x1 = p0.x + sens * ddx;
+            double ddx = Math.abs((Math.tan(a+Math.PI/2) * Math.abs(y1-p0.getY())));
+            x1 = (int)Math.round(p0.getX() + sens * ddx);
         }    
         return new GridCoordinates2D(x1, y1);
     }

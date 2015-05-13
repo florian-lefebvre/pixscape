@@ -6,6 +6,7 @@
 
 package org.thema.pixscape.metric;
 
+import java.io.Serializable;
 import java.util.SortedSet;
 
 
@@ -13,7 +14,7 @@ import java.util.SortedSet;
  *
  * @author gvuidel
  */
-public interface Metric {
+public interface Metric extends Serializable {
     public boolean isCodeSupported();
     public void setCodes(SortedSet<Integer> codes);
     public SortedSet<Integer> getCodes();

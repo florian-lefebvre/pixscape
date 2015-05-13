@@ -6,7 +6,6 @@
 
 package org.thema.pixscape;
 
-import org.thema.pixscape.view.ComputeView;
 import com.vividsolutions.jts.geom.Coordinate;
 import java.io.File;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.ComputeView;
 
 /**
  *

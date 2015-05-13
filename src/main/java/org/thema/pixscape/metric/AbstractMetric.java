@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.MissingResourceException;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Logger;
 import org.thema.pixscape.view.ViewResult;
 
 /**
@@ -63,6 +64,7 @@ public abstract class AbstractMetric implements Metric {
         try {
             return getCodeName() + " - " + java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle").getString(getShortName());
         } catch(MissingResourceException e) {
+            Logger.getLogger(AbstractMetric.class.getName()).info("No name for metric " + getShortName());
             return getCodeName();
         }
     }

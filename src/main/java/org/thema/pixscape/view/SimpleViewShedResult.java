@@ -17,6 +17,8 @@ import org.thema.process.Vectorizer;
 public class SimpleViewShedResult extends SimpleViewResult implements ViewShedResult {
     
     private double perim = -1;
+    private double areaUnbounded = Double.NaN;
+    private double [] areaLandUnbounded = null;
 
     /**
      * Creates a new SimpleViewShedResult
@@ -79,7 +81,12 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     @Override
     public double[] getAreaLand(double dmin, double dmax) {
         if(isUnboundedDistance(dmin, dmax)) {
-            return getAreaLandUnbounded();
+            synchronized(this) {
+                if(areaLandUnbounded == null) {
+                    areaLandUnbounded = getAreaLandUnbounded();
+                }
+                return areaLandUnbounded;
+            }
         }
         Raster view = getView();
         int size = (int) Math.ceil(dmax / getRes2D());
@@ -101,7 +108,12 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     @Override
     public double getArea(double dmin, double dmax) {
         if(isUnboundedDistance(dmin, dmax)) {
-            return getAreaUnbounded();
+            synchronized(this) {
+                if(Double.isNaN(areaUnbounded)) {
+                    areaUnbounded = getAreaUnbounded();
+                }
+                return areaUnbounded;
+            }
         }
         Raster view = getView();
         int size = (int) Math.ceil(dmax / getRes2D());

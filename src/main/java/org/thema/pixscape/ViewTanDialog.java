@@ -17,12 +17,8 @@ import java.awt.image.Raster;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JDialog;
-import org.geotools.coverage.grid.InvalidGridGeometryException;
 import org.geotools.geometry.DirectPosition2D;
-import org.opengis.referencing.operation.TransformException;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
 import org.thema.drawshape.SelectableShape;
@@ -34,7 +30,6 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.drawshape.ui.MapViewer;
-import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**

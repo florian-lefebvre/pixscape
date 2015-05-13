@@ -354,10 +354,10 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
             MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
                     .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
                             Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-            for(double res : multiResult.getViews().keySet()) {
-                addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
-            }
-//                addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+//            for(double res : multiResult.getViews().keySet()) {
+//                addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+//            }
+            addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
             result = multiResult;
         } else {
             result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
@@ -378,7 +378,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
 //                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true), project.getCRS());
             layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
                         project.getScaleDatas().get(res).getGridGeometry().getEnvelope2D(), new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
-                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0))), true), true), project.getCRS());
+                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0))), true), true), project.getCRS());
         } else {
             Geometry poly = Vectorizer.vectorize(view, 1);
             poly.apply(project.getScaleDatas().get(res).getGrid2Space());

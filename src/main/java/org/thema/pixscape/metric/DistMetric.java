@@ -9,6 +9,7 @@ package org.thema.pixscape.metric;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
@@ -29,26 +30,33 @@ public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTa
 
     @Override
     public Double[] calcMetric(ViewShedResult result) {
+        double n = 0, sum = 0, min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
         Raster view = result.getView();
-        DescriptiveStatistics stat = new DescriptiveStatistics();
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
                 if(view.getSample(x, y, 0) != 1) {
                     continue;
                 }
-                stat.addValue(result.getCoord().distance(x, y) * result.getRes2D());
+                final double d = result.getCoord().distance(x, y) * result.getRes2D();
+                n++;
+                sum += d;
+                if(d < min) {
+                    min = d;
+                }
+                if(d > max) {
+                    max = d;
+                }
             }
         }
         
-        return new Double[] {(double)stat.getN(), stat.getSum(), stat.getMean(), stat.getStandardDeviation(), stat.getMin(),
-            stat.getPercentile(25), stat.getPercentile(50), stat.getPercentile(75), stat.getMax()};
+        return new Double[] {n, sum, sum/n, min, max};
     }
 
     @Override
     public Double[] calcMetric(ViewTanResult result) {
         int[] view = ((DataBufferInt)result.getView().getDataBuffer()).getData();
         final int w = result.getGrid().getGridRange2D().width;
-        DescriptiveStatistics stat = new DescriptiveStatistics();
+        double n = 0, sum = 0, min = Double.POSITIVE_INFINITY, max = Double.NEGATIVE_INFINITY;
         for(int i = 0; i < view.length; i++) {
             final int ind = view[i];
             if(ind == -1) {
@@ -56,16 +64,23 @@ public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTa
             }
             final int x = ind % w;
             final int y = ind / w;
-            stat.addValue(result.getCoord().distance(x, y) * result.getRes2D());
+            final double d = result.getCoord().distance(x, y) * result.getRes2D();
+            n++;
+            sum += d;
+            if(d < min) {
+                min = d;
+            }
+            if(d > max) {
+                max = d;
+            }
         }
         
-        return new Double[] {(double)stat.getN(), stat.getSum(), stat.getMean(), stat.getStandardDeviation(), stat.getMin(),
-            stat.getPercentile(25), stat.getPercentile(50), stat.getPercentile(75), stat.getMax()};
+        return new Double[] {n, sum, sum/n, min, max};
     }
 
     @Override
     public String[] getResultNames() {
-        return new String [] {"DISTn", "DISTsum", "DISTavg", "DISTstd", "DISTmin", "DISTq1", "DISTmed", "DISTq3", "DISTmax"};
+        return new String [] {"DISTn", "DISTsum", "DISTavg", "DISTmin", "DISTmax"};
     }
     
     

@@ -24,11 +24,7 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.logging.ConsoleHandler;
-import java.util.logging.Filter;
-import java.util.logging.Handler;
 import java.util.logging.Level;
-import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
@@ -472,14 +468,14 @@ public class MainFrame extends javax.swing.JFrame {
             Raster land = project.getDefaultScale().getLand();
             for(Double resol : resolutions) {
                 int scale = (int)(resol/r);
-                WritableRaster dtmSamp = sampling(dtm, scale, 0);
+                WritableRaster dtmSamp = samplingDEM(dtm, scale);
                 Envelope2D env = project.getDtmCov().getEnvelope2D();
                 env = new Envelope2D(env.getCoordinateReferenceSystem(), 
                         env.x, env.y, dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
                 GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env);
                 ScaleData dataScale = new ScaleData(dtmCov, 
-                        land != null ? sampling(land, scale, 1) : null, 
-                        dsm != null ? sampling(dsm, scale, 0) : null, 
+                        land != null ? samplingLanduse(land, scale) : null, 
+                        dsm != null ? samplingDEM(dsm, scale) : null, 
                         1);
                 project.addScaleData(dataScale);
             }
@@ -654,7 +650,7 @@ public class MainFrame extends javax.swing.JFrame {
         logFrame.toBack();
     }//GEN-LAST:event_formWindowDeactivated
 
-    private WritableRaster sampling(Raster dtm, int scale, int aggr) {
+    private WritableRaster samplingDEM(Raster dtm, int scale) {
         WritableRaster raster = dtm.createCompatibleWritableRaster(
                 (int)Math.ceil(dtm.getWidth()/(double)scale), 
                 (int)Math.ceil(dtm.getHeight()/(double)scale));
@@ -668,7 +664,35 @@ public class MainFrame extends javax.swing.JFrame {
                 for(int i = 0; i < w*h; i++) {
                     stats.addValue(tab[i]);
                 }           
-                raster.setSample(x, y, 0, aggr == 0 ? stats.getMean() : stats.getMin());
+                raster.setSample(x, y, 0, stats.getMean());
+            }
+        }
+        return raster;
+    }
+    
+    private WritableRaster samplingLanduse(Raster land, int scale) {
+        WritableRaster raster = land.createCompatibleWritableRaster(
+                (int)Math.ceil(land.getWidth()/(double)scale), 
+                (int)Math.ceil(land.getHeight()/(double)scale));
+        int [] tab = new int[scale*scale];
+        for(int y = 0; y < raster.getHeight(); y++) {
+            for(int x = 0; x < raster.getWidth(); x++) {
+                int w = Math.min(scale, raster.getWidth()-x);
+                int h = Math.min(scale, raster.getHeight()-y);
+                land.getSamples(x*scale, y*scale, w, h, 0, tab);
+                int [] nb = new int[256];
+                for(int i = 0; i < w*h; i++) {
+                    nb[tab[i]]++;
+                }     
+                int max = Integer.MIN_VALUE;
+                int landMax = -1;
+                for(int i = 0; i < nb.length; i++) {
+                    if(nb[i] > max) {
+                        max = nb[i];
+                        landMax = i;
+                    }
+                }
+                raster.setSample(x, y, 0, landMax);
             }
         }
         return raster;
@@ -690,23 +714,6 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public static void main(String args[]) throws Exception {
         
-        // Disable logging of FileSystemPreferences
-        // Causes a lot of logs in parallel environments
-        Logger globalLogger = Logger.getLogger("");
-        for(Handler handler : globalLogger.getHandlers()) {
-            if(handler instanceof ConsoleHandler) {
-                globalLogger.removeHandler(handler);
-            }
-        }
-        ConsoleHandler h = new ConsoleHandler();
-        h.setFilter(new Filter() {
-            @Override
-            public boolean isLoggable(LogRecord record) {
-                return !record.getSourceClassName().equals("java.util.prefs.FileSystemPreferences");
-            }
-        });
-        globalLogger.addHandler(h);
-        
         // log all uncaught exception
         Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
             @Override
@@ -714,8 +721,7 @@ public class MainFrame extends javax.swing.JFrame {
                 Logger.getLogger("").log(Level.SEVERE, null, e);
             }
         });
-        
-        Config.setNodeClass(MainFrame.class);
+               
         Locale.setDefault(Locale.ENGLISH);
         
         // MPI Execution

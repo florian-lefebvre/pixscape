@@ -1,3 +1,6 @@
+version 0.3.2 (13/05/2015)
+- Optimize A and DIST metric calculation
+- MultiScale generation : better handling of land use
 version 0.3.1 (27/02/2015)
 - Metric result dialog : remove button now works
 - Show the distance intervals in metric name

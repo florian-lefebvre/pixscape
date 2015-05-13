@@ -28,19 +28,19 @@ public abstract class AbstractDistMetric extends AbstractMetric {
         distances = new TreeSet<>();
     }
     
-    public Double[] calcMetric(ViewShedResult result) {
+    public final Double[] calcMetric(ViewShedResult result) {
         return calcMetric((ViewResult)result);
     }
     
-    public Double[] calcMetric(ViewTanResult result) {
+    public final Double[] calcMetric(ViewTanResult result) {
         return calcMetric((ViewResult)result);
     }
     
-    protected Double [] calcMetric(ViewResult result) {
-        List<Double> results = new ArrayList<>();
+    private Double [] calcMetric(ViewResult result) {
         if(distances.isEmpty()) {
             return new Double[] {calcMetric(result, 0, Double.POSITIVE_INFINITY)};
         }
+        List<Double> results = new ArrayList<>(distances.size());
         Iterator<Double> it = distances.iterator();
         double d1 = it.next();
         while(it.hasNext()) {
@@ -51,7 +51,7 @@ public abstract class AbstractDistMetric extends AbstractMetric {
         return results.toArray(new Double[results.size()]);
     }
     
-    protected double calcMetric(ViewResult result, double dmin, double dmax) {
+    private double calcMetric(ViewResult result, double dmin, double dmax) {
         if(result instanceof ViewShedResult) {
             return calcMetric((ViewShedResult)result, dmin, dmax);
         } else {

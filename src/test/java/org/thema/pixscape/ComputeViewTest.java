@@ -6,9 +6,6 @@
 
 package org.thema.pixscape;
 
-import org.thema.pixscape.view.ComputeView;
-import org.thema.pixscape.view.cuda.ComputeViewCUDA;
-import org.thema.pixscape.view.ComputeViewJava;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
@@ -37,13 +34,16 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.referencing.operation.TransformException;
-import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.AreaMetric;
+import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.ComputeView;
+import org.thema.pixscape.view.ComputeViewJava;
 import org.thema.pixscape.view.MultiComputeViewJava;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
+import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
  *

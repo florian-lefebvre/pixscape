@@ -43,18 +43,18 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
+import org.thema.pixscape.metric.AreaMetric;
 import org.thema.pixscape.metric.CONTAGMetric;
+import org.thema.pixscape.metric.CompactMetric;
 import org.thema.pixscape.metric.DistMetric;
+import org.thema.pixscape.metric.FractalDimMetric;
 import org.thema.pixscape.metric.IJIMetric;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.PerimeterMetric;
 import org.thema.pixscape.metric.RasterMetric;
+import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SkyLineMetric;
-import org.thema.pixscape.metric.AreaMetric;
-import org.thema.pixscape.metric.CompactMetric;
-import org.thema.pixscape.metric.FractalDimMetric;
-import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.view.ComputeView;
 import org.thema.pixscape.view.ComputeViewJava;
 import org.thema.pixscape.view.MultiComputeViewJava;
@@ -284,9 +284,9 @@ public final class Project {
             if(isUseCUDA()) {
                 try {
                     simpleComputeView = new ComputeViewCUDA(getDefaultScale(), aPrec, nbGPU);
-                } catch (Throwable ex) {
-                    Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
-                    Logger.getLogger(Project.class.getName()).info("CUDA not available, continue in Java mode");
+                } catch (Exception ex) {
+                    Logger.getLogger(Project.class.getName()).log(Level.WARNING, null, ex);
+                    Logger.getLogger(Project.class.getName()).info("CUDA is not available, continue in Java mode");
                     nbGPU = 0;
                 }
             } 

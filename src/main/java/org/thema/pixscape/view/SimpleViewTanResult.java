@@ -18,6 +18,9 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     
     private WritableRaster elevation, distance, landuse;
 
+    private double areaUnbounded = Double.NaN;
+    private double [] areaLandUnbounded = null;
+    
     /**
      * Creates a new SimpleViewTanResult
      * @param ares the angular resolution in radian
@@ -35,13 +38,46 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         return ares;
     }
 
-    @Override
-    public double getArea(double dmin, double dmax) {
-        final boolean unbounded = isUnboundedDistance(dmin, dmax);
+    protected double getAreaUnbounded() {
         int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
         int nb = 0;
         for(int ind : buf) {
-            if(ind > -1 && (unbounded || isInside(ind % getW(), ind / getW(), dmin, dmax))) {
+            if(ind > -1) {
+                nb++;
+            }
+        }
+        return nb * Math.pow(getAres()*180/Math.PI, 2);
+    }
+
+    protected double[] getAreaLandUnbounded() {
+        final double res = Math.pow(getAres()*180/Math.PI, 2);
+        final double[] count = new double[256];
+        
+        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        for(int ind : buf) {
+            if(ind > -1) {
+                final int x = ind % getW();
+                final int y = ind / getW();
+                count[getLanduse().getSample(x, y, 0)] += res;
+            }
+        }
+        return count;
+    }
+    
+    @Override
+    public double getArea(double dmin, double dmax) {
+        if(isUnboundedDistance(dmin, dmax)) {
+            synchronized(this) {
+                if(Double.isNaN(areaUnbounded)) {
+                    areaUnbounded = getAreaUnbounded();
+                }
+                return areaUnbounded;
+            }
+        }
+        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        int nb = 0;
+        for(int ind : buf) {
+            if(ind > -1 && isInside(ind % getW(), ind / getW(), dmin, dmax)) {
                 nb++;
             }
         }
@@ -50,7 +86,14 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public double[] getAreaLand(double dmin, double dmax) {
-        final boolean unbounded = isUnboundedDistance(dmin, dmax);
+        if(isUnboundedDistance(dmin, dmax)) {
+            synchronized(this) {
+                if(areaLandUnbounded == null) {
+                    areaLandUnbounded = getAreaLandUnbounded();
+                }
+                return areaLandUnbounded;
+            }
+        }
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];
         
@@ -58,7 +101,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         for(int ind : buf) {
             final int x = ind % getW();
             final int y = ind / getW();
-            if(ind > -1 && (unbounded || isInside(x, y, dmin, dmax))) {
+            if(ind > -1 && isInside(x, y, dmin, dmax)) {
                 count[getLanduse().getSample(x, y, 0)] += res;
             }
         }

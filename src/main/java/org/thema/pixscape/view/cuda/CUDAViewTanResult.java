@@ -19,9 +19,6 @@ import org.thema.pixscape.view.SimpleViewTanResult;
 class CUDAViewTanResult extends SimpleViewTanResult {
     
     private final ComputeViewCUDA.CUDAContext context;
-    
-    private double count = -1;
-    private double[] countLand;
 
     CUDAViewTanResult(double ares, GridCoordinates2D cg, ComputeViewCUDA.CUDAContext context, ComputeViewCUDA compute) {
         super(ares, cg, null, compute);
@@ -29,22 +26,18 @@ class CUDAViewTanResult extends SimpleViewTanResult {
     }
 
     @Override
-    public double[] getAreaLand() {
-        if (countLand == null) {
-            countLand = new double[getCodes().last() + 1];
-            for (int code : getCodes()) {
-                countLand[code] = context.getSumLandViewTan((byte) code) * Math.pow(getAres()*180/Math.PI, 2);
-            }
+    protected double[] getAreaLandUnbounded() {
+        double [] countLand = new double[getCodes().last() + 1];
+        for (int code : getCodes()) {
+            countLand[code] = context.getSumLandViewTan((byte) code) * Math.pow(getAres()*180/Math.PI, 2);
         }
+
         return countLand;
     }
 
     @Override
-    public double getArea() {
-        if (count == -1) {
-            count = context.getSumViewTan() * Math.pow(getAres()*180/Math.PI, 2);
-        }
-        return count;
+    public double getAreaUnbounded() {
+        return context.getSumViewTan() * Math.pow(getAres()*180/Math.PI, 2);
     }
 
     @Override

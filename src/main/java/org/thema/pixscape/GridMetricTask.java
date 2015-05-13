@@ -6,7 +6,6 @@
 
 package org.thema.pixscape;
 
-import org.thema.pixscape.view.ComputeView;
 import com.sun.media.imageio.plugins.tiff.TIFFImageWriteParam;
 import com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi;
 import java.awt.Point;
@@ -45,6 +44,7 @@ import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.ComputeView;
 
 /**
  *

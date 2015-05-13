@@ -271,7 +271,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
         try {
             int res = cuInit(0);
             return res == CUresult.CUDA_SUCCESS;
-        } catch(Throwable e) {
+        } catch(LinkageError e) {
             Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.INFO, null, e);
             return false;
         }
@@ -642,7 +642,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
                         }
                         try {
                             run.result = run.run(context);
-                        } catch(Throwable e) {
+                        } catch(Exception e) {
                             run.result = e;
                         }
                         synchronized(run) {
