@@ -129,7 +129,7 @@ public class CLITools {
                         sample = Integer.parseInt(p.split("=")[1]);
                     } else if(p.startsWith("land=")) {
                         from = new TreeSet<>();
-                        String [] codes = args.remove(0).split("=")[1].split(",");
+                        String [] codes = p.split("=")[1].split(",");
                         for(String code : codes) {
                             from.add(Integer.parseInt(code));
                         }
