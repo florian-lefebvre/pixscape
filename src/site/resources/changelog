@@ -1,3 +1,9 @@
+version 0.3.4 (22/06/2015)
+- Bug in menu "Add scale" : invert dsm and land use rasters
+- CLI : add option -multi dmin=... and -mono
+- Stop ray tracing when fall on dtm NaN value
+- Optimize viewshed in multiscale
+- Generate multiscale is false on border
 version 0.3.3 (05/06/2015)
 - CLI : option -sampling land=... does not work
 version 0.3.2 (13/05/2015)

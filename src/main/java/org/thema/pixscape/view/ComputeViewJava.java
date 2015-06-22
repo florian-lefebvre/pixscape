@@ -145,12 +145,15 @@ public class ComputeViewJava extends SimpleComputeView {
             }
 
             final double z = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            if(Double.isNaN(z)) {
+                return;
+            }
             if(maxSlope >= 0 && z <= maxZ) {
                 continue;
             }
             final double dist = getData().getResolution() * Math.sqrt(xx*xx + yy*yy) - Math.signum(z-z0)*getData().getResolution()/2;
             if(dist > bounds.getDmax()) {
-                break;
+                return;
             }
             final double slope = (z - z0) / (dist);
             if(slope > maxSlope) {
@@ -170,7 +173,7 @@ public class ComputeViewJava extends SimpleComputeView {
                 maxSlope = slope;
             }
             if(maxSlope > bounds.getSlopemax()) {
-                break;
+                return;
             }
             if(z > maxZ) {
                 maxZ = z;
@@ -244,6 +247,9 @@ public class ComputeViewJava extends SimpleComputeView {
             }
 
             final double zSurf = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            if(Double.isNaN(zSurf)) {
+                return;
+            }
             final double zView = destZ == -1 ? zSurf : (dtmBuf[ind] + destZ);
             
             if(maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
@@ -253,13 +259,13 @@ public class ComputeViewJava extends SimpleComputeView {
             // distance au carré
             final double d2 = res2D2 * (xx*xx + yy*yy);
             if(d2 >= bounds.getDmax2()) {
-                break;
+                return;
             }
             
             final double zzSurf = (zSurf - z0);
             final double slopeSurf = zzSurf*Math.abs(zzSurf) / d2;
             if(slopeSurf > bounds.getSlopemax2()) {
-                break;
+                return;
             }
 
             if(d2 >= bounds.getDmin2() && zView >= zSurf) {
@@ -331,13 +337,16 @@ public class ComputeViewJava extends SimpleComputeView {
                 ind += sy*w;
             }
             final double z = dtmBuf[ind];
+            if(Double.isNaN(z)) {
+                return;
+            }
             if(maxSlope >= 0 && z+startZ <= maxZ) {
                 continue;
             }
 
             final double d2 = getData().getResolution()*getData().getResolution() * (xx*xx + yy*yy);
             if(d2 >= bounds.getDmax2()) {
-                break;
+                return;
             }
             double zz = z + startZ - z0;
             final double slopeEye = zz*Math.abs(zz) / d2;
@@ -353,7 +362,7 @@ public class ComputeViewJava extends SimpleComputeView {
                 maxSlope = slope;
             }
             if(maxSlope > bounds.getSlopemax2()) {
-                break;
+                return;
             }
             if(ztot > maxZ) {
                 maxZ = ztot;

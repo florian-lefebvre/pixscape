@@ -7,16 +7,20 @@
 package org.thema.pixscape;
 
 
-import com.vividsolutions.jts.geom.Geometry;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.geometry.DirectPosition2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.drawshape.PanelMap;
 import org.thema.drawshape.PointShape;
@@ -33,8 +37,7 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.drawshape.ui.MapViewer;
 import org.thema.pixscape.view.MultiViewShedResult;
-import org.thema.pixscape.view.ViewResult;
-import org.thema.process.Vectorizer;
+import org.thema.pixscape.view.ViewShedResult;
 
 /**
  *
@@ -348,43 +351,61 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 layers.removeLayer(l);
             }
         }
-        ViewResult result;
-        Raster viewShed;
+        ViewShedResult result;
+        
         if(multiScaleCheckBox.isSelected()) {
             MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
                     .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
                             Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-//            for(double res : multiResult.getViews().keySet()) {
-//                addViewShedLayer(multiResult.getViews().get(res), res, (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
-//            }
-            addViewShedLayer(multiResult.getView(), project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+            if(rasterRadioButton.isSelected()) {
+                for(double res : multiResult.getViews().keySet()) {
+                    try {
+                        GridEnvelope2D env = multiResult.getZones().get(res);
+                        addRasterViewShedLayer(multiResult.getViews().get(res).createTranslatedChild(0, 0), project.getScaleDatas().get(res).getGridGeometry().gridToWorld(env), (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+                    } catch (TransformException ex) {
+                        Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } 
+            } else {
+                addViewShedLayer(multiResult, directCheckBox.isSelected()?"direct":"indirect");
+            }
             result = multiResult;
         } else {
             result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
                 Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-            viewShed = result.getView();
-            addViewShedLayer(viewShed, project.getDefaultScale().getResolution(), directCheckBox.isSelected()?"direct":"indirect");
+            addViewShedLayer(result, directCheckBox.isSelected()?"direct":"indirect");
         }
 
         metricDlg.setResult(result);
         mapViewer.getMap().fullRepaint(); // normalement pas utile mais par moment bug du rafraichissement...
     }
     
-    private void addViewShedLayer(Raster view, double res, String name) {
+    private void addViewShedLayer(ViewShedResult result, String name) {
         Layer layer;
         if(rasterRadioButton.isSelected()) {
-//            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
-//                        project.getScaleDatas().get(res).getGridGeometry().getEnvelope2D(), new RasterStyle( 
-//                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true), project.getCRS());
-            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
-                        project.getScaleDatas().get(res).getGridGeometry().getEnvelope2D(), new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
-                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0))), true), true), project.getCRS());
+            layer = new RasterLayer("Viewshed-" + name, new RasterShape(result.getView(),
+                        project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle( 
+                                new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true), project.getCRS());
         } else {
-            Geometry poly = Vectorizer.vectorize(view, 1);
-            poly.apply(project.getScaleDatas().get(res).getGrid2Space());
-            layer = new FeatureLayer("Viewshed-" + name, Arrays.asList(new DefaultFeature(name, poly)), 
+            layer = new FeatureLayer("Viewshed-" + name, Arrays.asList(new DefaultFeature(name, result.getPolygon())), 
                     new FeatureStyle(new Color(0, 0, 0, 40), null), project.getCRS());
         }
+        layer.setRemovable(true);
+        layers.addLayerLast(layer);
+    }
+    
+    private void addRasterViewShedLayer(Raster view, Rectangle2D zone, String name) {
+        Layer layer;
+
+//            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+//                        zone, new RasterStyle( new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0),
+//                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0))), true), true), project.getCRS());
+
+//        // for debugging pixels not tested
+        layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+                    zone, new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
+                            Arrays.asList(new Color(127, 127, 127), new Color(255, 255, 255), new Color(255, 0, 0))), true), true), project.getCRS());
+        
         layer.setRemovable(true);
         layers.addLayerLast(layer);
     }

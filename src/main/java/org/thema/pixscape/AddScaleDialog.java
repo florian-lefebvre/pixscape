@@ -170,7 +170,7 @@ public class AddScaleDialog extends javax.swing.JDialog {
             if(project.hasLandUse()) {
                 land = IOImage.loadCoverage(landSelectFilePanel.getSelectedFile()).getRenderedImage().getData();
             }
-            ScaleData data = new ScaleData(dtmCov, dsm, land, Double.parseDouble(resZTextField.getText()));
+            ScaleData data = new ScaleData(dtmCov, land, dsm, Double.parseDouble(resZTextField.getText()));
             project.addScaleData(data);
             isOk = true;
             doClose();

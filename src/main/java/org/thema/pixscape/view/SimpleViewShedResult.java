@@ -34,7 +34,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     public synchronized double getPerimeter() {
         if (perim == -1) {
             double p = 0;
-            Raster view = getView();
+            final Raster view = getView();
             final int w = view.getWidth();
             final int h = view.getHeight();
             for(int y = 0; y < h; y++) {
@@ -56,7 +56,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     }
 
     protected double getAreaUnbounded() {
-        byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
+        final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
         int nb = 0;
         for (int v : buf) {
             if (v == 1) {
@@ -69,7 +69,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     protected double[] getAreaLandUnbounded() {
         final double res2D2 = getRes2D()*getRes2D();
         final double[] count = new double[256];
-        byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
+        final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
         for (int i = 0; i < buf.length; i++) {
             if (buf[i] == 1) {
                 count[getLanduse().getSample(i % getW(), i / getW(), 0)] += res2D2;
@@ -88,9 +88,9 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
                 return areaLandUnbounded;
             }
         }
-        Raster view = getView();
-        int size = (int) Math.ceil(dmax / getRes2D());
-        Rectangle r = Double.isInfinite(dmax) ? view.getBounds() :
+        final Raster view = getView();
+        final int size = (int) Math.ceil(dmax / getRes2D());
+        final Rectangle r = Double.isInfinite(dmax) ? view.getBounds() :
                 new GridEnvelope2D(getCoord().x-size, getCoord().y-size, 2*size+1, 2*size+1).intersection(view.getBounds());
         final double res2D2 = getRes2D()*getRes2D();
         final double[] count = new double[256];
@@ -115,9 +115,9 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
                 return areaUnbounded;
             }
         }
-        Raster view = getView();
-        int size = (int) Math.ceil(dmax / getRes2D());
-        Rectangle r = Double.isInfinite(dmax) ? view.getBounds() :
+        final Raster view = getView();
+        final int size = (int) Math.ceil(dmax / getRes2D());
+        final Rectangle r = Double.isInfinite(dmax) ? view.getBounds() :
                 new GridEnvelope2D(getCoord().x-size, getCoord().y-size, 2*size+1, 2*size+1).intersection(view.getBounds());
         int nb = 0;
         for(int y = (int) r.getMinY(); y < r.getMaxY(); y++) {

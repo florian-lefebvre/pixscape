@@ -132,9 +132,10 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
             for(int x = 0; x < w; x++) {
                 GridCoordinates2D c = new GridCoordinates2D(x*sample+sample/2, y*sample+sample/2);
                 
-                if(from != null && !from.contains(land.getSample(c.x, c.y, 0))) {
+                if(from != null && !from.contains(land.getSample(c.x, c.y, 0)) || Float.isNaN(dtm.getSampleFloat(c.x, c.y, 0))) {
                     continue;
                 }
+                long time = System.currentTimeMillis();
                 DirectPosition2D p = null;
                 try {
                     p = (DirectPosition2D) grid.gridToWorld(c);
@@ -153,6 +154,8 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                         map.get(resName).setSample(x, y, 0, values.get(i)[j++]);
                     }
                 }
+                long dt = System.currentTimeMillis()-time;
+                System.out.println(dt + " ms");
             }
             incProgress(1);
         }

@@ -6,11 +6,14 @@ import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.media.jai.iterator.RandomIter;
+import javax.media.jai.iterator.RandomIterFactory;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -38,11 +41,12 @@ public class ScaleData {
         if(cov.getProperty("GC_NODATA") != null && (cov.getProperty("GC_NODATA") instanceof Number)) {
             noData = ((Number)cov.getProperty("GC_NODATA")).doubleValue();
         }
-        Raster r = cov.getRenderedImage().getData();
-        WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, r.getWidth(), r.getHeight(), 1), null);
-        for(int y = 0; y < r.getHeight(); y++) {
-            for(int x = 0; x < r.getWidth(); x++) {
-                double val = r.getSampleDouble(x, y, 0);
+        final RenderedImage img = cov.getRenderedImage();
+        final RandomIter r = RandomIterFactory.create(img, null);
+        final WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
+        for(int y = 0; y < img.getHeight(); y++) {
+            for(int x = 0; x < img.getWidth(); x++) {
+                final double val = r.getSampleDouble(x, y, 0);
                 if(val == noData) {
                     dtmFloat.setSample(x, y, 0, Float.NaN);
                 } else {
@@ -55,7 +59,7 @@ public class ScaleData {
     }
     
     ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm) {
-        init(dtmCov, land, dsm);
+        this(dtmCov, land, dsm, 1);
     }
     
     private void init(GridCoverage2D dtmCov, Raster land, Raster dsm) {

@@ -42,12 +42,12 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
 
     @Override
     public double getArea(double dmin, double dmax) {
-        boolean unbounded = isUnboundedDistance(dmin, dmax);
+        final boolean unbounded = isUnboundedDistance(dmin, dmax);
         double area = 0;
         for(Double res : getViews().keySet()) {
-            double res2 = res*res;
-            Raster v = getViews().get(res);               
-            GridEnvelope2D zone = getZones().get(res);
+            final double res2 = res*res;
+            final Raster v = getViews().get(res);               
+            final GridEnvelope2D zone = getZones().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
                     if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res, x, y, dmin, dmax))) {
@@ -61,13 +61,13 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
 
     @Override
     public double[] getAreaLand(double dmin, double dmax) {
-        boolean unbounded = isUnboundedDistance(dmin, dmax);
+        final boolean unbounded = isUnboundedDistance(dmin, dmax);
         double [] counts = new double[256];
         for(Double res : getViews().keySet()) {
-            double res2 = res*res;
-            Raster v = getViews().get(res);     
-            Raster land = getDatas().get(res).getLand();
-            GridEnvelope2D zone = getZones().get(res);
+            final double res2 = res*res;
+            final Raster v = getViews().get(res);     
+            final Raster land = getDatas().get(res).getLand();
+            final GridEnvelope2D zone = getZones().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
                     if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res, x, y, dmin, dmax))) {
@@ -82,9 +82,9 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
 
     @Override
     protected synchronized void calcViewLand() {
-        view = getViews().firstEntry().getValue().createCompatibleWritableRaster();
         ScaleData first = getDatas().firstEntry().getValue();
         GridGeometry2D firstGrid = first.getGridGeometry();
+        view = getViews().firstEntry().getValue().createCompatibleWritableRaster(firstGrid.getGridRange2D());
         if(first.getLand() != null) {
             land = first.getLand().createCompatibleWritableRaster();
         }
@@ -101,7 +101,9 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
                         if(!r.intersects(view.getBounds())) {
                             continue;
                         }
-                        r = r.intersection(view.getBounds());
+                        if(!view.getBounds().contains(r)) {
+                            r = r.intersection(view.getBounds());
+                        }
                         if(tab.length != r.width*r.height) {
                             tab = new int[r.width*r.height];
                         }
@@ -126,6 +128,7 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
         for(double res : getViews().keySet()) {
             Geometry poly = Vectorizer.vectorize(getViews().get(res), 1);
             poly.apply(getDatas().get(res).getGrid2Space());
+            geoms.add(poly);
         }
         return new GeometryFactory().buildGeometry(geoms);
     }

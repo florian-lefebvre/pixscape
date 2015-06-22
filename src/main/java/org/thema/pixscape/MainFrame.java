@@ -471,7 +471,7 @@ public class MainFrame extends javax.swing.JFrame {
                 WritableRaster dtmSamp = samplingDEM(dtm, scale);
                 Envelope2D env = project.getDtmCov().getEnvelope2D();
                 env = new Envelope2D(env.getCoordinateReferenceSystem(), 
-                        env.x, env.y, dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
+                        env.x, env.y-(dtmSamp.getHeight()*scale*r-dtm.getHeight()*r), dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
                 GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env);
                 ScaleData dataScale = new ScaleData(dtmCov, 
                         land != null ? samplingLanduse(land, scale) : null, 
@@ -657,14 +657,24 @@ public class MainFrame extends javax.swing.JFrame {
         double [] tab = new double[scale*scale];
         for(int y = 0; y < raster.getHeight(); y++) {
             for(int x = 0; x < raster.getWidth(); x++) {
-                int w = Math.min(scale, raster.getWidth()-x);
-                int h = Math.min(scale, raster.getHeight()-y);
+                final int w = Math.min(scale, dtm.getWidth()-x*scale);
+                final int h = Math.min(scale, dtm.getHeight()-y*scale);
                 dtm.getSamples(x*scale, y*scale, w, h, 0, tab);
+                int nbNaN = scale*scale - w*h;
                 SummaryStatistics stats = new SummaryStatistics();
                 for(int i = 0; i < w*h; i++) {
-                    stats.addValue(tab[i]);
-                }           
-                raster.setSample(x, y, 0, stats.getMean());
+                    final double v = tab[i];
+                    if(Double.isNaN(v)) {
+                        nbNaN++;
+                    } else {
+                        stats.addValue(v);
+                    }
+                }          
+                if(nbNaN < stats.getN()) {
+                    raster.setSample(x, y, 0, stats.getMean());
+                } else {
+                    raster.setSample(x, y, 0, Double.NaN);
+                }
             }
         }
         return raster;
@@ -677,8 +687,8 @@ public class MainFrame extends javax.swing.JFrame {
         int [] tab = new int[scale*scale];
         for(int y = 0; y < raster.getHeight(); y++) {
             for(int x = 0; x < raster.getWidth(); x++) {
-                int w = Math.min(scale, raster.getWidth()-x);
-                int h = Math.min(scale, raster.getHeight()-y);
+                int w = Math.min(scale, land.getWidth()-x*scale);
+                int h = Math.min(scale, land.getHeight()-y*scale);
                 land.getSamples(x*scale, y*scale, w, h, 0, tab);
                 int [] nb = new int[256];
                 for(int i = 0; i < w*h; i++) {

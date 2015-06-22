@@ -54,7 +54,8 @@ public class CLITools {
                     "--project project_file.xml\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
-                    "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname] command\n" +
+                    "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]\n" +
+                    "[-multi dmin=val| -mono] command\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
                     "--viewtan [prec=deg] x y\n" +
@@ -152,6 +153,13 @@ public class CLITools {
                     p = args.remove(0);
                     resDir = new File(p);
                     resDir.mkdirs();
+                    break;
+                case "-multi":
+                    p = args.remove(0);
+                    project.setMinDistMS(Double.parseDouble(p.split("=")[1]));
+                    break;
+                case "-mono":
+                    project.setMinDistMS(0);
                     break;
                 default:
                     throw new IllegalArgumentException("Unknown option " + p);

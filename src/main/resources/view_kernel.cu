@@ -5,6 +5,8 @@
 
 #define NCORE 512   
 
+// TODO stop ray tracing when fall on dtm NaN value
+
 extern "C"
 __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
         float res2D, int hasdsm, float * dsm, unsigned char *view) {
