@@ -30,6 +30,7 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
 import javax.media.jai.remote.SerializableState;
@@ -155,7 +156,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                     }
                 }
                 long dt = System.currentTimeMillis()-time;
-                System.out.println(dt + " ms");
+                Logger.getLogger(GridMetricTask.class.getName()).fine(dt + " ms");
             }
             incProgress(1);
         }
@@ -185,17 +186,27 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
             for(String resName : map.keySet()) {
                 try {
                     if(!writers.containsKey(resName)) {
-                        ImageWriter writer = new TIFFImageWriterSpi().createWriterInstance();
+                        ImageWriter writer = new TIFFImageWriterSpi().createWriterInstance();                       
                         writer.setOutput(new FileImageOutputStream(getResultFile(resName)));
+                        ImageWriteParam param = writer.getDefaultWriteParam();
+//                        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+//                        param.setCompressionType("LZW");
+//                        param.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
+//                        param.setTiling(dtm.getWidth()/sample, 1, 0, 0);
                         writer.prepareWriteEmpty(null, ImageTypeSpecifier.createBanded(ColorSpace.getInstance(ColorSpace.CS_GRAY),
-                                new int[]{0}, new int[]{0}, DataBuffer.TYPE_FLOAT, false, false), dtm.getWidth()/sample, dtm.getHeight()/sample, null, null, null);
+                                new int[]{0}, new int[]{0}, DataBuffer.TYPE_FLOAT, false, false), dtm.getWidth()/sample, dtm.getHeight()/sample, 
+                                null, null, param);
                         writers.put(resName, writer);
                     }
                     ImageWriter writer = writers.get(resName);
                     Raster r = (Raster) map.get(resName).getObject();
                     writer.prepareReplacePixels(0, new Rectangle(r.getMinX(), r.getMinY(), r.getWidth(), r.getHeight()));
-                    TIFFImageWriteParam param = new TIFFImageWriteParam(Locale.FRENCH);
+                    ImageWriteParam param = writer.getDefaultWriteParam();
                     param.setDestinationOffset(r.getBounds().getLocation());
+//                    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+//                    param.setCompressionType("LZW");
+//                    param.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
+//                    param.setTiling(r.getWidth(), 1, 0, 0);
                     writer.replacePixels(r, param);
                     writer.endReplacePixels();
                 } catch (IOException ex) {

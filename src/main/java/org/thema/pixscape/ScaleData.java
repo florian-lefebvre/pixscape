@@ -27,11 +27,12 @@ import org.thema.data.IOImage;
  *
  * @author Gilles Vuidel
  */
-public class ScaleData {
+public final class ScaleData {
     private double resolution;
     private transient GridCoverage2D dtmCov;
     private transient Raster dtm;
     private transient Raster land, dsm;
+    private transient Double maxZ;
     
     private SortedSet<Integer> codes;
     
@@ -91,6 +92,12 @@ public class ScaleData {
                 throw new IllegalArgumentException("DSM raster size does not correspond to DTM raster size");
             }
         }
+        
+        if(dtmCov.getRenderedImage() instanceof BufferedImage) {
+            this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
+        } else {
+            this.dtm = dtmCov.getRenderedImage().getData();
+        }
     }
     
     public double getResolution() {
@@ -101,14 +108,7 @@ public class ScaleData {
         return dtmCov;
     }
 
-    public synchronized Raster getDtm() {
-        if(dtm == null) {
-            if(dtmCov.getRenderedImage() instanceof BufferedImage) {
-                this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
-            } else {
-                this.dtm = dtmCov.getRenderedImage().getData();
-            }
-        }
+    public Raster getDtm() {
         return dtm;
     }
 
@@ -148,9 +148,31 @@ public class ScaleData {
         return z;
     }
     
+    public final synchronized double getMaxZ() {
+        if(maxZ == null) {
+            double max = Double.NEGATIVE_INFINITY;
+            final int w = getDtm().getWidth();
+            final int h = getDtm().getHeight();
+            for(int y = 0; y < h; y++) {
+                for(int x = 0; x < w; x++) {
+                    final double z = getZ(x, y);
+                    if(z > max) {
+                        max = z;
+                    }
+                }
+            }
+            maxZ = max;
+        }
+        return maxZ;
+    }
     
     void load(File dir) throws IOException {
         dtmCov = IOImage.loadTiffWithoutCRS(new File(dir, "dtm-" + resolution + ".tif"));
+        if(dtmCov.getRenderedImage() instanceof BufferedImage) {
+            this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
+        } else {
+            this.dtm = dtmCov.getRenderedImage().getData();
+        }
         
         File dsmFile = new File(dir, "dsm-" + resolution + ".tif");
         if(dsmFile.exists()) {

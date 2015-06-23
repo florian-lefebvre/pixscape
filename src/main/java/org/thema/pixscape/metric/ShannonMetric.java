@@ -21,16 +21,17 @@ public class ShannonMetric extends AbstractDistMetric implements ViewShedMetric,
     }
 
     @Override
-    protected double calcMetric(ViewShedResult result, double dmin, double dmax) {
-        return calcShannon(result, dmin, dmax);
-    }
-
-    @Override
-    protected double calcMetric(ViewTanResult result, double dmin, double dmax) {
-        return calcShannon(result, dmin, dmax);
+    public final Double[] calcMetric(ViewShedResult result) {
+        return calcMetric((ViewResult)result);
     }
     
-    private double calcShannon(ViewResult result, double dmin, double dmax) {
+    @Override
+    public final Double[] calcMetric(ViewTanResult result) {
+        return calcMetric((ViewResult)result);
+    }
+    
+    @Override
+    protected double calcMetric(ViewResult result, double dmin, double dmax) {
         double[] count = result.getAreaLand(dmin, dmax);
         double shannon = 0;
         double sum = 0;

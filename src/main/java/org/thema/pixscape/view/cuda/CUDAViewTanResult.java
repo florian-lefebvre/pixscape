@@ -26,7 +26,7 @@ class CUDAViewTanResult extends SimpleViewTanResult {
     }
 
     @Override
-    protected double[] getAreaLandUnbounded() {
+    protected double[] calcAreaLandUnbounded() {
         double [] countLand = new double[getCodes().last() + 1];
         for (int code : getCodes()) {
             countLand[code] = context.getSumLandViewTan((byte) code) * Math.pow(getAres()*180/Math.PI, 2);
@@ -36,7 +36,7 @@ class CUDAViewTanResult extends SimpleViewTanResult {
     }
 
     @Override
-    public double getAreaUnbounded() {
+    protected double calcAreaUnbounded() {
         return context.getSumViewTan() * Math.pow(getAres()*180/Math.PI, 2);
     }
 

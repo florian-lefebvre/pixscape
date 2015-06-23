@@ -59,8 +59,8 @@ public class CLITools {
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
                     "--viewtan [prec=deg] x y\n" +
-                    "--viewmetric [indirect] metric1[[code1,...,coden]] ... metricn[[code1,...,coden]]\n" +
-                    "--tanmetric [prec=deg] metric1[[code1,...,coden]] ... metricn[[code1,...,coden]]\n");
+                    "--viewmetric [indirect] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
+                    "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n");
             return;
         }
         
@@ -256,21 +256,10 @@ public class CLITools {
         List<ViewShedMetric> metrics = new ArrayList<>();
         while(!args.isEmpty()) {
             String s = args.remove(0);
-            TreeSet<Integer> codes = null;
-            if(s.contains("[")) {
-                codes = new TreeSet<>();
-                String lst = s.split("\\[")[1].replace("]", "");
-                String [] tokens = lst.split(",");
-                for(String code : tokens) {
-                    codes.add(Integer.parseInt(code));
-                }
-                s = s.split("\\[")[0];
-            }
-            Metric m = Project.getMetric(s);
+            Metric m = Project.getMetricWithParams(s);            
             if(!(m instanceof ViewShedMetric)) {
                 throw new IllegalArgumentException("The metric " + m + " is not a viewshed metric");
             }
-            m.setCodes(codes);
             metrics.add((ViewShedMetric) m);
         }
         ParallelTask task;
@@ -292,21 +281,10 @@ public class CLITools {
         List<ViewTanMetric> metrics = new ArrayList<>();
         while(!args.isEmpty()) {
             String s = args.remove(0);
-            TreeSet<Integer> codes = null;
-            if(s.contains("[")) {
-                codes = new TreeSet<>();
-                String lst = s.split("\\[")[1].replace("]", "");
-                String [] tokens = lst.split(",");
-                for(String code : tokens) {
-                    codes.add(Integer.parseInt(code));
-                }
-                s = s.split("\\[")[0];
-            }
-            Metric m = Project.getMetric(s);
+            Metric m = Project.getMetricWithParams(s);        
             if(!(m instanceof ViewTanMetric)) {
                 throw new IllegalArgumentException("The metric " + m + " is not a tangential metric");
             }
-            m.setCodes(codes);
             metrics.add((ViewTanMetric) m);
         }
         ParallelTask task;

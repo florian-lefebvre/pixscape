@@ -7,6 +7,7 @@ import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
+import org.thema.pixscape.Bounds;
 import org.thema.process.Vectorizer;
 
 /**
@@ -17,8 +18,6 @@ import org.thema.process.Vectorizer;
 public class SimpleViewShedResult extends SimpleViewResult implements ViewShedResult {
     
     private double perim = -1;
-    private double areaUnbounded = Double.NaN;
-    private double [] areaLandUnbounded = null;
 
     /**
      * Creates a new SimpleViewShedResult
@@ -55,7 +54,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         return perim;
     }
 
-    protected double getAreaUnbounded() {
+    protected double calcAreaUnbounded() {
         final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
         int nb = 0;
         for (int v : buf) {
@@ -66,7 +65,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         return nb * getRes2D()*getRes2D();
     }
 
-    protected double[] getAreaLandUnbounded() {
+    protected double[] calcAreaLandUnbounded() {
         final double res2D2 = getRes2D()*getRes2D();
         final double[] count = new double[256];
         final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
@@ -79,14 +78,9 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     }
 
     @Override
-    public double[] getAreaLand(double dmin, double dmax) {
-        if(isUnboundedDistance(dmin, dmax)) {
-            synchronized(this) {
-                if(areaLandUnbounded == null) {
-                    areaLandUnbounded = getAreaLandUnbounded();
-                }
-                return areaLandUnbounded;
-            }
+    protected double[] calcAreaLand(double dmin, double dmax) {
+        if(Bounds.isUnboundedDistance(dmin, dmax)) {
+            return calcAreaLandUnbounded();
         }
         final Raster view = getView();
         final int size = (int) Math.ceil(dmax / getRes2D());
@@ -107,13 +101,8 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
 
     @Override
     public double getArea(double dmin, double dmax) {
-        if(isUnboundedDistance(dmin, dmax)) {
-            synchronized(this) {
-                if(Double.isNaN(areaUnbounded)) {
-                    areaUnbounded = getAreaUnbounded();
-                }
-                return areaUnbounded;
-            }
+        if(Bounds.isUnboundedDistance(dmin, dmax)) {
+            return calcAreaUnbounded();
         }
         final Raster view = getView();
         final int size = (int) Math.ceil(dmax / getRes2D());

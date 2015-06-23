@@ -7,6 +7,7 @@ import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import org.geotools.coverage.grid.GridCoordinates2D;
+import org.thema.pixscape.Bounds;
 
 /**
  * ViewTanResult implementation for monoscale computation.
@@ -18,8 +19,6 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     
     private WritableRaster elevation, distance, landuse;
 
-    private double areaUnbounded = Double.NaN;
-    private double [] areaLandUnbounded = null;
     
     /**
      * Creates a new SimpleViewTanResult
@@ -38,7 +37,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         return ares;
     }
 
-    protected double getAreaUnbounded() {
+    protected double calcAreaUnbounded() {
         int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
         int nb = 0;
         for(int ind : buf) {
@@ -49,7 +48,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         return nb * Math.pow(getAres()*180/Math.PI, 2);
     }
 
-    protected double[] getAreaLandUnbounded() {
+    protected double[] calcAreaLandUnbounded() {
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];
         
@@ -66,13 +65,8 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     
     @Override
     public double getArea(double dmin, double dmax) {
-        if(isUnboundedDistance(dmin, dmax)) {
-            synchronized(this) {
-                if(Double.isNaN(areaUnbounded)) {
-                    areaUnbounded = getAreaUnbounded();
-                }
-                return areaUnbounded;
-            }
+        if(Bounds.isUnboundedDistance(dmin, dmax)) {
+            return calcAreaUnbounded();
         }
         int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
         int nb = 0;
@@ -85,14 +79,9 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     }
 
     @Override
-    public double[] getAreaLand(double dmin, double dmax) {
-        if(isUnboundedDistance(dmin, dmax)) {
-            synchronized(this) {
-                if(areaLandUnbounded == null) {
-                    areaLandUnbounded = getAreaLandUnbounded();
-                }
-                return areaLandUnbounded;
-            }
+    protected double[] calcAreaLand(double dmin, double dmax) {
+        if(Bounds.isUnboundedDistance(dmin, dmax)) {
+            return calcAreaLandUnbounded();
         }
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];

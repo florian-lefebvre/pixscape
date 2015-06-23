@@ -63,7 +63,6 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         this.project = project;
         initComponents();
         getRootPane().setDefaultButton(updateButton);
-        
         multiScaleCheckBox.setEnabled(project.hasMultiScale());
         
         zEyeTextField.setText(""+project.getStartZ());

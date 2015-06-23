@@ -74,6 +74,14 @@ public abstract class MultiViewResult extends AbstractViewResult {
     public final TreeMap<Double, ScaleData> getDatas() {
         return compute.getDatas();
     }
+
+    /**
+     * Returns the grid coordinates of the point of view for each scale.
+     * @return the grid coordinates of the point of view for each scale
+     */
+    public TreeMap<Double, Point2D> getCoords() {
+        return coords;
+    }
     
     /**
      * Returns the view in the first scale grid geometry.
@@ -122,20 +130,20 @@ public abstract class MultiViewResult extends AbstractViewResult {
      * Calculates the viewshed and the landuse at the first scale and stores them into view and land.
      */
     protected abstract void calcViewLand();
-
+    
     /**
      * Calculates the distance between the point of view and (x, y), and checks if it is in the interval [dmin dmax[.
      * 
-     * @param res the resolution of the data
+     * @param res2 the squared resolution of the data
+     * @param p the point of view in grid coordinate at scale res
      * @param x x grid coordinate at scale res
      * @param y y grid coordinate at scale res
      * @param dmin the minimal distance
      * @param dmax the maximal distance
      * @return true if the distance to the point (x, y) is in the interval [dmin dmax[
      */
-    protected final boolean isInside(double res, int x, int y, double dmin, double dmax) {
-        final Point2D p = coords.get(res);
-        double d2 = res*res * (Math.pow(x-p.getX(), 2) + Math.pow(y-p.getY(), 2));
+    protected final boolean isInside(double res2, Point2D p, int x, int y, double dmin, double dmax) {
+        double d2 = res2 * (Math.pow(x-p.getX(), 2) + Math.pow(y-p.getY(), 2));
         return d2 >= dmin*dmin && d2 < dmax*dmax;
     }
 }

@@ -1,6 +1,8 @@
 
 package org.thema.pixscape.view;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.geotools.coverage.grid.GridCoordinates2D;
 
 /**
@@ -9,9 +11,12 @@ import org.geotools.coverage.grid.GridCoordinates2D;
  * @author Gilles Vuidel
  */
 public abstract class AbstractViewResult implements ViewResult {
+    
+    private static final Pair UNBOUND = new Pair(0, Double.POSITIVE_INFINITY);
+    
     private final GridCoordinates2D coord;
     private double area = -1;
-    private double [] areaLand = null;
+    private Map<Pair, double []> areaLand = null;
 
     /**
      * Creates a new Viewresult
@@ -19,6 +24,7 @@ public abstract class AbstractViewResult implements ViewResult {
      */
     public AbstractViewResult(GridCoordinates2D coord) {
         this.coord = coord;
+        areaLand = new HashMap<>();
     }
     
     @Override
@@ -29,27 +35,63 @@ public abstract class AbstractViewResult implements ViewResult {
     @Override
     public synchronized double getArea() {
         if(area == -1) {
-            area = getArea(0, Double.POSITIVE_INFINITY);
+            area = getArea(UNBOUND.min, UNBOUND.max);
         }
         return area;
     }
 
     @Override
-    public synchronized double[] getAreaLand() {
-        if(areaLand == null) {
-            areaLand = getAreaLand(0, Double.POSITIVE_INFINITY);
-        }
-        return areaLand;
-    }
-    
-    /**
-     * Tests if distance interval is infinite.
-     * @param dmin
-     * @param dmax
-     * @return true if dmin == 0 and dmax == +inf
-     */
-    protected final boolean isUnboundedDistance(double dmin, double dmax) {
-        return dmin == 0 && dmax == Double.POSITIVE_INFINITY;
+    public double[] getAreaLand() {
+        return getAreaLand(UNBOUND.min, UNBOUND.max);
     }
 
+    @Override
+    public double[] getAreaLand(double dmin, double dmax) {
+        final Pair pair = new Pair(dmin, dmax);
+        synchronized(this) {
+            if(!areaLand.containsKey(pair)) {
+                areaLand.put(pair, calcAreaLand(dmin, dmax));
+            }
+        }
+        return areaLand.get(pair);
+    }
+    
+    protected abstract double[] calcAreaLand(double dmin, double dmax);
+    
+
+    private static class Pair {
+        private double min, max;
+
+        private Pair(double min, double max) {
+            this.min = min;
+            this.max = max;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 37 * hash + (int) (Double.doubleToLongBits(this.min) ^ (Double.doubleToLongBits(this.min) >>> 32));
+            hash = 37 * hash + (int) (Double.doubleToLongBits(this.max) ^ (Double.doubleToLongBits(this.max) >>> 32));
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (getClass() != obj.getClass()) {
+                return false;
+            }
+            final Pair other = (Pair) obj;
+            if (Double.doubleToLongBits(this.min) != Double.doubleToLongBits(other.min)) {
+                return false;
+            }
+            if (Double.doubleToLongBits(this.max) != Double.doubleToLongBits(other.max)) {
+                return false;
+            }
+            return true;
+        }
+        
+    }
 }

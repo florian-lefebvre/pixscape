@@ -43,6 +43,7 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
+import org.thema.pixscape.metric.AbstractDistMetric;
 import org.thema.pixscape.metric.AreaMetric;
 import org.thema.pixscape.metric.CONTAGMetric;
 import org.thema.pixscape.metric.CompactMetric;
@@ -55,6 +56,7 @@ import org.thema.pixscape.metric.RasterMetric;
 import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SkyLineMetric;
+import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.view.ComputeView;
 import org.thema.pixscape.view.ComputeViewJava;
 import org.thema.pixscape.view.MultiComputeViewJava;
@@ -479,6 +481,47 @@ public final class Project {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
             throw new RuntimeException("Error while instanciate " + shortName);
         }
+    }
+    
+    public static Metric getMetricWithParams(String name) {
+        
+        String shortName;
+        if(name.contains("[")) {
+            shortName = name.split("\\[")[0];
+        } else if(name.contains("_")) {
+            shortName = name.split("_")[0];
+        } else {
+            shortName = name;
+        }
+        Metric m = Project.getMetric(shortName);
+        
+        if(name.contains("[")) {
+            if(!m.isCodeSupported()) {
+                throw new IllegalArgumentException("Metric " + shortName + " does not support codes.");
+            }
+            TreeSet<Integer> codes = new TreeSet<>();
+            String lst = name.split("\\[")[1].split("\\]")[0];
+            String [] tokens = lst.split(",");
+            for(String code : tokens) {
+                codes.add(Integer.parseInt(code));
+            }
+            m.setCodes(codes);
+        }
+        
+        if(name.contains("_")) {
+            if(!(m instanceof AbstractDistMetric)) {
+                throw new IllegalArgumentException("Metric " + shortName + " does not support distances.");
+            }
+            TreeSet<Double> dists = new TreeSet<>();
+            String lst = name.split("_")[1];
+            String [] tokens = lst.split(",");
+            for(String dist : tokens) {
+                dists.add(Double.parseDouble(dist));
+            }
+            ((AbstractDistMetric)m).setDistances(dists);
+        }
+        
+        return m;
     }
     
     private static final List<Metric> METRICS;

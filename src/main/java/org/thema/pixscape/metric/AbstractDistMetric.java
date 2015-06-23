@@ -28,15 +28,7 @@ public abstract class AbstractDistMetric extends AbstractMetric {
         distances = new TreeSet<>();
     }
     
-    public final Double[] calcMetric(ViewShedResult result) {
-        return calcMetric((ViewResult)result);
-    }
-    
-    public final Double[] calcMetric(ViewTanResult result) {
-        return calcMetric((ViewResult)result);
-    }
-    
-    private Double [] calcMetric(ViewResult result) {
+    protected Double [] calcMetric(ViewResult result) {
         if(distances.isEmpty()) {
             return new Double[] {calcMetric(result, 0, Double.POSITIVE_INFINITY)};
         }
@@ -51,17 +43,8 @@ public abstract class AbstractDistMetric extends AbstractMetric {
         return results.toArray(new Double[results.size()]);
     }
     
-    private double calcMetric(ViewResult result, double dmin, double dmax) {
-        if(result instanceof ViewShedResult) {
-            return calcMetric((ViewShedResult)result, dmin, dmax);
-        } else {
-            return calcMetric((ViewTanResult)result, dmin, dmax);
-        }
-    }
+    protected abstract double calcMetric(ViewResult result, double dmin, double dmax);
     
-    protected abstract double calcMetric(ViewShedResult result, double dmin, double dmax);
-    
-    protected abstract double calcMetric(ViewTanResult result, double dmin, double dmax);
     
     public SortedSet<Double> getDistances() {
         return distances;

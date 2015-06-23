@@ -26,7 +26,7 @@ class CUDAViewShedResult extends SimpleViewShedResult {
     }
 
     @Override
-    public double[] getAreaLandUnbounded() {
+    protected double[] calcAreaLandUnbounded() {
         double [] countLand = new double[getCodes().last() + 1];
         for (int code : getCodes()) {
             countLand[code] = context.getSumLandView((byte) code) * getRes2D()*getRes2D();
@@ -36,7 +36,7 @@ class CUDAViewShedResult extends SimpleViewShedResult {
     }
 
     @Override
-    public double getAreaUnbounded() {
+    protected double calcAreaUnbounded() {
         return context.getSumView() * getRes2D()*getRes2D();
     }
 

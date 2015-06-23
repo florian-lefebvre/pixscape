@@ -8,6 +8,7 @@ package org.thema.pixscape.metric;
 
 import java.util.Arrays;
 import java.util.TreeSet;
+import org.thema.pixscape.Bounds;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
@@ -28,18 +29,19 @@ public class AreaMetric extends AbstractDistMetric implements ViewShedMetric, Vi
     }
     
     @Override
-    protected double calcMetric(ViewShedResult result, double dmin, double dmax) {
-        return calcArea(result, dmin, dmax);
-    }
-
-    @Override
-    protected double calcMetric(ViewTanResult result, double dmin, double dmax) {
-        return calcArea(result, dmin, dmax);
+    public final Double[] calcMetric(ViewShedResult result) {
+        return calcMetric((ViewResult)result);
     }
     
-    public double calcArea(ViewResult result, double dmin, double dmax) {
+    @Override
+    public final Double[] calcMetric(ViewTanResult result) {
+        return calcMetric((ViewResult)result);
+    }
+    
+    @Override
+    protected final double calcMetric(ViewResult result, double dmin, double dmax) {
         if(getCodes().isEmpty()) {
-            return result.getArea(dmin, dmax);
+            return Bounds.isUnboundedDistance(dmin, dmax) ? result.getArea() : result.getArea(dmin, dmax);
         } else {
             double[] count = result.getAreaLand(dmin, dmax);
             double sum = 0;

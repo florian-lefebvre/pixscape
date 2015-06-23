@@ -642,12 +642,12 @@ public class MainFrame extends javax.swing.JFrame {
 
     private void formWindowDeactivated(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowDeactivated
         if(viewshedDlg != null) {
-            viewshedDlg.toBack();
+            viewshedDlg.setAlwaysOnTop(false);
         }
         if(viewtanDlg != null) {
-            viewtanDlg.toBack();
+            viewtanDlg.setAlwaysOnTop(false);
         }
-        logFrame.toBack();
+        logFrame.setAlwaysOnTop(false);
     }//GEN-LAST:event_formWindowDeactivated
 
     private WritableRaster samplingDEM(Raster dtm, int scale) {

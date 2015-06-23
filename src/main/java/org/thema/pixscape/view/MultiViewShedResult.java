@@ -4,6 +4,7 @@ package org.thema.pixscape.view;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import java.awt.Rectangle;
+import java.awt.geom.Point2D;
 import java.awt.image.Raster;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,6 +14,8 @@ import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.opengis.referencing.operation.TransformException;
+import org.thema.common.JTS;
+import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
 import org.thema.process.Vectorizer;
 
@@ -42,15 +45,16 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
 
     @Override
     public double getArea(double dmin, double dmax) {
-        final boolean unbounded = isUnboundedDistance(dmin, dmax);
+        final boolean unbounded = Bounds.isUnboundedDistance(dmin, dmax);
         double area = 0;
         for(Double res : getViews().keySet()) {
             final double res2 = res*res;
-            final Raster v = getViews().get(res);               
+            final Raster v = getViews().get(res);    
+            final Point2D p = getCoords().get(res);
             final GridEnvelope2D zone = getZones().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
-                    if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res, x, y, dmin, dmax))) {
+                    if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res2, p, x, y, dmin, dmax))) {
                         area += res2;
                     }
                 }
@@ -60,20 +64,30 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
     }
 
     @Override
-    public double[] getAreaLand(double dmin, double dmax) {
-        final boolean unbounded = isUnboundedDistance(dmin, dmax);
-        double [] counts = new double[256];
+    protected double[] calcAreaLand(double dmin, double dmax) {
+        final boolean unbounded = Bounds.isUnboundedDistance(dmin, dmax);
+        final double [] counts = new double[256];
+        final double sqrt2 = Math.sqrt(2);
         for(Double res : getViews().keySet()) {
+            final GridEnvelope2D zone = getZones().get(res);
+            int size = Math.max(zone.width, zone.height);
+            if(size*res*sqrt2 < dmin) {
+                continue;
+            }
             final double res2 = res*res;
             final Raster v = getViews().get(res);     
             final Raster land = getDatas().get(res).getLand();
-            final GridEnvelope2D zone = getZones().get(res);
+            final Point2D p = getCoords().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
-                    if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res, x, y, dmin, dmax))) {
+                    if(v.getSample(x, y, 0) == 1 && (unbounded || isInside(res2, p, x, y, dmin, dmax))) {
                         counts[land.getSample(x, y, 0)] += res2;
                     }
                 }
+            }
+            //size = Math.min(zone.width, zone.height);
+            if(size*res > dmax*2) {
+                break;
             }
         }
 
@@ -130,6 +144,6 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
             poly.apply(getDatas().get(res).getGrid2Space());
             geoms.add(poly);
         }
-        return new GeometryFactory().buildGeometry(geoms);
+        return JTS.flattenGeometryCollection(new GeometryFactory().buildGeometry(geoms));
     }
 }

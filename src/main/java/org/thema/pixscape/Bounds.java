@@ -244,4 +244,14 @@ public final class Bounds implements Serializable {
         return new DefaultFeature(id, geom, new ArrayList<>(ATTRIBUTES), new ArrayList<>(Arrays.asList(
                 getDmin(), getDmax(), getOrientation(), getAmplitude(), getZMin(), getZMax())));
     }
+    
+    /**
+     * Tests if distance interval is infinite.
+     * @param dmin
+     * @param dmax
+     * @return true if dmin == 0 and dmax == +inf
+     */
+    public static final boolean isUnboundedDistance(double dmin, double dmax) {
+        return dmin == 0 && dmax == Double.POSITIVE_INFINITY;
+    }
 }
