@@ -32,9 +32,9 @@ import org.thema.pixscape.view.ComputeView;
  *
  * @author gvuidel
  */
-public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, Map<DefaultFeature, List<Double[]>>> implements Serializable {
+public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, Map<Object, List<Double[]>>> implements Serializable {
     
-    boolean isTan;
+    private boolean isTan;
     
     private final double startZ;
     
@@ -54,7 +54,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     
     private transient ComputeView compute;
     private transient List<DefaultFeature> points;
-    private transient Map<DefaultFeature, List<Double[]>> result;
+    private transient Map<Object, List<Double[]>> result;
 
     public PointMetricTask(double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
@@ -97,8 +97,8 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     }
     
     @Override
-    public Map<DefaultFeature, List<Double[]>> execute(int start, int end) {
-        Map<DefaultFeature, List<Double[]>> map = new HashMap<>();
+    public Map<Object, List<Double[]>> execute(int start, int end) {
+        Map<Object, List<Double[]>> map = new HashMap<>();
         
         for(int i = start; i < end; i++) {
             if(isCanceled()) {
@@ -114,7 +114,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
             } else {
                 values = compute.aggrViewShed(gc, startZ, destZ, direct, b, (List) metrics);
             }
-            map.put(points.get(i), values);
+            map.put(points.get(i).getId(), values);
             incProgress(1);
         }
         
@@ -131,7 +131,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         List<DefaultFeature> resPoints = new ArrayList<>();
         for(DefaultFeature point : points) {
             DefaultFeature p = bounds.updateBounds(point).createFeatureWithBoundAttr(point.getId(), point.getGeometry());
-            List<Double[]> values = result.get(point);
+            List<Double[]> values = result.get(point.getId());
             for(int i = 0; i < metrics.size(); i++) {
                 int j = 0;
                 for(String resName : metrics.get(i).getResultNames()) {
@@ -144,7 +144,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     }
 
     @Override
-    public void gather(Map<DefaultFeature, List<Double[]>> map) {
+    public void gather(Map<Object, List<Double[]>> map) {
         if(result == null) {
             result = new HashMap<>();
         }

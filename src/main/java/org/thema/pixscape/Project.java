@@ -56,7 +56,6 @@ import org.thema.pixscape.metric.RasterMetric;
 import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SkyLineMetric;
-import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.view.ComputeView;
 import org.thema.pixscape.view.ComputeViewJava;
 import org.thema.pixscape.view.MultiComputeViewJava;
@@ -420,7 +419,7 @@ public final class Project {
         if(hasLandUse()) {
             final UniqueColorTable colorTable = new UniqueColorTable((Map)colors);
             RasterLayer l = new RasterLayer("Land use", new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
-                    new RasterStyle(colorTable), true));
+                    new RasterStyle(colorTable, false), true));
             l.addLayerListener(new LayerListener() {
                 @Override
                 public void layerVisibilityChanged(EventObject e) {                    

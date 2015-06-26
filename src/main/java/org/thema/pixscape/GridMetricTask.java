@@ -6,7 +6,6 @@
 
 package org.thema.pixscape;
 
-import com.sun.media.imageio.plugins.tiff.TIFFImageWriteParam;
 import com.sun.media.imageioimpl.plugins.tiff.TIFFImageWriterSpi;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -22,7 +21,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
@@ -38,6 +36,7 @@ import javax.media.jai.remote.SerializerFactory;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridGeometry2D;
 import org.geotools.geometry.DirectPosition2D;
+import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.common.ProgressBar;
 import org.thema.data.IOImage;
@@ -230,12 +229,21 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     public void finish() {
         super.finish(); 
         if(isSaved()) {
+            GridGeometry2D savedGrid = grid;
+            if(sample > 1) {
+                double r = Project.getProject().getDefaultScale().getResolution();
+                Envelope2D env = grid.getEnvelope2D();
+                int w = dtm.getWidth()/sample;
+                int h = dtm.getHeight()/sample;
+                env = new Envelope2D(env.getCoordinateReferenceSystem(), 
+                        env.x, env.y-(h*sample*r-env.getHeight()), w * sample*r, h * sample*r);
+                savedGrid = new GridGeometry2D(new Rectangle(w, h), env);
+            }
             try {
                 for(String resName : writers.keySet()) {
                     writers.get(resName).endWriteEmpty();
                     writers.get(resName).dispose();
-                    // TODO tfw is false when sample > 1
-                    IOImage.createTIFFWorldFile(Project.getProject().getDtmCov(), getResultFile(resName).getAbsolutePath());
+                    IOImage.createTIFFWorldFile(savedGrid, getResultFile(resName).getAbsolutePath());
                 }
             } catch (IOException ex) {
                 Logger.getLogger(GridMetricTask.class.getName()).log(Level.SEVERE, null, ex);

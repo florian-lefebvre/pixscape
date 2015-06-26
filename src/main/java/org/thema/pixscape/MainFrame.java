@@ -471,7 +471,7 @@ public class MainFrame extends javax.swing.JFrame {
                 WritableRaster dtmSamp = samplingDEM(dtm, scale);
                 Envelope2D env = project.getDtmCov().getEnvelope2D();
                 env = new Envelope2D(env.getCoordinateReferenceSystem(), 
-                        env.x, env.y-(dtmSamp.getHeight()*scale*r-dtm.getHeight()*r), dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
+                        env.x, env.y-r*(dtmSamp.getHeight()*scale-dtm.getHeight()), dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
                 GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env);
                 ScaleData dataScale = new ScaleData(dtmCov, 
                         land != null ? samplingLanduse(land, scale) : null, 
@@ -724,20 +724,20 @@ public class MainFrame extends javax.swing.JFrame {
      */
     public static void main(String args[]) throws Exception {
         
-        // log all uncaught exception
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                Logger.getLogger("").log(Level.SEVERE, null, e);
-            }
-        });
+//        // log all uncaught exception
+//        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+//            @Override
+//            public void uncaughtException(Thread t, Throwable e) {
+//                Logger.getLogger("").log(Level.SEVERE, null, e);
+//            }
+//        });
                
         Locale.setDefault(Locale.ENGLISH);
         
         // MPI Execution
         if(args.length > 0 && args[0].equals("-mpi")) {
             new MpiLauncher(Arrays.copyOfRange(args, 1, args.length)).run();
-            System.exit(0);
+            return;
         }
 
         // CLI execution

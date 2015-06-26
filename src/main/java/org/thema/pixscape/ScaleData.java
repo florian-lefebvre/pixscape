@@ -168,30 +168,18 @@ public final class ScaleData {
     
     void load(File dir) throws IOException {
         dtmCov = IOImage.loadTiffWithoutCRS(new File(dir, "dtm-" + resolution + ".tif"));
-        if(dtmCov.getRenderedImage() instanceof BufferedImage) {
-            this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
-        } else {
-            this.dtm = dtmCov.getRenderedImage().getData();
-        }
+        this.dtm = dtmCov.getRenderedImage().getData();
         
         File dsmFile = new File(dir, "dsm-" + resolution + ".tif");
         if(dsmFile.exists()) {
-            GridCoverage2D cov = IOImage.loadTiffWithoutCRS(dsmFile);
-            if(cov.getRenderedImage() instanceof BufferedImage) {
-                dsm = ((BufferedImage)cov.getRenderedImage()).getRaster();
-            } else {
-                dsm = cov.getRenderedImage().getData();
-            }
+            GridCoverage2D dsmCov = IOImage.loadTiffWithoutCRS(dsmFile);
+            dsm = dsmCov.getRenderedImage().getData();
         }
         
         File luFile = new File(dir, "land-" + resolution + ".tif");
         if(luFile.exists()) {
-            GridCoverage2D cov = IOImage.loadTiffWithoutCRS(luFile);
-            if(cov.getRenderedImage() instanceof BufferedImage) {
-                land = ((BufferedImage)cov.getRenderedImage()).getRaster();
-            } else {
-                land = cov.getRenderedImage().getData();
-            }
+            GridCoverage2D landCov = IOImage.loadTiffWithoutCRS(luFile);
+            land = landCov.getRenderedImage().getData();
         }
     }
     
