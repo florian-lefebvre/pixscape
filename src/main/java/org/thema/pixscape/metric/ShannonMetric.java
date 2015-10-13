@@ -6,6 +6,8 @@
 
 package org.thema.pixscape.metric;
 
+import java.util.List;
+import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
@@ -38,13 +40,28 @@ public class ShannonMetric extends AbstractDistMetric implements ViewShedMetric,
         for(int code : getCodes(result)) {
             sum += count[code];
         }
-        for(int code : getCodes(result)) {
-            final double nb = count[code];
-            if(nb > 0) {
-                shannon += - nb/sum * Math.log(nb/sum);
+        int n = 0;
+        if(!hasCodeGroup()) {
+            for(int code : getCodes(result)) {
+                final double nb = count[code];
+                if(nb > 0) {
+                    shannon += - nb/sum * Math.log(nb/sum);
+                }
+                n++;
+            }
+        } else {
+            for(List<Integer> codes : getCodeGroups().values()) {
+                double nb = 0;
+                for(int code : codes) {
+                    nb += count[code];
+                }
+                if(nb > 0) {
+                    shannon += - nb/sum * Math.log(nb/sum);
+                }
+                n++;
             }
         }
-        return shannon/Math.log(getCodes(result).size());
+        return shannon / Math.log(n);
     }
 
     @Override

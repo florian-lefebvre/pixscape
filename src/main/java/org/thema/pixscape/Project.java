@@ -47,6 +47,7 @@ import org.thema.pixscape.metric.AbstractDistMetric;
 import org.thema.pixscape.metric.AreaMetric;
 import org.thema.pixscape.metric.CONTAGMetric;
 import org.thema.pixscape.metric.CompactMetric;
+import org.thema.pixscape.metric.DepthLineMetric;
 import org.thema.pixscape.metric.DistMetric;
 import org.thema.pixscape.metric.FractalDimMetric;
 import org.thema.pixscape.metric.IJIMetric;
@@ -498,13 +499,25 @@ public final class Project {
             if(!m.isCodeSupported()) {
                 throw new IllegalArgumentException("Metric " + shortName + " does not support codes.");
             }
-            TreeSet<Integer> codes = new TreeSet<>();
+            
             String lst = name.split("\\[")[1].split("\\]")[0];
             String [] tokens = lst.split(",");
             for(String code : tokens) {
-                codes.add(Integer.parseInt(code));
+                code = code.trim();
+                if(code.isEmpty()) {
+                    continue;
+                }
+                if(code.contains("-")) {
+                    TreeSet<Integer> codes = new TreeSet<>();
+                    String [] toks = code.split("-");
+                    for(String c : toks) {
+                        codes.add(Integer.parseInt(c));
+                    }
+                    m.addCodes(codes);
+                } else {
+                    m.addCode(Integer.parseInt(code));
+                }
             }
-            m.setCodes(codes);
         }
         
         if(name.contains("_")) {
@@ -528,7 +541,7 @@ public final class Project {
         METRICS = new ArrayList(Arrays.asList(new AreaMetric(), new PerimeterMetric(), 
                 new CompactMetric(), new ShannonMetric(), new FractalDimMetric(),
                 new IJIMetric(), new CONTAGMetric(), new DistMetric(), new SkyLineMetric(), 
-                new ShanDistMetric(), new RasterMetric()));
+                new ShanDistMetric(), new DepthLineMetric(), new RasterMetric()));
     }
     
     

@@ -6,11 +6,18 @@
 
 package org.thema.pixscape.metric;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.MissingResourceException;
+import java.util.Set;
+import java.util.SortedMap;
 import java.util.SortedSet;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Logger;
+import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 
 /**
@@ -19,12 +26,12 @@ import org.thema.pixscape.view.ViewResult;
  */
 public abstract class AbstractMetric implements Metric {
     private final boolean codeSupport;
-    private SortedSet<Integer> codes;
+    private SortedMap<Integer, Integer> codes;
 
     public AbstractMetric(boolean codeSupport) {
         this.codeSupport = codeSupport;
         if(codeSupport) {
-            codes = new TreeSet<>();
+            codes = new TreeMap<>();
         }
     }
 
@@ -34,14 +41,25 @@ public abstract class AbstractMetric implements Metric {
     }
 
     @Override
-    public void setCodes(SortedSet<Integer> codes) {
+    public void addCode(int code) {
         if(!isCodeSupported()) {
             return;
         }
-        if(codes == null) {
-            this.codes = new TreeSet<>();
+        if(codes.isEmpty()) {
+            codes.put(code, 0);
         } else {
-            this.codes = codes;
+            codes.put(code, Collections.max(codes.values())+1);
+        }
+    }
+
+    @Override
+    public void addCodes(Set<Integer> set) {
+        if(!isCodeSupported()) {
+            return;
+        }
+        int group = codes.isEmpty() ? 0 : (Collections.max(codes.values())+1);
+        for(Integer code : set) {
+            codes.put(code, group);
         }
     }
 
@@ -50,8 +68,24 @@ public abstract class AbstractMetric implements Metric {
         if(!isCodeSupported()) {
             throw new IllegalStateException("Codes are not supported for metric : " + this);
         }
-        return codes;
+        return new TreeSet<>(codes.keySet());
     }
+    
+    public boolean hasCodeGroup() {
+        return codes.size() > new HashSet(codes.values()).size();
+    }
+    
+    public HashMapList<Integer, Integer> getCodeGroups() {
+        if(!isCodeSupported()) {
+            throw new IllegalStateException("Codes are not supported for metric : " + this);
+        }
+        HashMapList<Integer, Integer> groups = new HashMapList<>();
+        for(Integer code : codes.keySet()) {
+            groups.putValue(codes.get(code), code);
+        }
+        return groups;
+    }
+    
     
     protected SortedSet<Integer> getCodes(ViewResult result) {
         if(!isCodeSupported()) {
@@ -72,7 +106,15 @@ public abstract class AbstractMetric implements Metric {
     public String getCodeName() {
         String s = getShortName();
         if(isCodeSupported() && !codes.isEmpty()) {
-            s += Arrays.deepToString(codes.toArray()).replace(",", "");
+            for(List<Integer> group : getCodeGroups().values()) {
+                Iterator<Integer> it = group.iterator();
+                s += it.next();
+                while(it.hasNext()) {
+                    s += "-" + it.next();
+                }
+                s += ",";
+            }
+            s = s.substring(0, s.length()-1);
         }
         return s;
     }

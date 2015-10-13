@@ -6,7 +6,10 @@
 
 package org.thema.pixscape.metric;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import org.thema.common.collection.TreeMapList;
 import org.thema.pixscape.view.ViewTanResult;
 
@@ -16,28 +19,27 @@ import org.thema.pixscape.view.ViewTanResult;
  */
 public class ShanDistMetric extends AbstractMetric implements ViewTanMetric {
 
+    private static final TreeSet<Double> DIST_BREAKS = new TreeSet<>(Arrays.asList(0.0, 10.0, 100.0, 1000.0, 10000.0));
+    
     public ShanDistMetric() {
         super(false);
     }
 
     @Override
     public Double[] calcMetric(ViewTanResult result) {
-        TreeMapList<Integer, Integer> distances = new TreeMapList<>();
+        TreeMapList<Double, Double> distances = new TreeMapList<>();
         for(int t = 0; t < result.getThetaWidth(); t++) {
-            int dist = (int) result.getMaxDistance(t);
-            distances.putValue(dist, dist);
+            double dist = result.getMaxDistance(t);
+            distances.putValue(DIST_BREAKS.floor(dist), dist);
         }
         if(distances.size() < 2) {
             return new Double[]{ 0.0 };
         }
         double shannon = 0;
-        double sum = 0;
-        for(List<Integer> lst : distances.values()) {
-            sum += lst.size();
-        }
-        for(List<Integer> lst : distances.values()) {
+        final double tot = result.getThetaWidth();
+        for(List<Double> lst : distances.values()) {
             int nb = lst.size();
-            shannon += - nb/sum * Math.log(nb/sum);
+            shannon += - nb/tot * Math.log(nb/tot);
         }
 
         return new Double[]{ shannon/Math.log(distances.size()) };
@@ -47,6 +49,5 @@ public class ShanDistMetric extends AbstractMetric implements ViewTanMetric {
     public String getShortName() {
         return "SD";
     }
-
 
 }

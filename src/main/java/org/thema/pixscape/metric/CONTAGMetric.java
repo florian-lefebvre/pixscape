@@ -9,6 +9,8 @@ package org.thema.pixscape.metric;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
 import java.util.SortedSet;
+import java.util.TreeSet;
+import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
@@ -45,18 +47,12 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
                     final int l1 = land.getSample(x+1, y, 0);
                     border[l][l1]++;
+                    border[l1][l]++;
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
                     final int l1 = land.getSample(x, y+1, 0);
                     border[l][l1]++;
-                }
-                if(x > 0 && view.getSample(x-1, y, 0) == 1) {
-                    final int l1 = land.getSample(x-1, y, 0);
-                    border[l][l1]++;
-                }
-                if(y > 0 && view.getSample(x, y-1, 0) == 1) {
-                    final int l1 = land.getSample(x, y-1, 0);
-                    border[l][l1]++;
+                    border[l1][l]++;
                 }
             }
         }
@@ -82,18 +78,12 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
                     final int l1 = land[view.getSample(x+1, y, 0)];
                     border[l][l1]++;
+                    border[l1][l]++;
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
                     final int l1 = land[view.getSample(x, y+1, 0)];
                     border[l][l1]++;
-                }
-                if(x > 0 && view.getSample(x-1, y, 0) != -1) {
-                    final int l1 = land[view.getSample(x-1, y, 0)];
-                    border[l][l1]++;
-                }
-                if(y > 0 && view.getSample(x, y-1, 0) != -1) {
-                    final int l1 = land[view.getSample(x, y-1, 0)];
-                    border[l][l1]++;
+                    border[l1][l]++;
                 }
             }
         }
@@ -102,7 +92,33 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
     }
     
     private double calcCONTAG(ViewResult result, int[][] border, int [] count) {
-        final SortedSet<Integer> codes = getCodes(result);
+        SortedSet<Integer> codes;
+        if(hasCodeGroup()) {
+            HashMapList<Integer, Integer> groups = getCodeGroups();
+            int[] c = new int[groups.size()];
+            for(int g : groups.keySet()) {
+                for(int code : groups.get(g)) {
+                    c[g] += count[code];
+                }
+            }
+            count = c;
+            int[][] b = new int[groups.size()][groups.size()];
+            for(int g1 : groups.keySet()) {
+                for(int g2 : groups.keySet()) {
+                    for(int c1 : groups.get(g1)) {
+                        for(int c2 : groups.get(g2)) {
+                            int n = border[c1][c2];
+                            b[g1][g2] += n;
+                        }
+                    }
+                }
+            }
+            border = b;
+            codes = new TreeSet<>(groups.keySet());
+        } else {
+            codes = getCodes(result);
+        }
+        
         final int m = codes.size();
         if(m < 2) {
             return Double.NaN;

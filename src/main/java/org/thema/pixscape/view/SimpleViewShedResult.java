@@ -41,10 +41,16 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
                     if(view.getSample(x, y, 0) != 1) {
                         continue;
                     }
-                    if(        x == 0 || view.getSample(x-1, y, 0) != 1
-                            || y == 0 || view.getSample(x, y-1, 0) != 1
-                            || x == w-1 || view.getSample(x+1, y, 0) != 1
-                            || y == h-1 || view.getSample(x, y+1, 0) != 1) {
+                    if(x == 0 || view.getSample(x-1, y, 0) != 1) {
+                        p++;
+                    }
+                    if(y == 0 || view.getSample(x, y-1, 0) != 1) {
+                        p++;
+                    }
+                    if(x == w-1 || view.getSample(x+1, y, 0) != 1) {
+                        p++;
+                    }
+                    if(y == h-1 || view.getSample(x, y+1, 0) != 1) {
                         p++;
                     }
                 }

@@ -8,6 +8,8 @@ package org.thema.pixscape.metric;
 
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
+import java.util.TreeSet;
+import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
@@ -42,22 +44,16 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
                     final int l1 = land.getSample(x+1, y, 0);
                     if(l != l1) {
-                        if(l < l1) {
-                            border[l][l1]++;
-                        } else {
-                            border[l1][l]++;
-                        }
+                        border[l][l1]++;
+                        border[l1][l]++;
                         tot++;
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
                     final int l1 = land.getSample(x, y+1, 0);
                     if(l != l1) {
-                        if(l < l1) {
-                            border[l][l1]++;
-                        } else {
-                            border[l1][l]++;
-                        }
+                        border[l][l1]++;
+                        border[l1][l]++;
                         tot++;
                     }
                 }
@@ -81,24 +77,18 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                 }
                 final int l = land[ind];
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
-                    final int l1 = land[view.getSample(x+1, y, 0)];
+                    final int l1 = land[view.getSample(x+1, y, 0)] & 0xff;
                     if(l != l1) {
-                        if(l < l1) {
-                            border[l][l1]++;
-                        } else {
-                            border[l1][l]++;
-                        }
+                        border[l][l1]++;
+                        border[l1][l]++;
                         tot++;
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
-                    final int l1 = land[view.getSample(x, y+1, 0)];
+                    final int l1 = land[view.getSample(x, y+1, 0)] & 0xff;
                     if(l != l1) {
-                        if(l < l1) {
-                            border[l][l1]++;
-                        } else {
-                            border[l1][l]++;
-                        }
+                        border[l][l1]++;
+                        border[l1][l]++;
                         tot++;
                     }
                 }
@@ -109,14 +99,36 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
     }
     
     private double calcIJI(ViewResult result, int[][] border, int tot) {
-        int m = getCodes(result).size();
+        TreeSet<Integer> codes;
+        if(hasCodeGroup()) {
+            tot = 0;
+            HashMapList<Integer, Integer> groups = getCodeGroups();
+            TreeSet<Integer> codeGroups = new TreeSet<>(groups.keySet());
+            int[][] b = new int[groups.size()][groups.size()];
+            for(int g1 : codeGroups) {
+                for(int g2 : codeGroups.tailSet(g1, false)) {
+                    for(int c1 : groups.get(g1)) {
+                        for(int c2 : groups.get(g2)) {
+                            int n = border[c1][c2];
+                            b[g1][g2] += n;
+                            tot += n;
+                        }
+                    }
+                }
+            }
+            border = b;
+            codes = new TreeSet<>(groups.keySet());
+        } else {
+            codes = new TreeSet<>(getCodes(result));
+        }
+        int m = codes.size();
         if(tot == 0 || m < 3) {
             return Double.NaN;
         }
         
         double sum = 0;
-        for(int c1 : getCodes(result)) {
-            for(int c2 : getCodes(result).tailSet(c1)) {
+        for(int c1 : codes) {
+            for(int c2 : codes.tailSet(c1, false)) {
                 double val = border[c1][c2];
                 if(val > 0) {
                     sum += -(val / tot) * Math.log(val / tot);

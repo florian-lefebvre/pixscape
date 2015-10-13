@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.thema.pixscape.view.ViewResult;
-import org.thema.pixscape.view.ViewShedResult;
-import org.thema.pixscape.view.ViewTanResult;
 
 /**
  *

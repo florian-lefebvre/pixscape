@@ -6,8 +6,6 @@
 
 package org.thema.pixscape.metric;
 
-import java.util.Arrays;
-import java.util.TreeSet;
 import org.thema.pixscape.Bounds;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
@@ -25,7 +23,7 @@ public class AreaMetric extends AbstractDistMetric implements ViewShedMetric, Vi
     
     public AreaMetric(int code) {
         this();
-        setCodes(new TreeSet<>(Arrays.asList(code)));
+        addCode(code);
     }
     
     @Override

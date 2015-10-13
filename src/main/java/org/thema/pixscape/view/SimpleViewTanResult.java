@@ -178,13 +178,11 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public double getMaxDistance(int theta1) {
-        double max = Double.NEGATIVE_INFINITY;
-        for(int y = 0; y < view.getHeight(); y++) {
-            double d = getDistance(theta1, y);
-            if(d > max) {
-                max = d;
-            }
-        }
-        return max;
+        final int h = getThetaHeight();
+        int y = 0;
+        while(y < h && view.getSample(theta1, y, 0) == -1) {
+            y++;
+        } 
+        return y == h ? 0 : getDistance(theta1, y);
     }
 }

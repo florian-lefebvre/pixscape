@@ -187,22 +187,16 @@ public class MetricDialog extends javax.swing.JDialog {
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         metric = (Metric) metricComboBox.getSelectedItem();
-        TreeSet<Integer> codes = new TreeSet<>();
-        for(String s : codesTextField.getText().split(",")) {
-            if(!s.trim().isEmpty()) {
-                codes.add(Integer.parseInt(s.trim()));
-            }
+        
+        String fullName = metric.getShortName();
+        if(metric.isCodeSupported() && hasCodes && !codesTextField.getText().trim().isEmpty()) {
+            fullName += "[" + codesTextField.getText() + "]";
         }
-        if(metric instanceof AbstractDistMetric) {
-            TreeSet<Double> dists = new TreeSet<>();
-            for(String s : distTextField.getText().split(",")) {
-                if(!s.trim().isEmpty()) {
-                    dists.add(Double.parseDouble(s.trim()));
-                }
-            }
-            ((AbstractDistMetric)metric).setDistances(dists);
+        if(metric instanceof AbstractDistMetric && !distTextField.getText().trim().isEmpty()) {
+            fullName += "_" + distTextField.getText();
         }
-        metric.setCodes(codes);
+        metric = Project.getMetricWithParams(fullName);
+
         isOk = true;
         doClose();
     }//GEN-LAST:event_okButtonActionPerformed

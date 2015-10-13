@@ -405,7 +405,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         for(int code : dlg.metric.getCodes()) {
             try {
                 Metric m = dlg.metric.getClass().newInstance();
-                m.setCodes(new TreeSet<>(Collections.singleton(code)));
+                m.addCode(code);
                 ((DefaultListModel)metricList.getModel()).addElement(m);
             } catch (InstantiationException | IllegalAccessException ex) {
                 Logger.getLogger(ViewMetricDialog.class.getName()).log(Level.SEVERE, null, ex);

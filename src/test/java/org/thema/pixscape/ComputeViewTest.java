@@ -9,7 +9,6 @@ package org.thema.pixscape;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -17,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +42,7 @@ import org.thema.pixscape.view.MultiComputeViewJava;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 import org.thema.pixscape.view.cuda.ComputeViewCUDA;
+import static org.thema.pixscape.TestTools.printArray;
 
 /**
  *
@@ -118,23 +117,7 @@ public class ComputeViewTest {
         }
         
         int size = 10;
-        System.out.println("calcViewShed random mnt + mne");
-        WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
-        WritableRaster mne = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
-        WritableRaster land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, size, size, 1), null);
-        GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, size, size));
-        for(int y = 0; y < size; y++) {
-            for(int x = 0; x < size; x++) {
-                mnt.setSample(x, y, 0, (float)(Math.random()*5));
-                mne.setSample(x, y, 0, (float)(Math.random()*2));
-                land.setSample(x, y, 0, (int)(Math.random()*5+1));
-            }
-        }
-        System.out.println("mnt");
-        printArray(((DataBufferFloat)mnt.getDataBuffer()).getData());
-        System.out.println("mne");
-        printArray(((DataBufferFloat)mne.getDataBuffer()).getData());
-        ScaleData data = new ScaleData(mntCov, land, mne, 1);
+        ScaleData data = TestTools.createRandomData(size);
         ComputeViewCUDA cuda = new ComputeViewCUDA(data, 0, 1);
         ComputeViewJava java = new ComputeViewJava(data, 0);
         double startZ = 2;
@@ -158,25 +141,8 @@ public class ComputeViewTest {
      */
 //    @Test
     public void testViewShedJavaMulti() throws IOException, TransformException {  
-        
         int size = 5;
-        System.out.println("calcViewShed random mnt + mne");
-        WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
-        WritableRaster mne = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
-        WritableRaster land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, size, size, 1), null);
-        GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, size, size));
-        for(int y = 0; y < size; y++) {
-            for(int x = 0; x < size; x++) {
-                mnt.setSample(x, y, 0, (float)(Math.random()*5));
-                mne.setSample(x, y, 0, (float)(Math.random()*2));
-                land.setSample(x, y, 0, (int)(Math.random()*5+1));
-            }
-        }
-        System.out.println("mnt");
-        printArray(((DataBufferFloat)mnt.getDataBuffer()).getData());
-        System.out.println("mne");
-        printArray(((DataBufferFloat)mne.getDataBuffer()).getData());
-        ScaleData data = new ScaleData(mntCov, land, mne, 1);
+        ScaleData data = TestTools.createRandomData(size);
         MultiComputeViewJava multi = new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0);
         ComputeViewJava java = new ComputeViewJava(data, 0);
         double startZ = 2;
@@ -298,7 +264,7 @@ public class ComputeViewTest {
                     while(line != null && !line.trim().isEmpty()) {
                         tokens = line.split("=");
                         double res = ((ViewShedMetric)Project.getMetric(tokens[0])).calcMetric(viewshedResult)[0];
-                        Assert.assertEquals(Double.parseDouble(tokens[1]), res, 1e-10);
+                        Assert.assertEquals(tokens[0], Double.parseDouble(tokens[1]), res, 1e-10);
                         line = r.readLine();
                     }
                 }
@@ -373,7 +339,7 @@ public class ComputeViewTest {
                     while(line != null && !line.trim().isEmpty()) {
                         tokens = line.split("=");
                         double res = ((ViewTanMetric)Project.getMetric(tokens[0])).calcMetric(viewtanResult)[0];
-                        Assert.assertEquals(Double.parseDouble(tokens[1]), res, 1e-10);
+                        Assert.assertEquals(tokens[0], Double.parseDouble(tokens[1]), res, 1e-10);
                         line = r.readLine();
                     }
                 }
@@ -386,19 +352,4 @@ public class ComputeViewTest {
         }
     }
 
-    public static void printArray(Object array) {
-        int size = (int) Math.sqrt(Array.getLength(array));
-        printArray(array, size, size);
-    }
-    
-    public static void printArray(Object array, int w, int h) {
-        for(int i = 0; i < h; i++) {
-            for(int j = 0; j < w; j++) {
-                System.out.print(Array.get(array, i*w+j) + " ");
-            }
-            System.out.println();
-        }
-    }
-    
-    
 }
