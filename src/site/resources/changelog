@@ -1,3 +1,5 @@
+version 0.3.8 (20/10/2015)
+- Project data save : force land in byte and DSM in float
 version 0.3.7 (13/10/2015)
 - P Metric (Perimeter) : change the calculation from number of border pixel to the length of the "true" contour
 - C Metric (Compacity) : change due to Perimeter metric change => always >= 1

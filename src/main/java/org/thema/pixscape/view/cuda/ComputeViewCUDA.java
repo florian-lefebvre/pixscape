@@ -71,25 +71,11 @@ public class ComputeViewCUDA extends SimpleComputeView {
     public ComputeViewCUDA(ScaleData data, double aPrec, int nbGPU) throws IOException {
         super(data, aPrec);
         dtm = data.getDtm();
-        if(dtm.getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT) {
-            dtmBuf = ((DataBufferFloat)dtm.getDataBuffer()).getData();
-        } else {
-            throw new IllegalArgumentException("DTM is not float data type");
-        }
+        dtmBuf = ((DataBufferFloat)dtm.getDataBuffer()).getData();
+        
         if(data.hasLandUse()) {
-            if(data.getLand().getDataBuffer().getDataType() == DataBuffer.TYPE_BYTE) {
-                landBuf = ((DataBufferByte)data.getLand().getDataBuffer()).getData();
-            } else {
-                DataBuffer buf = data.getLand().getDataBuffer();
-                landBuf = new byte[buf.getSize()];
-                for(int i = 0; i < landBuf.length; i++) {
-                    int v = buf.getElem(i);
-                    if(v < 0 || v > 255) {
-                        throw new RuntimeException("Land use code > 255 is not supported with CUDA");
-                    }
-                    landBuf[i] = (byte) v;
-                }
-            }
+            landBuf = ((DataBufferByte)data.getLand().getDataBuffer()).getData();
+            
             ncode = -1;
             for(int i = 0; i < landBuf.length; i++){
                 int v = landBuf[i];
@@ -101,15 +87,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
         }
         
         if(data.getDsm() != null) {
-            if(data.getDsm().getDataBuffer().getDataType() == DataBuffer.TYPE_FLOAT) {
-                dsmBuf = ((DataBufferFloat)data.getDsm().getDataBuffer()).getData();
-            } else {
-                DataBuffer buf = data.getDsm().getDataBuffer();
-                dsmBuf = new float[buf.getSize()];
-                for(int i = 0; i < dsmBuf.length; i++) {
-                    dsmBuf[i] = (float) buf.getElem(i);
-                }
-            }
+            dsmBuf = ((DataBufferFloat)data.getDsm().getDataBuffer()).getData();
         }
         
         // Enable exceptions and omit all subsequent error checks

@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileFilter;
@@ -128,14 +129,18 @@ public final class Project {
         scaleDatas.put(newData.getResolution(), newData);
         simpleComputeView = null;
         
+//        ColorModel colorModel = landCov.getRenderedImage().getColorModel();
         codes = new TreeSet<>(newData.getCodes());
-        
         colors = new TreeMap<>();
         for(Integer code : codes) {
-            colors.put(code.doubleValue(), SimpleStyle.randomColor().brighter());
+//            try {
+//                colors.put(code.doubleValue(), new Color(colorModel.getRGB(code.intValue())));
+//            } catch(IllegalArgumentException ex) {
+                colors.put(code.doubleValue(), SimpleStyle.randomColor().brighter());
+//            }
         }
         
-        new GeoTiffWriter(new File(dir, "land-" + newData.getResolution() + ".tif")).write(landCov, null);
+        newData.save(dir);
         save();
     }
     
@@ -158,7 +163,7 @@ public final class Project {
         scaleDatas.put(newData.getResolution(), newData);
         simpleComputeView = null;
         
-        new GeoTiffWriter(new File(dir, "dsm-" + newData.getResolution() + ".tif")).write(dsmCov, null);
+        newData.save(dir);
         save();
     }
     

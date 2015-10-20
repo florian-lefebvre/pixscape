@@ -8,7 +8,6 @@ package org.thema.pixscape.metric;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.SortedSet;
 import java.util.TreeSet;
 import org.thema.common.collection.TreeMapList;
 import org.thema.pixscape.view.ViewTanResult;

@@ -7,7 +7,6 @@
 package org.thema.pixscape.metric;
 
 import java.util.List;
-import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;

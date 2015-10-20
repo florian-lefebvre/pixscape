@@ -42,9 +42,9 @@ public final class ScaleData {
         if(cov.getProperty("GC_NODATA") != null && (cov.getProperty("GC_NODATA") instanceof Number)) {
             noData = ((Number)cov.getProperty("GC_NODATA")).doubleValue();
         }
-        final RenderedImage img = cov.getRenderedImage();
-        final RandomIter r = RandomIterFactory.create(img, null);
-        final WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
+        RenderedImage img = cov.getRenderedImage();
+        RandomIter r = RandomIterFactory.create(img, null);
+        WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
         for(int y = 0; y < img.getHeight(); y++) {
             for(int x = 0; x < img.getWidth(); x++) {
                 final double val = r.getSampleDouble(x, y, 0);
@@ -55,7 +55,7 @@ public final class ScaleData {
                 }
             }
         }
-  
+
         init(new GridCoverageFactory().create("", dtmFloat, cov.getEnvelope2D()), land, dsm);
     }
     
@@ -65,8 +65,6 @@ public final class ScaleData {
     
     private void init(GridCoverage2D dtmCov, Raster land, Raster dsm) {
         this.dtmCov = dtmCov;
-        this.land = land;
-        this.dsm = dsm;
         
         GridEnvelope2D r = dtmCov.getGridGeometry().getGridRange2D();
         resolution = dtmCov.getEnvelope2D().getWidth() / r.getWidth();
@@ -79,10 +77,16 @@ public final class ScaleData {
             if(type == DataBuffer.TYPE_FLOAT || type == DataBuffer.TYPE_DOUBLE) {
                 throw new IllegalArgumentException("Float types are not supported for land use");
             }
+            this.land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, land.getWidth(), land.getHeight(), 1), null);
             codes = new TreeSet<>();
             for(int yi = 0; yi < land.getHeight(); yi++) {
                 for(int xi = 0; xi < land.getWidth(); xi++) {
-                    codes.add(land.getSample(xi, yi, 0));
+                    int val = land.getSample(xi, yi, 0) & 0xFF;
+                    if(val < 0 || val > 255) {
+                        throw new IllegalArgumentException("Land codes must be in [0-255]");
+                    }
+                    codes.add(val);
+                    ((WritableRaster)this.land).setSample(xi, yi, 0, val);
                 }
             }
         }
@@ -90,6 +94,17 @@ public final class ScaleData {
         if(dsm != null) {
             if(dsm.getWidth() != r.getWidth() || dsm.getHeight() != r.getHeight()) {
                 throw new IllegalArgumentException("DSM raster size does not correspond to DTM raster size");
+            }
+            if(dsm.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT) {
+                this.dsm = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dsm.getWidth(), dsm.getHeight(), 1), null);
+                for(int y = 0; y < dsm.getHeight(); y++) {
+                    for(int x = 0; x < dsm.getWidth(); x++) {
+                        final double val = dsm.getSampleDouble(x, y, 0);
+                        ((WritableRaster)this.dsm).setSample(x, y, 0, val);
+                    }
+                }
+            } else {
+                this.dsm = dsm;
             }
         }
         
