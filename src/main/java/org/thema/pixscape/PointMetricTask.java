@@ -34,6 +34,9 @@ import org.thema.pixscape.view.ComputeView;
  */
 public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, Map<Object, List<Double[]>>> implements Serializable {
     
+    /** project file for loading project for MPI mode */
+    private File prjFile;
+    
     private boolean isTan;
     
     private final double startZ;
@@ -52,12 +55,15 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     
     private final File resDir;
     
+    private transient Project project;
     private transient ComputeView compute;
     private transient List<DefaultFeature> points;
     private transient Map<Object, List<Double[]>> result;
 
-    public PointMetricTask(double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
+    public PointMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
+        this.project = project;
+        this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.destZ = destZ;
         this.direct = direct;
@@ -69,8 +75,10 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         this.isTan = false;
     }
     
-    public PointMetricTask(double startZ, Bounds bounds, List<ViewTanMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
+    public PointMetricTask(Project project, double startZ, Bounds bounds, List<ViewTanMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
+        this.project = project;
+        this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.bounds = bounds;
         this.metrics = metrics;
@@ -85,11 +93,16 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         try {
             // needed for getSplitRange
             points = GlobalDataStore.getFeatures(pointFile, idField, null);
+            super.init(); 
+            // useful for MPI only, because project is not serializable
+            if(project == null) {
+                project = Project.loadProject(prjFile);
+            }
         } catch (IOException ex) {
-            Logger.getLogger(PointMetricTask.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException(ex);
         }
-        super.init(); 
-        compute = Project.getProject().getDefaultComputeView();
+        
+        compute = project.getDefaultComputeView();
     }
 
     public boolean isSaved() {

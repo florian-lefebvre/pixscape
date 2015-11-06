@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -12,11 +7,17 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Shannon entropy of landuse classes for planimetric and tangential view.
+ * 
+ * Calculates the Shannon entropy on the landuse seen.
+ * Support landuse codes, landuse code groups and distance ranges.
+ * @author Gilles Vuidel
  */
 public class ShannonMetric extends AbstractDistMetric implements ViewShedMetric, ViewTanMetric {
 
+    /**
+     * Creates a new ShannonMetric
+     */
     public ShannonMetric() {
         super(true);
     }

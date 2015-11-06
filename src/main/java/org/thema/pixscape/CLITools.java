@@ -16,13 +16,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
+import org.geotools.feature.SchemaException;
 import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.operation.TransformException;
-import org.thema.common.parallel.ParallelFExecutor;
 import org.thema.common.swing.TaskMonitor;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
@@ -47,15 +49,17 @@ public class CLITools {
     private File pointFile = null;
     private String idField = null;
     
-    public void execute(String [] arg) throws IOException {
+    public void execute(String [] arg) throws IOException, SchemaException {
         if(arg[0].equals("--help")) {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
                     "java -jar pixscape.jar [-mpi | -proc n | -cuda n]\n"  +
                     "--project project_file.xml\n" +
+                    "[--landmod zone=filezones.shp id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
                     "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]\n" +
-                    "[-multi dmin=val| -mono] command\n" +
+                    "[-multi dmin=val| -mono]\n" +
+                    " commands\n\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
                     "--viewtan [prec=deg] x y\n" +
@@ -80,7 +84,6 @@ public class CLITools {
             switch (p) {
                 case "-proc":
                     int n = Integer.parseInt(args.remove(0));
-                    ParallelFExecutor.setNbProc(n);
                     ParallelExecutor.setNbProc(n);
                     break;
                 case "-cuda":
@@ -97,8 +100,15 @@ public class CLITools {
         args.remove(0);
         project = Project.loadProject(new File(args.remove(0)));
         project.setUseCUDA(useCUDA);
-        resDir = new File(".");
+        resDir = project.getDirectory();
         zEye = project.getStartZ();
+        
+        // land mod special command
+        if(!args.isEmpty() && args.get(0).equals("--landmod")) {
+            args.remove(0);
+            landmod(args);
+            return;
+        }
         
         // global options
         while(!args.isEmpty() && !args.get(0).startsWith("--")) {
@@ -167,7 +177,8 @@ public class CLITools {
         }
         
         if(args.isEmpty()) {
-            throw new IllegalArgumentException("No command to execute");
+            Logger.getLogger(CLITools.class.getName()).log(Level.WARNING, "No command to execute");
+            return;
         }
         
         try {
@@ -264,9 +275,9 @@ public class CLITools {
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(zEye, zDest, direct, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(project, zEye, zDest, direct, bounds, from, metrics, sample, resDir, null);
         } else {
-            task = new PointMetricTask(zEye, zDest, direct, bounds, metrics, pointFile, idField, resDir, null);
+            task = new PointMetricTask(project, zEye, zDest, direct, bounds, metrics, pointFile, idField, resDir, null);
         }
         
         ExecutorService.execute(task);
@@ -289,14 +300,30 @@ public class CLITools {
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(zEye, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(project, zEye, bounds, from, metrics, sample, resDir, null);
         } else {
-            task = new PointMetricTask(zEye, bounds, metrics, pointFile, idField, resDir, null);
+            task = new PointMetricTask(project, zEye, bounds, metrics, pointFile, idField, resDir, null);
         }
         
         ExecutorService.execute(task);
     }
+    
+    private void landmod(final List<String> args) throws IOException, SchemaException {
+        File fileZone = new File(args.remove(0).split("=")[1]);
+        String idZoneField = args.remove(0).split("=")[1];
+        String codeField = args.remove(0).split("=")[1];
+        File dsmFile = new File(args.remove(0).split("=")[1]);
+        List<String> selIds = null;
+        if(!args.isEmpty() && args.get(0).startsWith("selid=")) {
+            selIds = Arrays.asList(args.remove(0).split("=")[1].split(","));
+        }
+        
+        LandModTask task = new LandModTask(project, fileZone, idZoneField, codeField, dsmFile, selIds, args);
+        ExecutorService.executeSequential(task);
 
+        args.clear();
+    }
+    
     private void showMetrics() {
         System.out.println("===== Metrics =====");
         for(Metric indice : Project.getMetrics(Metric.class)) {

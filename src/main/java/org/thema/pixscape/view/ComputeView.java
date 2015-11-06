@@ -100,6 +100,15 @@ public abstract class ComputeView {
     }
 
     /**
+     * Alpha precision in radian for tangential view.
+     * 
+     * @return the precision in radian for tangential view
+     */
+    public double getRadaPrec() {
+        return aPrec;
+    }
+    
+    /**
      * Alpha precision in degree for tangential view.
      * 
      * @return the precision in degree for tangential view

@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.thema.pixscape.metric;
 
 import java.awt.image.Raster;
@@ -18,12 +14,20 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Special metric for saving the complete view in a raster file for planimetric and tangential view.
+ * Use only for debugging purpose.
+ * 
+ * @author Gilles Vuidel
  */
 public class RasterMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
-    public RasterMetric() {
+    private Project project;
+    
+    /**
+     * Creates a new RasterMetric for the given project
+     * @param project the current project
+     */
+    public RasterMetric(Project project) {
         super(false);
     }
 
@@ -36,9 +40,9 @@ public class RasterMetric extends AbstractMetric implements ViewShedMetric, View
     public Double[] calcMetric(ViewShedResult result) {
         try {
             Raster view = result.getView();
-            RasterLayer l = new RasterLayer("rast", view, Project.getProject().getDtmCov().getEnvelope2D());
-            l.setCRS(Project.getProject().getCRS());
-            l.saveRaster(new File(Project.getProject().getDirectory(), "viewshed-" + result.getCoord() + ".tif"));
+            RasterLayer l = new RasterLayer("rast", view, project.getDtmCov().getEnvelope2D());
+            l.setCRS(project.getCRS());
+            l.saveRaster(new File(project.getDirectory(), "viewshed-" + result.getCoord() + ".tif"));
             return new Double[]{1.0};
         } catch (IOException ex) {
             Logger.getLogger(RasterMetric.class.getName()).log(Level.SEVERE, null, ex);
@@ -51,7 +55,7 @@ public class RasterMetric extends AbstractMetric implements ViewShedMetric, View
         try {
             Raster view = result.getView();
             RasterLayer l = new RasterLayer("rast", new RasterShape(view, view.getBounds(), new RasterStyle(), true));
-            l.saveRaster(new File(Project.getProject().getDirectory(), "viewtan-" + result.getCoord() + ".tif"));
+            l.saveRaster(new File(project.getDirectory(), "viewtan-" + result.getCoord() + ".tif"));
             return new Double[]{1.0};
         } catch (IOException ex) {
             Logger.getLogger(RasterMetric.class.getName()).log(Level.SEVERE, null, ex);

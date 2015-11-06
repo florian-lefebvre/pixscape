@@ -1,18 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Interface for tangential metric.
+ * 
+ * @author Gilles Vuidel
  */
 public interface ViewTanMetric extends Metric {
     
+    /**
+     * Calculates the metric based on tangential result.
+     * The size of the array equals to {@link #getResultNames() } size.
+     * @param result the tangential result
+     * @return the metric results 
+     */
     public Double [] calcMetric(ViewTanResult result);
 }

@@ -1,24 +1,25 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
 import org.thema.pixscape.view.ViewShedResult;
 
 /**
- *
- * @author gvuidel
+ * Compacity index for planimetric view.
+ * Calculates the compacity index of the sight.
+ * 
+ * Does not support codes nor distance ranges.
+ * 
+ * @author Gilles Vuidel
  */
 public class CompactMetric extends AbstractMetric implements ViewShedMetric {
 
+    /**
+     * Creates a new CompactMetric
+     */
     public CompactMetric() {
         super(false);
     }
     
-
     @Override
     public Double[] calcMetric(ViewShedResult result) {
         double a = result.getArea();

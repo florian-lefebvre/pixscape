@@ -61,7 +61,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     }
 
     protected double calcAreaUnbounded() {
-        final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
+        final byte[] buf = ((DataBufferByte) getView().getDataBuffer()).getData();
         int nb = 0;
         for (int v : buf) {
             if (v == 1) {
@@ -74,7 +74,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     protected double[] calcAreaLandUnbounded() {
         final double res2D2 = getRes2D()*getRes2D();
         final double[] count = new double[256];
-        final byte[] buf = ((DataBufferByte) view.getDataBuffer()).getData();
+        final byte[] buf = ((DataBufferByte) getView().getDataBuffer()).getData();
         for (int i = 0; i < buf.length; i++) {
             if (buf[i] == 1) {
                 count[getLanduse().getSample(i % getW(), i / getW(), 0)] += res2D2;
@@ -129,7 +129,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     @Override
     public Geometry getPolygon() {
         Geometry poly = Vectorizer.vectorize(getView(), 1);
-        poly.apply(getData().getGrid2Space());
+        poly.apply(getData().getGrid2World());
         return poly;
     }
 

@@ -141,7 +141,7 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
         List<Geometry> geoms = new ArrayList<>();
         for(double res : getViews().keySet()) {
             Geometry poly = Vectorizer.vectorize(getViews().get(res), 1);
-            poly.apply(getDatas().get(res).getGrid2Space());
+            poly.apply(getDatas().get(res).getGrid2World());
             geoms.add(poly);
         }
         return JTS.flattenGeometryCollection(new GeometryFactory().buildGeometry(geoms));

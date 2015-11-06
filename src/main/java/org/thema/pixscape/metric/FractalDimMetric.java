@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -13,11 +8,17 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.process.BoxCounting;
 
 /**
- *
+ * Fractal dimension of the sight in planimetric view.
+ * Calculates the fractal dimension with box counting method.
+ * 
+ * Does not support codes nor distance ranges.
  * @author Gilles Vuidel
  */
 public class FractalDimMetric extends AbstractMetric implements ViewShedMetric {
 
+    /**
+     * Creates a new FractalDimMetric
+     */
     public FractalDimMetric() {
         super(false);
     }

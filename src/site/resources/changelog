@@ -1,3 +1,7 @@
+version 0.3.9 (06/11/2015)
+- CLI : add command --landmod for batching landuse changes
+- Remove Raster metric from UI
+- Remove Project static references from Project and MPILauncher
 version 0.3.8 (20/10/2015)
 - Project data save : force land in byte and DSM in float
 version 0.3.7 (13/10/2015)

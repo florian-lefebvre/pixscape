@@ -77,7 +77,7 @@ public class ComputeViewJava extends SimpleComputeView {
             }
         }
         Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
-        return new SimpleViewTanResult(aPrec, cg, view, this);
+        return new SimpleViewTanResult(cg, view, this);
     }
     
     /**

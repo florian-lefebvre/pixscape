@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -21,13 +16,19 @@ import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
 
 /**
- *
- * @author gvuidel
+ * Base class for Metric implementation.
+ * 
+ * @author Gilles Vuidel
  */
 public abstract class AbstractMetric implements Metric {
+    
     private final boolean codeSupport;
     private SortedMap<Integer, Integer> codes;
 
+    /**
+     * Creates a new metric
+     * @param codeSupport is the metric support landuse code ?
+     */
     public AbstractMetric(boolean codeSupport) {
         this.codeSupport = codeSupport;
         if(codeSupport) {
@@ -63,6 +64,10 @@ public abstract class AbstractMetric implements Metric {
         }
     }
 
+    /**
+     * {@inheritDoc }
+     * @throws IllegalStateException if codes are not supported by this metric
+     */
     @Override
     public SortedSet<Integer> getCodes() {
         if(!isCodeSupported()) {
@@ -71,10 +76,17 @@ public abstract class AbstractMetric implements Metric {
         return new TreeSet<>(codes.keySet());
     }
     
+    /**
+     * @return true if some landuse codes are grouped
+     */
     public boolean hasCodeGroup() {
         return codes.size() > new HashSet(codes.values()).size();
     }
     
+    /**
+     * @return a mapping containing for each group id (key) the list of landuse codes
+     * @throws IllegalStateException if codes are not supported by this metric
+     */
     public HashMapList<Integer, Integer> getCodeGroups() {
         if(!isCodeSupported()) {
             throw new IllegalStateException("Codes are not supported for metric : " + this);
@@ -86,7 +98,12 @@ public abstract class AbstractMetric implements Metric {
         return groups;
     }
     
-    
+    /**
+     * If {@link #getCodes() } is empty returns all codes from {@link ViewResult#getCodes() }
+     * @param result the view result 
+     * @return the landuse codes to be used for calculating this metric
+     * @throws IllegalStateException if codes are not supported by this metric
+     */
     protected SortedSet<Integer> getCodes(ViewResult result) {
         if(!isCodeSupported()) {
             throw new IllegalStateException("Codes are not supported for metric : " + this);
@@ -94,6 +111,14 @@ public abstract class AbstractMetric implements Metric {
         return getCodes().isEmpty() ? result.getCodes() : getCodes();
     }
     
+    /**
+     * The full name of the metric is retrieved from 
+     * org/thema/pixscape/metric/Bundle properties file.
+     * The key is the short name metric.
+     * If the entry does not exist in the Bundle file, return only the short name with codes if any.
+     * @return the full name of the metric
+     */
+    @Override
     public String getName() {
         try {
             return getCodeName() + " - " + java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle").getString(getShortName());
@@ -103,7 +128,11 @@ public abstract class AbstractMetric implements Metric {
         }
     }
     
-    public String getCodeName() {
+    /**
+     * Example : A1,2,3,4-6 
+     * @return a String containing the metric short name followed by the codes list if any
+     */
+    protected String getCodeName() {
         String s = getShortName();
         if(isCodeSupported() && !codes.isEmpty()) {
             for(List<Integer> group : getCodeGroups().values()) {
@@ -119,11 +148,18 @@ public abstract class AbstractMetric implements Metric {
         return s;
     }
 
+    /**
+     * @return the full name of the metric
+     */
     @Override
     public String toString() {
         return getName();
     }
 
+    /**
+     * {@inheritDoc }
+     * Default implementation returns the short name with codes.
+     */
     @Override
     public String[] getResultNames() {
         return new String[] { getCodeName() };

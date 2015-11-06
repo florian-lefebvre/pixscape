@@ -427,7 +427,6 @@ public class MainFrame extends javax.swing.JFrame {
         
         try {
             GridCoverage2D dtm = IOImage.loadCoverage(dlg.dtm);
-            dlg.path.mkdir();
             project = new Project(dlg.name, dlg.path, dtm, dlg.resZ);
             rootLayer = project.getLayers();
             mapViewer.setRootLayer(rootLayer);
@@ -499,7 +498,7 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Metrics...");
                 if(dlg.gridSampling) {
-                    GridMetricTask task = new GridMetricTask(project.getStartZ(), -1, 
+                    GridMetricTask task = new GridMetricTask(project, project.getStartZ(), -1, 
                             dlg.direct, dlg.bounds, dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
                     ExecutorService.execute(task);
                     Map<String, WritableRaster> result = task.getResult();
@@ -517,7 +516,7 @@ public class MainFrame extends javax.swing.JFrame {
                     gl.getLayerFirst().setVisible(true);
                     rootLayer.addLayerFirst(gl);
                 } else {
-                    PointMetricTask task = new PointMetricTask(project.getStartZ(), -1, 
+                    PointMetricTask task = new PointMetricTask(project, project.getStartZ(), -1, 
                             dlg.direct, dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
@@ -549,7 +548,7 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Metrics...");
                 if(dlg.gridSampling) {
-                    GridMetricTask task = new GridMetricTask(project.getStartZ(), dlg.bounds, 
+                    GridMetricTask task = new GridMetricTask(project, project.getStartZ(), dlg.bounds, 
                             dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
                     ExecutorService.execute(task);
                     Map<String, WritableRaster> result = task.getResult();
@@ -567,7 +566,7 @@ public class MainFrame extends javax.swing.JFrame {
                     gl.getLayerFirst().setVisible(true);
                     rootLayer.addLayerFirst(gl);
                 } else {
-                    PointMetricTask task = new PointMetricTask(project.getStartZ(), 
+                    PointMetricTask task = new PointMetricTask(project, project.getStartZ(), 
                             dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
@@ -723,15 +722,7 @@ public class MainFrame extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) throws Exception {
-        
-//        // log all uncaught exception
-//        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-//            @Override
-//            public void uncaughtException(Thread t, Throwable e) {
-//                Logger.getLogger("").log(Level.SEVERE, null, e);
-//            }
-//        });
-               
+                      
         Locale.setDefault(Locale.ENGLISH);
         
         // MPI Execution

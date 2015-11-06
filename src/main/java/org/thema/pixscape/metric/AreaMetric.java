@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -12,15 +7,26 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Area metric for planimetric and tangential view.
+ * Calculates the sight area in square meter for planimetric and in square degree for tangential.
+ * Support landuse codes and distance ranges.
+ * For code support, code groups has no effect (ie. A[1,2] = A[1-2])
+ * 
+ * @author Gilles Vuidel
  */
 public class AreaMetric extends AbstractDistMetric implements ViewShedMetric, ViewTanMetric {
 
+    /**
+     * Creates a new AreaMetric
+     */
     public AreaMetric() {
         super(true);
     }
     
+    /**
+     * Creates a new AreaMetric just for one landuse code
+     * @param code the landuse code
+     */
     public AreaMetric(int code) {
         this();
         addCode(code);

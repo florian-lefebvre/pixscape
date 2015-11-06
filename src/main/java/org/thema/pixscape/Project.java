@@ -6,7 +6,6 @@ import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileFilter;
@@ -73,8 +72,6 @@ public final class Project {
 
     public enum Aggregate {NONE, SUM, SHANNON};
     
-    private static Project project;
-    
     private transient DefaultGroupLayer layers;
     private transient File dir;
     private transient SimpleComputeView simpleComputeView;
@@ -99,15 +96,30 @@ public final class Project {
         this.scaleDatas = new TreeMap<>();
         ScaleData scaleData = new ScaleData(demCov, null, null, resZ);
         scaleDatas.put(scaleData.getResolution(), scaleData);
-        
+        prjPath.mkdirs();
         new GeoTiffWriter(new File(prjPath, "dtm-" + scaleData.getResolution() + ".tif")).write(scaleData.getDtmCov(), null);
         
         CoordinateReferenceSystem crs = demCov.getCoordinateReferenceSystem2D();
         if(crs != null) {
             wktCRS = crs.toWKT();
         }
+
+        save();
+    }
+    
+    public Project(String name, File prjPath, ScaleData scaleData) throws IOException {
+        this.name = name;
+        this.dir = prjPath;
+        this.scaleDatas = new TreeMap<>();
+        scaleDatas.put(scaleData.getResolution(), scaleData);
+        prjPath.mkdirs();
+        scaleData.save(prjPath);
         
-        project = this;
+        CoordinateReferenceSystem crs = scaleData.getDtmCov().getCoordinateReferenceSystem2D();
+        if(crs != null) {
+            wktCRS = crs.toWKT();
+        }
+
         save();
     }
 
@@ -197,10 +209,6 @@ public final class Project {
     private void removeScaleData(double res) throws IOException {
         scaleDatas.remove(res);
         save();
-    }
-
-    public AffineTransformation getGrid2space() {
-        return getDefaultScale().getGrid2Space();
     }
     
     public GridCoverage2D getDtmCov() {
@@ -329,7 +337,7 @@ public final class Project {
         for(ScaleData data : prj.scaleDatas.values()) {
             data.load(prj.dir);
         }
-        project = prj;
+
         return prj;
     }
     
@@ -347,6 +355,10 @@ public final class Project {
 
     public File getDirectory() {
         return dir;
+    }
+
+    public String getName() {
+        return name;
     }
     
     public CoordinateReferenceSystem getCRS() {
@@ -393,7 +405,7 @@ public final class Project {
 
             @Override
             public JPopupMenu getContextMenu() {
-                if(data == project.getDefaultScale()) {
+                if(data == getDefaultScale()) {
                     return null;
                 }
                 JPopupMenu menu = new JPopupMenu();
@@ -443,10 +455,6 @@ public final class Project {
         gl.setLayersVisible(false);
         return gl;
     } 
-    
-    public static Project getProject() {
-        return project;
-    }
 
     public void close() {
         try {
@@ -546,7 +554,7 @@ public final class Project {
         METRICS = new ArrayList(Arrays.asList(new AreaMetric(), new PerimeterMetric(), 
                 new CompactMetric(), new ShannonMetric(), new FractalDimMetric(),
                 new IJIMetric(), new CONTAGMetric(), new DistMetric(), new SkyLineMetric(), 
-                new ShanDistMetric(), new DepthLineMetric(), new RasterMetric()));
+                new ShanDistMetric(), new DepthLineMetric()));
     }
     
     

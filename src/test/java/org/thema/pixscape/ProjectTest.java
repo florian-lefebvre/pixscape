@@ -55,7 +55,6 @@ public class ProjectTest {
         assertEquals(new TreeSet<>(Arrays.asList(1, 2, 5)), A.getCodes());
         assertEquals(Arrays.asList(1, 5), A.getCodeGroups().get(0));
         assertEquals(Arrays.asList(2), A.getCodeGroups().get(1));
-        assertEquals("A1-5,2", A.getCodeName());
         
         A = (AreaMetric) Project.getMetricWithParams("A_0,10,+Infinity");
         assertEquals(new TreeSet<>(Arrays.asList(0.0, 10.0, Double.POSITIVE_INFINITY)), A.getDistances());

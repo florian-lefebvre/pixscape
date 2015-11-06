@@ -15,16 +15,22 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.thema.data.IOImage;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for adding dtm, dsm and landuse at another resolution from files.
+ * 
+ * @author Gilles Vuidel
  */
 public class AddScaleDialog extends javax.swing.JDialog {
 
+    /** has user validated ? */
     public boolean isOk = false;
 
     private Project project;
     
-    /** Creates new form AddScaleDialog */
+    /** 
+     * Creates new form AddScaleDialog 
+     * @param parent the parent frame
+     * @param prj the current project
+     */
     public AddScaleDialog(java.awt.Frame parent, Project prj) {
         super(parent, true);
         initComponents();

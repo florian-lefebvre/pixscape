@@ -1,0 +1,190 @@
+
+package org.thema.pixscape;
+
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.Envelope;
+import com.vividsolutions.jts.geom.Geometry;
+import com.vividsolutions.jts.geom.GeometryFactory;
+import com.vividsolutions.jts.geom.util.AffineTransformation;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.TreeSet;
+import org.geotools.feature.SchemaException;
+import org.thema.common.collection.HashMapList;
+import org.thema.data.IOImage;
+import org.thema.data.feature.DefaultFeature;
+import org.thema.parallel.AbstractParallelTask;
+
+/**
+ * Parallel task for creating multiple projects from land modifications and executing CLI commands for each.
+ * This task works in theaded and MPI mode.
+ * 
+ * @author Gilles Vuidel
+ */
+public class LandModTask extends AbstractParallelTask<Void, Void> implements Serializable {
+
+    /** project file for loading project for MPI mode */
+    private File prjFile;
+    private File fileZone;
+    private String idField;
+    private String codeField;
+    private List<String> zoneIds;
+    private List<String> args;
+    private File fileDsm;
+    
+    private transient Project project;
+    private transient HashMapList<String, DefaultFeature> zones;
+    private transient Raster finalDsm;
+
+    /**
+     * Creates a new LandmodTask
+     * @param project the initial project (must be saved for MPI mode)
+     * @param fileZone the shapefile containing polygons of land modifications
+     * @param idField the shapefile field containing identifier
+     * @param codeField the shapefile field containing the new land code
+     * @param selIds a list of zone ids or null for calculating for all zones
+     * @param args the CLI commands to execute after creating each project
+     */
+    public LandModTask(Project project, File fileZone, String idField, String codeField, File fileDsm, List<String> selIds, List<String> args) {
+        this.project = project;
+        this.prjFile = project.getProjectFile();
+        this.fileZone = fileZone;
+        this.idField = idField;
+        this.codeField = codeField;
+        this.zoneIds = selIds;
+        this.fileDsm = fileDsm;
+        this.args = args;
+    }
+
+    @Override
+    public void init() {
+        try {
+            // useful for MPI only, because project is not serializable
+            if(project == null) {
+                project = Project.loadProject(prjFile);
+            }
+        
+            List<DefaultFeature> features = DefaultFeature.loadFeatures(fileZone);
+            if(!features.get(0).getAttributeNames().contains(idField)) {
+                throw new IllegalArgumentException("Unknow field : " + idField);
+            }
+            if(!features.get(0).getAttributeNames().contains(codeField)) {
+                throw new IllegalArgumentException("Unknow field : " + codeField);
+            }
+            zones = new HashMapList<>();
+            for(DefaultFeature f : features) {
+                zones.putValue(f.getAttribute(idField).toString(), f);
+            }
+            
+            if(zoneIds == null) {
+                zoneIds = new ArrayList(zones.keySet());
+                // sort to ensure the same order for several JVM in MPI mode
+                Collections.sort(zoneIds);
+            } else {
+                // check if selected ids exists
+                if(!zones.keySet().containsAll(zoneIds)) {
+                    zoneIds.removeAll(zones.keySet());
+                    throw new IllegalArgumentException("Unknown ids : " + Arrays.deepToString(zoneIds.toArray()));
+                }
+            }
+            finalDsm = IOImage.loadCoverage(fileDsm).getRenderedImage().getData();
+            
+            super.init();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    @Override
+    public Void execute(int start, int end) {
+        for(String id : zoneIds.subList(start, end)) {
+            try {
+                File newPrjFile = createProject(id, zones.get(id)).getProjectFile();
+                
+                // execute next commands
+                ArrayList<String> newArgs = new ArrayList<>(args);
+                newArgs.add(0, "--project");
+                newArgs.add(1, newPrjFile.getAbsolutePath());
+                new CLITools().execute(newArgs.toArray(new String[0]));
+            } catch (IOException | SchemaException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public int getSplitRange() {
+        return zoneIds.size();
+    }
+
+    @Override
+    public void gather(Void results) {
+    }
+
+    /**
+     * @return nothing
+     * @throws UnsupportedOperationException
+     */
+    @Override
+    public Void getResult() {
+        throw new UnsupportedOperationException(); 
+    }
+
+    /**
+     * Creates a new Project based on the initial project while changing the landmap on areas covering the features zones
+     * @param id the identifier for the new project
+     * @param zones the zones to change in the land map and dsm map
+     * @return the new created project
+     * @throws IOException
+     * @throws SchemaException 
+     */
+    private Project createProject(String id, List<DefaultFeature> zones) throws IOException, SchemaException {
+        Raster src = project.getDefaultScale().getLand();
+        WritableRaster land = src.createCompatibleWritableRaster();
+        land.setRect(src);
+        src = project.getDefaultScale().getDsm();
+        WritableRaster dsm = src.createCompatibleWritableRaster();
+        dsm.setRect(src);
+        
+        TreeSet<Integer> codes = new TreeSet<>(project.getCodes());
+        AffineTransformation trans = project.getDefaultScale().getWorld2Grid();
+        // update land map
+        for(DefaultFeature zone : zones) {
+            int code = ((Number)zone.getAttribute(codeField)).intValue();
+            Geometry trGeom = trans.transform(zone.getGeometry());
+            for(int i = 0; i < trGeom.getNumGeometries(); i++) {
+                Geometry transGeom = trGeom.getGeometryN(i);
+                Envelope env = transGeom.getEnvelopeInternal();
+                int miny = Math.max((int)env.getMinY(), land.getMinY());
+                int minx = Math.max((int)env.getMinX(), land.getMinX());
+                int maxy = Math.min((int)Math.ceil(env.getMaxY()), land.getMinY() + land.getHeight());
+                int maxx = Math.min((int)Math.ceil(env.getMaxX()), land.getMinX() + land.getWidth());
+                Coordinate c = new Coordinate();
+                GeometryFactory geomFact = new GeometryFactory();
+                for(c.y = miny+0.5; c.y < maxy; c.y++) {
+                    for(c.x = minx+0.5; c.x < maxx; c.x++) {
+                        if(transGeom.intersects(geomFact.createPoint(c))) {
+                            final int x = (int)c.x;
+                            final int y = (int)c.y;
+                            land.setSample(x, y, 0, code);
+                            dsm.setSample(x, y, 0, finalDsm.getSampleDouble(x, y, 0));
+                        }
+                    }
+                }
+            }
+            codes.add(code);
+        }
+        
+        // create project
+        File dir = new File(project.getDirectory(), id);       
+        return new Project(project.getName() + "-" + id, dir, new ScaleData(project.getDtmCov(), land, dsm));
+    }
+}

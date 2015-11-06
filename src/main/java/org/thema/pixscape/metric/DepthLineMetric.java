@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -10,11 +5,16 @@ import java.awt.image.Raster;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Compacity index of the shape formed by the sky line transposed on the "ground", for tangential view only.
+ * Does not support codes nor distance ranges.
+ * 
+ * @author Gilles Vuidel
  */
 public class DepthLineMetric extends AbstractMetric implements ViewTanMetric {
 
+    /**
+     * Creates a new DepthLineMetric
+     */
     public DepthLineMetric() {
         super(false);
     }

@@ -1,18 +1,20 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
 import org.thema.pixscape.view.ViewShedResult;
 
 /**
- *
- * @author gvuidel
+ * Interface for planimetric metric.
+ * 
+ * @author Gilles Vuidel
  */
 public interface ViewShedMetric extends Metric {
     
+    /**
+     * Calculates the metric based on planimetric result.
+     * The size of the array equals to {@link #getResultNames() } size.
+     * @param result the planimetric result
+     * @return the metric results 
+     */
     public Double [] calcMetric(ViewShedResult result);
 }

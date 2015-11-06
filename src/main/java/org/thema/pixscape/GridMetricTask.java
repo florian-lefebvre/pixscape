@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageTypeSpecifier;
@@ -52,6 +53,9 @@ import org.thema.pixscape.view.ComputeView;
  */
 public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRaster>, Map<String, SerializableState>> implements Serializable {
     
+    /** project file for loading project for MPI mode */
+    private File prjFile;
+    
     private final boolean isTan;
     
     private final double startZ;
@@ -70,14 +74,30 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     
     private final File resDir;
     
+    private transient Project project;
     private transient GridGeometry2D grid;
     private transient ComputeView compute;
     private transient Raster dtm, land;
     private transient Map<String, WritableRaster> result;
     private transient Map<String, ImageWriter> writers;
 
-    public GridMetricTask(double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
+    /**
+     * 
+     * @param project the project (must be saved for MPI mode)
+     * @param startZ
+     * @param destZ
+     * @param direct
+     * @param bounds
+     * @param fromCode
+     * @param metrics
+     * @param sample
+     * @param resDir
+     * @param monitor 
+     */
+    public GridMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
+        this.project = project;
+        this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.destZ = destZ;
         this.direct = direct;
@@ -89,8 +109,21 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         this.isTan = false;
     }
     
-    public GridMetricTask(double startZ, Bounds bounds, Set<Integer> fromCode, List<ViewTanMetric> metrics, int sample, File resDir, ProgressBar monitor) {
+    /**
+     * 
+     * @param project the project (must be saved for MPI mode)
+     * @param startZ
+     * @param bounds
+     * @param fromCode
+     * @param metrics
+     * @param sample
+     * @param resDir
+     * @param monitor 
+     */
+    public GridMetricTask(Project project, double startZ, Bounds bounds, Set<Integer> fromCode, List<ViewTanMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
+        this.project = project;
+        this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.bounds = bounds;
         this.from = fromCode != null && !fromCode.isEmpty() ? new TreeSet<>(fromCode) : null;
@@ -102,12 +135,20 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
 
     @Override
     public void init() {
+        // useful for MPI only, because project is not serializable
+        if(project == null) {
+            try {
+                project = Project.loadProject(prjFile);
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         // needed for getSplitRange
-        dtm = Project.getProject().getDtm();
-        grid = Project.getProject().getDtmCov().getGridGeometry();
+        dtm = project.getDtm();
         super.init(); 
-        compute = Project.getProject().getDefaultComputeView();
-        land = Project.getProject().getLandUse();
+        grid = project.getDtmCov().getGridGeometry();
+        compute = project.getDefaultComputeView();
+        land = project.getLandUse();
     }
     
     public boolean isSaved() {
@@ -188,10 +229,6 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                         ImageWriter writer = new TIFFImageWriterSpi().createWriterInstance();                       
                         writer.setOutput(new FileImageOutputStream(getResultFile(resName)));
                         ImageWriteParam param = writer.getDefaultWriteParam();
-//                        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-//                        param.setCompressionType("LZW");
-//                        param.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
-//                        param.setTiling(dtm.getWidth()/sample, 1, 0, 0);
                         writer.prepareWriteEmpty(null, ImageTypeSpecifier.createBanded(ColorSpace.getInstance(ColorSpace.CS_GRAY),
                                 new int[]{0}, new int[]{0}, DataBuffer.TYPE_FLOAT, false, false), dtm.getWidth()/sample, dtm.getHeight()/sample, 
                                 null, null, param);
@@ -202,14 +239,10 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                     writer.prepareReplacePixels(0, new Rectangle(r.getMinX(), r.getMinY(), r.getWidth(), r.getHeight()));
                     ImageWriteParam param = writer.getDefaultWriteParam();
                     param.setDestinationOffset(r.getBounds().getLocation());
-//                    param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-//                    param.setCompressionType("LZW");
-//                    param.setTilingMode(ImageWriteParam.MODE_EXPLICIT);
-//                    param.setTiling(r.getWidth(), 1, 0, 0);
                     writer.replacePixels(r, param);
                     writer.endReplacePixels();
                 } catch (IOException ex) {
-                    Logger.getLogger(GridMetricTask.class.getName()).log(Level.SEVERE, null, ex);
+                    throw new RuntimeException(ex);
                 }
             }
         } else {
@@ -231,7 +264,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         if(isSaved()) {
             GridGeometry2D savedGrid = grid;
             if(sample > 1) {
-                double r = Project.getProject().getDefaultScale().getResolution();
+                double r = project.getDefaultScale().getResolution();
                 Envelope2D env = grid.getEnvelope2D();
                 int w = dtm.getWidth()/sample;
                 int h = dtm.getHeight()/sample;

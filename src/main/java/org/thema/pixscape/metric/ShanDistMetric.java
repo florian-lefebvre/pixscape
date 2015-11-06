@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
@@ -13,13 +8,21 @@ import org.thema.common.collection.TreeMapList;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Shannon entropy of the distance of the pixels on the skyline in tangential view.
+ * The distances are grouped in 5 classes defined by {@link #DIST_BREAKS }
+ * Does not support codes nor distance ranges.
+ * @author Gilles Vuidel
  */
 public class ShanDistMetric extends AbstractMetric implements ViewTanMetric {
 
-    private static final TreeSet<Double> DIST_BREAKS = new TreeSet<>(Arrays.asList(0.0, 10.0, 100.0, 1000.0, 10000.0));
+    /**
+     * Distance classes 
+     */
+    public static final TreeSet<Double> DIST_BREAKS = new TreeSet<>(Arrays.asList(0.0, 10.0, 100.0, 1000.0, 10000.0));
     
+    /**
+     * Creates a new ShanDistMetric
+     */
     public ShanDistMetric() {
         super(false);
     }

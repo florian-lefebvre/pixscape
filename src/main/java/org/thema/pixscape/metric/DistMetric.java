@@ -1,24 +1,22 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.metric;
 
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Distance distribution metric for planimetric and tangential view.
+ * Calculates the min,max,sum,average distances for pixels seen.
+ * Does not support codes nor distance ranges.
+ * @author Gilles Vuidel
  */
 public class DistMetric extends AbstractMetric implements ViewShedMetric, ViewTanMetric {
 
+    /**
+     * Creates a new DistMetric
+     */
     public DistMetric() {
         super(false);
     }

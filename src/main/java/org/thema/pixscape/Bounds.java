@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
 
@@ -15,8 +10,17 @@ import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
 
 /**
- *
- * @author gvuidel
+ * Class for defining limits of the sight in 3D polar coordinates (theta1, theta2, r).
+ * theta1 is the angle in the x,y plan [0-360°[
+ * theta2 is the angle in z  [-90° - +90°]
+ * r is the distance [0-infinity[
+ * 
+ * The bounds are defined by 3 intervals :
+ * - r interval : [dmin dmax]
+ * - theta2 interval : [zmin zmax]
+ * - theta1 interval : [orien-amp/2 orien+amp/2] or in radian [alpharight alphaleft]
+ * 
+ * @author Gilles Vuidel
  */
 public final class Bounds implements Serializable {
     
@@ -36,6 +40,9 @@ public final class Bounds implements Serializable {
     private final double alphaleft, alpharight;
     private double slopemin, slopemax;
 
+    /**
+     * Creates a default bounds unbounded !
+     */
     public Bounds() {
         this.dmin = 0;
         this.dmax = Double.POSITIVE_INFINITY;
@@ -47,6 +54,10 @@ public final class Bounds implements Serializable {
         this.slopemax = Double.POSITIVE_INFINITY;
     }
     
+    /**
+     * Creates a copy of a bounds
+     * @param bounds the bounds to dupplicate
+     */
     public Bounds(Bounds bounds) {
         this.dmin = bounds.dmin;
         this.dmax = bounds.dmax;
@@ -58,6 +69,15 @@ public final class Bounds implements Serializable {
         this.slopemax = bounds.slopemax;
     }
     
+    /**
+     * Create a new bounds
+     * @param dmin minimum distance [0 infinity[
+     * @param dmax maximum distance [0 infinity[
+     * @param orientation center horizontal angle in degree [0 360[
+     * @param amplitude size of the horizontal angle in degree [0 360]
+     * @param zmin minimum vertical angle in degree [-90 +90]
+     * @param zmax maximum vertical angle in degree [-90 +90]
+     */
     public Bounds(double dmin, double dmax, double orientation, double amplitude, double zmin, double zmax) {
         this.dmin = dmin;
         this.dmax = dmax;

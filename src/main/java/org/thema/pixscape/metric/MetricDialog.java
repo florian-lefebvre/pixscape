@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.thema.pixscape.metric;
 
 import java.awt.event.ActionEvent;
@@ -19,13 +15,16 @@ import javax.swing.KeyStroke;
 import org.thema.pixscape.Project;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for selecting a metric and if needed selecting codes and distance ranges.
+ * 
+ * @author Gilles Vuidel
  */
 public class MetricDialog extends javax.swing.JDialog {
 
+    /** the selected metric */
     public Metric metric;
     
+    /** has user validated */
     public boolean isOk = false;
     
     private Set<Integer> codes;
@@ -33,6 +32,9 @@ public class MetricDialog extends javax.swing.JDialog {
 
     /**
      * Creates new form MetricDialog
+     * @param parent the parent frame
+     * @param isTan tangential metric or planimetric ?
+     * @param codes the landuse codes if any
      */
     public MetricDialog(java.awt.Window parent, boolean isTan, Set<Integer> codes) {
         super(parent, ModalityType.APPLICATION_MODAL);

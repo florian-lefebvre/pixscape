@@ -43,20 +43,23 @@ public final class ScaleData {
             noData = ((Number)cov.getProperty("GC_NODATA")).doubleValue();
         }
         RenderedImage img = cov.getRenderedImage();
-        RandomIter r = RandomIterFactory.create(img, null);
-        WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
-        for(int y = 0; y < img.getHeight(); y++) {
-            for(int x = 0; x < img.getWidth(); x++) {
-                final double val = r.getSampleDouble(x, y, 0);
-                if(val == noData) {
-                    dtmFloat.setSample(x, y, 0, Float.NaN);
-                } else {
-                    dtmFloat.setSample(x, y, 0, val * resZ);
+        if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 && !Double.isNaN(noData)) {
+            RandomIter r = RandomIterFactory.create(img, null);
+            WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
+            for(int y = 0; y < img.getHeight(); y++) {
+                for(int x = 0; x < img.getWidth(); x++) {
+                    final double val = r.getSampleDouble(x, y, 0);
+                    if(val == noData) {
+                        dtmFloat.setSample(x, y, 0, Float.NaN);
+                    } else {
+                        dtmFloat.setSample(x, y, 0, val * resZ);
+                    }
                 }
             }
+            init(new GridCoverageFactory().create("", dtmFloat, cov.getEnvelope2D()), land, dsm);
         }
 
-        init(new GridCoverageFactory().create("", dtmFloat, cov.getEnvelope2D()), land, dsm);
+        init(cov, land, dsm);
     }
     
     ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm) {
@@ -143,12 +146,22 @@ public final class ScaleData {
         return dtmCov.getGridGeometry();
     }
     
-    public AffineTransformation getGrid2Space() {
+    public AffineTransformation getGrid2World() {
         Envelope2D zone = dtmCov.getEnvelope2D();
         GridEnvelope2D range = getGridGeometry().getGridRange2D();
         return new AffineTransformation(
                 zone.getWidth() / range.getWidth(), 0, zone.getMinX(),
                 0, -zone.getHeight() / range.getHeight(), zone.getMaxY());
+    }
+    
+    public AffineTransformation getWorld2Grid() {
+        Envelope2D envelope = dtmCov.getEnvelope2D();
+        GridEnvelope2D range = getGridGeometry().getGridRange2D();
+        double sx = range.getWidth() / envelope.getWidth();
+        double sy = range.getHeight() / envelope.getHeight();
+        return new AffineTransformation(
+                sx, 0, -envelope.getMinX()*sx, 
+                0, -sy, envelope.getMaxY()*sy);
     }
     
     public boolean hasLandUse() {

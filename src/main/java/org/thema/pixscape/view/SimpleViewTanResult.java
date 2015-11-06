@@ -15,30 +15,26 @@ import org.thema.pixscape.Bounds;
  * @author Gilles Vuidel
  */
 public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResult {
-    private final double ares;
-    
+       
     private WritableRaster elevation, distance, landuse;
 
-    
     /**
      * Creates a new SimpleViewTanResult
-     * @param ares the angular resolution in radian
      * @param cg the point of view in grid coordinate
      * @param view the resulting view, may be null
      * @param compute the compute view used
      */
-    public SimpleViewTanResult(double ares, GridCoordinates2D cg, Raster view, SimpleComputeView compute) {
+    public SimpleViewTanResult(GridCoordinates2D cg, Raster view, SimpleComputeView compute) {
         super(cg, view, compute);
-        this.ares = ares;
     }
 
     @Override
     public final double getAres() {
-        return ares;
+        return compute.getRadaPrec();
     }
 
     protected double calcAreaUnbounded() {
-        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
         int nb = 0;
         for(int ind : buf) {
             if(ind > -1) {
@@ -52,7 +48,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];
         
-        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
         for(int ind : buf) {
             if(ind > -1) {
                 final int x = ind % getW();
@@ -68,7 +64,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         if(Bounds.isUnboundedDistance(dmin, dmax)) {
             return calcAreaUnbounded();
         }
-        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
         int nb = 0;
         for(int ind : buf) {
             if(ind > -1 && isInside(ind % getW(), ind / getW(), dmin, dmax)) {
@@ -86,7 +82,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];
         
-        int[] buf = ((DataBufferInt) view.getDataBuffer()).getData();
+        int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
         for(int ind : buf) {
             final int x = ind % getW();
             final int y = ind / getW();
@@ -99,7 +95,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public final double getDistance(int theta1, int theta2) {
-        final int ind = view.getSample(theta1, theta2, 0);
+        final int ind = getView().getSample(theta1, theta2, 0);
         if(ind == -1) {
             return Double.NaN;
         }
@@ -108,7 +104,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public final int getLandUse(int theta1, int theta2) {
-        final int ind = view.getSample(theta1, theta2, 0);
+        final int ind = getView().getSample(theta1, theta2, 0);
         if(ind == -1) {
             return -1;
         }
@@ -117,7 +113,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public final double getElevation(int theta1, int theta2) {
-        final int ind = view.getSample(theta1, theta2, 0);
+        final int ind = getView().getSample(theta1, theta2, 0);
         if(ind == -1) {
             return Double.NaN;
         }
@@ -149,14 +145,13 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     }
     
     private void fillViews() {
-        elevation = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                view.getWidth(), view.getHeight(), 1), null);
-        distance = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 
-                view.getWidth(), view.getHeight(), 1), null);
-        landuse = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, 
-                view.getWidth(), view.getHeight(), 1), null);
-        for(int y = 0; y < view.getHeight(); y++) {
-            for(int x = 0; x < view.getWidth(); x++) {
+        final int w = getThetaWidth();
+        final int h = getThetaHeight();
+        elevation = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
+        distance = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
+        landuse = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, w, h, 1), null);
+        for(int y = 0; y < h; y++) {
+            for(int x = 0; x < w; x++) {
                 elevation.setSample(x, y, 0, getElevation(x, y));
                 distance.setSample(x, y, 0, getDistance(x, y));
                 if(getLanduse() != null) {
@@ -168,19 +163,19 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
 
     @Override
     public int getThetaWidth() {
-        return view.getWidth();
+        return getView().getWidth();
     }
 
     @Override
     public int getThetaHeight() {
-        return view.getHeight();
+        return getView().getHeight();
     }
 
     @Override
     public double getMaxDistance(int theta1) {
         final int h = getThetaHeight();
         int y = 0;
-        while(y < h && view.getSample(theta1, y, 0) == -1) {
+        while(y < h && getView().getSample(theta1, y, 0) == -1) {
             y++;
         } 
         return y == h ? 0 : getDistance(theta1, y);

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape.view.cuda;
 
@@ -13,14 +8,21 @@ import org.geotools.coverage.grid.GridCoordinates2D;
 import org.thema.pixscape.view.SimpleViewShedResult;
 
 /**
- *
- * @author gvuidel
+ * SimpleViewShedResult implementation for CUDA GPU execution.
+ * 
+ * @author Gilles Vuidel
  */
-class CUDAViewShedResult extends SimpleViewShedResult {
+final class CUDAViewShedResult extends SimpleViewShedResult {
     
-    private final ComputeViewCUDA.CUDAContext context;
+    private final CUDAContext context;
     
-    CUDAViewShedResult(GridCoordinates2D cg, ComputeViewCUDA.CUDAContext context, ComputeViewCUDA compute) {
+    /**
+     * Creates a new CUDAViewShedResult
+     * @param cg the point of view or observed point in grid coordinate
+     * @param context the CUDA context for calling CUDA functions
+     * @param compute the CUDA compute view used
+     */
+    CUDAViewShedResult(GridCoordinates2D cg, CUDAContext context, ComputeViewCUDA compute) {
         super(cg, null, compute);
         this.context = context;
     }

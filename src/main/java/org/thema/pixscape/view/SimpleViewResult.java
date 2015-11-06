@@ -14,7 +14,7 @@ import org.thema.pixscape.ScaleData;
  */
 public abstract class SimpleViewResult extends AbstractViewResult {
     
-    private final SimpleComputeView compute;
+    protected final SimpleComputeView compute;
     private final int w;
     
     /**
