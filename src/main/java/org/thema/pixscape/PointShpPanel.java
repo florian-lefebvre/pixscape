@@ -1,8 +1,4 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
+
 package org.thema.pixscape;
 
 import com.vividsolutions.jts.geom.Geometry;
@@ -14,8 +10,9 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.feature.type.AttributeType;
 
 /**
- *
- * @author gvuidel
+ * Panel for selecting a shapefile and a field of the shapefile.
+ * 
+ * @author Gilles Vuidel
  */
 public class PointShpPanel extends javax.swing.JPanel {
 
@@ -26,10 +23,16 @@ public class PointShpPanel extends javax.swing.JPanel {
         initComponents();
     }
 
+    /**
+     * @return the selected shapefile
+     */
     public File getPointFile() {
         return pathSelectFilePanel.getSelectedFile();
     }
     
+    /**
+     * @return the selected field
+     */
     public String getIdField() {
         return (String) idComboBox.getSelectedItem();
     }

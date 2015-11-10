@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -18,15 +12,20 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for setting global options :
+ * eye height, angular precision, multi scale mode, GPU
+ * 
+ * @author Gilles Vuidel
  */
 public class OptionDialog extends javax.swing.JDialog {
 
     private final Project project;
-
     
-    /** Creates new form ViewShedDialog */
+    /** 
+     * Creates new form OptionDialog
+     * @param parent the parent frame
+     * @param project the current project
+     */
     public OptionDialog(Frame parent, Project project) {
         super(parent, true);
         this.project = project;
@@ -47,9 +46,9 @@ public class OptionDialog extends javax.swing.JDialog {
         
         multiScaleCheckBox.setEnabled(project.hasMultiScale());
         zEyeTextField.setText(""+project.getStartZ());
-        aPrecjTextField.setText(""+project.getaPrec());
+        aPrecjTextField.setText(""+project.getAlphaPrec());
         multiScaleCheckBox.setEnabled(project.hasMultiScale());
-        multiScaleCheckBox.setSelected(project.getMinDistMS() > 0);
+        multiScaleCheckBox.setSelected(project.isMSComputation());
         minDistTextField.setText(""+project.getMinDistMS());
         gpuCheckBox.setSelected(project.isUseCUDA());
     }
@@ -186,11 +185,11 @@ public class OptionDialog extends javax.swing.JDialog {
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         project.setStartZ(Double.parseDouble(zEyeTextField.getText()));
-        project.setaPrec(Double.parseDouble(aPrecjTextField.getText()));
+        project.setAlphaPrec(Double.parseDouble(aPrecjTextField.getText()));
         if(multiScaleCheckBox.isSelected()) {
             project.setMinDistMS(Double.parseDouble(minDistTextField.getText()));
         } else {
-            project.setMinDistMS(-1);
+            project.setMinDistMS(0);
         }
         project.setUseCUDA(gpuCheckBox.isSelected() ? 1 : 0);
         try {

@@ -24,7 +24,12 @@ import org.thema.common.RasterImage;
 import org.thema.data.IOImage;
 
 /**
- *
+ * Contains the date for one scale (resolution) :
+ * - the DTM (Digital Terrain Model) : represents the elevation of the ground
+ * - the DSM (Digital Surface Model)(optional) : represents the height of the objetcs on the ground
+ * - the land use (optional)
+ * Loads and saves the rasters from/to the project directory.
+ * 
  * @author Gilles Vuidel
  */
 public final class ScaleData {
@@ -37,12 +42,24 @@ public final class ScaleData {
     private SortedSet<Integer> codes;
     
 
-    public ScaleData(GridCoverage2D cov, Raster land, Raster dsm, double resZ) {
+    /**
+     * Creates a new ScaleData.
+     * The unit of the coordinate system ind dtmCov must be metric
+     * The coordinate system for the land and dsm is supposed to be the same
+     * The elevation resolution of the DSM must be metric.
+     * @param dtmCov the DTM coverage
+     * @param land the land use raster, may be null
+     * @param dsm the DSM raster or null
+     * @param resZ the elevation resolution in meter of the DTM
+     * @throws IllegalArgumentException if land or dsm have not the same size than the dtmCov
+     * @throws IllegalArgumentException if land has float number type or if values are outside of [0-255]
+     */
+    public ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm, double resZ) {
         double noData = Double.NaN;
-        if(cov.getProperty("GC_NODATA") != null && (cov.getProperty("GC_NODATA") instanceof Number)) {
-            noData = ((Number)cov.getProperty("GC_NODATA")).doubleValue();
+        if(dtmCov.getProperty("GC_NODATA") != null && (dtmCov.getProperty("GC_NODATA") instanceof Number)) {
+            noData = ((Number)dtmCov.getProperty("GC_NODATA")).doubleValue();
         }
-        RenderedImage img = cov.getRenderedImage();
+        RenderedImage img = dtmCov.getRenderedImage();
         if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 && !Double.isNaN(noData)) {
             RandomIter r = RandomIterFactory.create(img, null);
             WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
@@ -56,12 +73,24 @@ public final class ScaleData {
                     }
                 }
             }
-            init(new GridCoverageFactory().create("", dtmFloat, cov.getEnvelope2D()), land, dsm);
+            init(new GridCoverageFactory().create("", dtmFloat, dtmCov.getEnvelope2D()), land, dsm);
         }
 
-        init(cov, land, dsm);
+        init(dtmCov, land, dsm);
     }
     
+    /**
+     * Creates a new ScaleData.
+     * The unit of the coordinate system ind dtmCov must be metric
+     * The coordinate system for the land and dsm is supposed to be the same
+     * The elevation resolution of the DTM and the DSM must be metric.
+     * @param dtmCov the DTM coverage
+     * @param land the land use raster, may be null
+     * @param dsm the DSM raster or null
+     * @param resZ the elevation resolution of the DTM
+     * @throws IllegalArgumentException if land or dsm have not the same size than the dtmCov
+     * @throws IllegalArgumentException if land has float number type or if values are outside of [0-255]
+     */
     ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm) {
         this(dtmCov, land, dsm, 1);
     }
@@ -118,34 +147,63 @@ public final class ScaleData {
         }
     }
     
+    /**
+     * @return the 2D resolution of the data in meter ie. pixel size
+     */
     public double getResolution() {
         return resolution;
     }
 
+    /**
+     * DTM values are always in meter.
+     * @return the DTM coverage
+     */
     public GridCoverage2D getDtmCov() {
         return dtmCov;
     }
 
+    /**
+     * DTM values are always in meter.
+     * @return the DTM raster
+     */
     public Raster getDtm() {
         return dtm;
     }
-
+    
+    /**
+     * Returns a raster of type float and meter unit
+     * @return the land use raster or null if none
+     */
     public Raster getLand() {
         return land;
     }
 
+    /**
+     * Returns a raster of type float and meter unit
+     * @return the DSM raster or null if none
+     */
     public Raster getDsm() {
         return dsm;
     }
 
+    /**
+     * @return the landuse codes contained in the landuse raster or null of no landuse raster
+     */
     public SortedSet<Integer> getCodes() {
         return codes;
     }
 
+    /**
+     * @return grid geometry of the coverage
+     */
     public GridGeometry2D getGridGeometry() {
         return dtmCov.getGridGeometry();
     }
     
+    /**
+     * Creates and return a transformation from grid coordinate to world coordinate
+     * @return transformation from grid to world coordinate
+     */
     public AffineTransformation getGrid2World() {
         Envelope2D zone = dtmCov.getEnvelope2D();
         GridEnvelope2D range = getGridGeometry().getGridRange2D();
@@ -154,6 +212,10 @@ public final class ScaleData {
                 0, -zone.getHeight() / range.getHeight(), zone.getMaxY());
     }
     
+    /**
+     * Creates and return a transformation from world coordinate to grid coordinate
+     * @return transformation from wrold to grid coordinate
+     */
     public AffineTransformation getWorld2Grid() {
         Envelope2D envelope = dtmCov.getEnvelope2D();
         GridEnvelope2D range = getGridGeometry().getGridRange2D();
@@ -164,11 +226,21 @@ public final class ScaleData {
                 0, -sy, envelope.getMaxY()*sy);
     }
     
+    /**
+     * @return does the data contain land use raster ?
+     */
     public boolean hasLandUse() {
         return land != null;
     }
     
-    public final double getZ(int x, int y) {
+    /**
+     * Returns the full elevation at position (x, y).
+     * The full elevation is the dtm elevation plus the dsm elevation if present
+     * @param x x in grid coordinate
+     * @param y y in grid coordinate
+     * @return the elevation at (x,y) position
+     */
+    public double getZ(int x, int y) {
         double z = dtm.getSample(x, y, 0);
         if(dsm != null) {
             z += dsm.getSample(x, y, 0);
@@ -176,7 +248,12 @@ public final class ScaleData {
         return z;
     }
     
-    public final synchronized double getMaxZ() {
+    /**
+     * Calculates, if not already done, and returns the maximum full elevation.
+     * The full elevation is the dtm elevation plus the dsm elevation if present
+     * @return the maximum full elevation of the map
+     */
+    public synchronized double getMaxZ() {
         if(maxZ == null) {
             double max = Double.NEGATIVE_INFINITY;
             final int w = getDtm().getWidth();
@@ -194,6 +271,11 @@ public final class ScaleData {
         return maxZ;
     }
     
+    /**
+     * Loads the 1, 2 or 3 rasters from a directory.
+     * @param dir the directory containing the rasters of this scale data
+     * @throws IOException 
+     */
     void load(File dir) throws IOException {
         dtmCov = IOImage.loadTiffWithoutCRS(new File(dir, "dtm-" + resolution + ".tif"));
         this.dtm = dtmCov.getRenderedImage().getData();
@@ -211,6 +293,11 @@ public final class ScaleData {
         }
     }
     
+    /**
+     * Saves the 1, 2 or 3 rasters to a directory.
+     * @param dir the directory for storing the rasters of this scale data
+     * @throws IOException 
+     */
     void save(File dir) throws IOException {
         new GeoTiffWriter(new File(dir, "dtm-" + getResolution() + ".tif")).write(dtmCov, null);
         if(dsm != null) {

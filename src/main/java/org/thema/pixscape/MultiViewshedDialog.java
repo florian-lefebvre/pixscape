@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -18,18 +12,29 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 /**
- *
- * @author gvuidel
+ * Dialog forms for setting parameters for calculating multiple viewshed from a set of points.
+ * 
+ * @author Gilles Vuidel
  */
 public class MultiViewshedDialog extends javax.swing.JDialog {
 
+    /** Does user have validated the form ? */
     public boolean isOk = false;
+    /** The shapefile containing the set of points */
     public File pathFile;
+    /** the identifier field name in the shapefile */
     public String idField;
+    /** Is from observer eye or to ? */
     public boolean direct;
+    /** 
+     * The default 3D limits of the sight. This limits are overriden by shapefile attributes if present
+     */
     public Bounds bounds;
     
-    /** Creates new form PathViewDialog */
+    /** 
+     * Creates new form PathViewDialog 
+     * @param parent the parent frame
+     */
     public MultiViewshedDialog(java.awt.Frame parent) {
         super(parent, true);
         initComponents();

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
 
@@ -29,12 +24,13 @@ import org.thema.pixscape.metric.ViewTanMetric;
 import org.thema.pixscape.view.ComputeView;
 
 /**
- *
- * @author gvuidel
+ * Parallel task for calculating metrics on a point shapefile sampling.
+ * 
+ * @author Gilles Vuidel
  */
 public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, Map<Object, List<Double[]>>> implements Serializable {
     
-    /** project file for loading project for MPI mode */
+    /** project file for loading project for MPI mode only */
     private File prjFile;
     
     private boolean isTan;
@@ -60,6 +56,20 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     private transient List<DefaultFeature> points;
     private transient Map<Object, List<Double[]>> result;
 
+    /**
+     * Creates a new PointMetricTask for viewshed metric.
+     * 
+     * @param project the project (must be saved for MPI mode)
+     * @param startZ the height of the eye of the observer
+     * @param destZ the height of the observed points, -1 if not used
+     * @param direct if true the starting point is the observer, else the starting point is the observed point
+     * @param bounds the 3D limits of the sight 
+     * @param metrics the metrics to calculate
+     * @param pointFile the sampling point shapefile
+     * @param idField the identifier name field in the shapefile
+     * @param resDir the directory for storing result file, may be null for not saving the results
+     * @param monitor the progress monitor, may be null
+     */
     public PointMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
         this.project = project;
@@ -75,6 +85,18 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         this.isTan = false;
     }
     
+    /**
+     * Creates a new PointMetricTask for tanential metric.
+     * 
+     * @param project the project (must be saved for MPI mode)
+     * @param startZ the height of the eye of the observer
+     * @param bounds the 3D limits of the sight 
+     * @param metrics the metrics to calculate
+     * @param pointFile the sampling point shapefile
+     * @param idField the identifier name field in the shapefile
+     * @param resDir the directory for storing result file, may be null for not saving the results
+     * @param monitor the progress monitor, may be null
+     */
     public PointMetricTask(Project project, double startZ, Bounds bounds, List<ViewTanMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
         this.project = project;
@@ -96,7 +118,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
             super.init(); 
             // useful for MPI only, because project is not serializable
             if(project == null) {
-                project = Project.loadProject(prjFile);
+                project = Project.load(prjFile);
             }
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -105,7 +127,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         compute = project.getDefaultComputeView();
     }
 
-    public boolean isSaved() {
+    private boolean isSaved() {
         return resDir != null;
     }
     
@@ -176,7 +198,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         }
     }
     
-    public File getResultFile() {
+    private File getResultFile() {
         if(isTan) {
             return new File(resDir, "metrics-" + pointFile.getName());
         } else {

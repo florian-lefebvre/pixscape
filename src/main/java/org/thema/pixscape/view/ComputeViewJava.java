@@ -69,10 +69,10 @@ public class ComputeViewJava extends SimpleComputeView {
         int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
         Arrays.fill(viewBuf, -1);
         GridCoordinates2D cg = getWorld2Grid(p);
-        double aStart = bounds.getAlphaleft();
+        double aStart = bounds.getTheta1Left();
         for(int ax = 0; ax < n; ax++) {
             double a = (aStart - ax*aPrec + 2*Math.PI) % (2*Math.PI);
-            if(bounds.isAlphaIncluded(a)) {
+            if(bounds.isTheta1Included(a)) {
                 calcRayTan(cg, startZ, bounds, viewBuf, a, n, ax, aPrec);
             }
         }
@@ -195,7 +195,7 @@ public class ComputeViewJava extends SimpleComputeView {
      */
     private void calcRay(final boolean direct, final GridCoordinates2D c0, final GridCoordinates2D c1, 
             final double startZ, final double destZ, Bounds bounds, final byte[] view) {
-        if(bounds.isAlphaIncluded(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
+        if(bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
             if(direct) {
                 calcRayDirect(c0, c1, startZ, destZ, bounds, view);
             } else {

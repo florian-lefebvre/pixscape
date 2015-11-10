@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -18,20 +12,29 @@ import javax.swing.JFileChooser;
 import javax.swing.KeyStroke;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for creating a new project.
+ * 
+ * @author Gilles Vuidel
  */
 public class NewProjectDialog extends javax.swing.JDialog {
 
+    /** Does user have validated the form ? */
     public boolean isOk = false;
+    /** The name of the new project */
     public String name;
+    /** The directory of the project */
     public File path;
+    /** The DTM file */
     public File dtm;
+    /** The elevation resolution in meter of the DTM */
     public double resZ;
 
-    /** Creates new form NewProjectDialog */
-    public NewProjectDialog(java.awt.Frame parent, boolean modal) {
-        super(parent, modal);
+    /** 
+     * Creates new form NewProjectDialog 
+     * @param parent the parent frame
+     */
+    public NewProjectDialog(java.awt.Frame parent) {
+        super(parent, true);
         initComponents();
         setLocationRelativeTo(parent);
         getRootPane().setDefaultButton(okButton);

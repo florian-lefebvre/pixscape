@@ -99,21 +99,21 @@ public class MultiComputeViewJava extends ComputeView {
 //            long t3 = System.currentTimeMillis();
             for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
                 double a = Math.atan2(-largestZone.getMinY(), x);
-                if(bounds.isAlphaIncluded(a)) {
+                if(bounds.isTheta1Included(a)) {
                     calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
                 a = Math.atan2(-(largestZone.getMaxY()-1), x);
-                if(bounds.isAlphaIncluded(a)) {
+                if(bounds.isTheta1Included(a)) {
                     calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
             }
             for(int y = largestZone.y+1; y < largestZone.getMaxY()-1; y++) {
                 double a = Math.atan2(-y, largestZone.getMinX());
-                if(bounds.isAlphaIncluded(a)) {
+                if(bounds.isTheta1Included(a)) {
                     calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
                 a = Math.atan2(-y, largestZone.getMaxX()-1);
-                if(bounds.isAlphaIncluded(a)) {
+                if(bounds.isTheta1Included(a)) {
                     calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
             }

@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
 
@@ -35,8 +30,9 @@ import org.thema.pixscape.metric.ViewTanMetric;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Command Line Interface class.
+ * 
+ * @author Gilles Vuidel
  */
 public class CLITools {
     private Project project;
@@ -49,6 +45,12 @@ public class CLITools {
     private File pointFile = null;
     private String idField = null;
     
+    /**
+     * Executes the commands from the command line
+     * @param argArray the command line arguments
+     * @throws IOException
+     * @throws SchemaException
+     */
     public void execute(String [] arg) throws IOException, SchemaException {
         if(arg[0].equals("--help")) {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
@@ -98,7 +100,7 @@ public class CLITools {
         }
         
         args.remove(0);
-        project = Project.loadProject(new File(args.remove(0)));
+        project = Project.load(new File(args.remove(0)));
         project.setUseCUDA(useCUDA);
         resDir = project.getDirectory();
         zEye = project.getStartZ();
@@ -234,7 +236,7 @@ public class CLITools {
 
         if(args.get(0).startsWith("prec=")) {
             double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
-            project.setaPrec(aPrec);
+            project.setAlphaPrec(aPrec);
         }
    
         DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
@@ -286,7 +288,7 @@ public class CLITools {
     private void tanMetric(List<String> args) throws IOException {
         if(!args.isEmpty() && args.get(0).startsWith("prec=")) {
             double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
-            project.setaPrec(aPrec);
+            project.setAlphaPrec(aPrec);
         }
 
         List<ViewTanMetric> metrics = new ArrayList<>();

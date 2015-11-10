@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
 
@@ -25,7 +20,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.imageio.ImageTypeSpecifier;
@@ -48,8 +42,10 @@ import org.thema.pixscape.metric.ViewTanMetric;
 import org.thema.pixscape.view.ComputeView;
 
 /**
- *
- * @author gvuidel
+ * Parallel task for calculating metrics on a grid sampling.
+ * The task works in threaded and MPI mode.
+ * 
+ * @author Gilles Vuidel
  */
 public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRaster>, Map<String, SerializableState>> implements Serializable {
     
@@ -82,17 +78,19 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     private transient Map<String, ImageWriter> writers;
 
     /**
-     * 
+     * Creates a new GridMetricTask for viewshed metric.
+     * If resDir == null, the results are kept in memory and can be retrieved by {@link #getResult()}, 
+     * else the results are not kept in memory and directly saved in tiff files progressively.
      * @param project the project (must be saved for MPI mode)
-     * @param startZ
-     * @param destZ
-     * @param direct
-     * @param bounds
-     * @param fromCode
-     * @param metrics
-     * @param sample
-     * @param resDir
-     * @param monitor 
+     * @param startZ the height of the eye of the observer
+     * @param destZ the height of the observed points, -1 if not used
+     * @param direct if true the starting point is the observer, else the starting point is the observed point
+     * @param bounds the 3D limits of the sight 
+     * @param fromCode calculates only from this land use codes, may be null for calculating from all landuse codes
+     * @param metrics the metrics to calculate
+     * @param sample if equals to 1 then calculates the sight from all pixels, if equals 2, calculates for one pixel on 2 in x and y direction, etc...
+     * @param resDir the directory for storing result files, may be null for not saving the results
+     * @param monitor the progress monitor, may be null
      */
     public GridMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
@@ -110,15 +108,17 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     }
     
     /**
-     * 
+     * Creates a new GridMetricTask for tangential metric.
+     * If resDir == null, the results are kept in memory and can be retrieved by {@link #getResult()}, 
+     * else the results are not kept in memory and directly saved in tiff files progressively.
      * @param project the project (must be saved for MPI mode)
-     * @param startZ
-     * @param bounds
-     * @param fromCode
-     * @param metrics
-     * @param sample
-     * @param resDir
-     * @param monitor 
+     * @param startZ the height of the eye of the observer
+     * @param bounds the 3D limits of the sight 
+     * @param fromCode calculates only from this land use codes, may be null for calculating from all landuse codes
+     * @param metrics the metrics to calculate
+     * @param sample if equals to 1 then calculates the sight from all pixels, if equals 2, calculates for one pixel on 2 in x and y direction, etc...
+     * @param resDir the directory for storing result files, may be null for not saving the results
+     * @param monitor the progress monitor, may be null
      */
     public GridMetricTask(Project project, double startZ, Bounds bounds, Set<Integer> fromCode, List<ViewTanMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
@@ -138,7 +138,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         // useful for MPI only, because project is not serializable
         if(project == null) {
             try {
-                project = Project.loadProject(prjFile);
+                project = Project.load(prjFile);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
@@ -151,7 +151,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         land = project.getLandUse();
     }
     
-    public boolean isSaved() {
+    private boolean isSaved() {
         return resDir != null;
     }
     
@@ -264,7 +264,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         if(isSaved()) {
             GridGeometry2D savedGrid = grid;
             if(sample > 1) {
-                double r = project.getDefaultScale().getResolution();
+                double r = project.getDefaultScaleData().getResolution();
                 Envelope2D env = grid.getEnvelope2D();
                 int w = dtm.getWidth()/sample;
                 int h = dtm.getHeight()/sample;
@@ -284,7 +284,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         }
     }
     
-    public File getResultFile(String resName) {
+    private File getResultFile(String resName) {
         if(isTan) {
             return new File(resDir, resName + "-" + bounds + ".tif");
         } else {

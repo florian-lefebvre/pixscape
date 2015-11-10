@@ -25,6 +25,7 @@ import org.thema.parallel.AbstractParallelTask;
 /**
  * Parallel task for creating multiple projects from land modifications and executing CLI commands for each.
  * This task works in theaded and MPI mode.
+ * This task does not return result. The result is stored directly.
  * 
  * @author Gilles Vuidel
  */
@@ -68,7 +69,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
         try {
             // useful for MPI only, because project is not serializable
             if(project == null) {
-                project = Project.loadProject(prjFile);
+                project = Project.load(prjFile);
             }
         
             List<DefaultFeature> features = DefaultFeature.loadFeatures(fileZone);
@@ -147,15 +148,15 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
      * @throws SchemaException 
      */
     private Project createProject(String id, List<DefaultFeature> zones) throws IOException, SchemaException {
-        Raster src = project.getDefaultScale().getLand();
+        Raster src = project.getDefaultScaleData().getLand();
         WritableRaster land = src.createCompatibleWritableRaster();
         land.setRect(src);
-        src = project.getDefaultScale().getDsm();
+        src = project.getDefaultScaleData().getDsm();
         WritableRaster dsm = src.createCompatibleWritableRaster();
         dsm.setRect(src);
         
         TreeSet<Integer> codes = new TreeSet<>(project.getCodes());
-        AffineTransformation trans = project.getDefaultScale().getWorld2Grid();
+        AffineTransformation trans = project.getDefaultScaleData().getWorld2Grid();
         // update land map
         for(DefaultFeature zone : zones) {
             int code = ((Number)zone.getAttribute(codeField)).intValue();

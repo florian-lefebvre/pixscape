@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -18,20 +12,29 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for creating bounds attributes in a shapefile.
+ * 
+ * @author Gilles Vuidel
  */
 public class PointAttributeDialog extends javax.swing.JDialog {
 
+    /** Does user have validated the form ? */
     public boolean isOk = false;
+    /** The input shapefile */
     public File pathFile;
+    /** the identifier field name in the shapefile */
     public String idField;
+    /** change orientation of each point depending on the next ? */
     public boolean setPathOrien;
+    /** The bounds paramaters to set in attributes of the ouput shapefile */
     public Bounds bounds;
-    
+    /** The name of the output shapefile */
     public String outputName;
     
-    /** Creates new form PathViewDialog */
+    /** 
+     * Creates new form PathViewDialog 
+     * @param parent the parent frame
+     */
     public PointAttributeDialog(java.awt.Frame parent) {
         super(parent, true);
         initComponents();

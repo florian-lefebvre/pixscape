@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.Color;
 import java.awt.Frame;
@@ -40,8 +34,9 @@ import org.thema.pixscape.view.MultiViewShedResult;
 import org.thema.pixscape.view.ViewShedResult;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for iteractively calculates planimetric view (viewshed).
+ * 
+ * @author Gilles Vuidel
  */
 public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.ShapeMouseListener {
 
@@ -57,7 +52,12 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     
     private final MetricResultDialog metricDlg;
     
-    /** Creates new form ViewShedDialog */
+    /** 
+     * Creates new form ViewShedDialog 
+     * @param parent the parent frame
+     * @param project the current project
+     * @param mapViewer the map viewer for refreshing view
+     */
     public ViewShedDialog(Frame parent, Project project, MapViewer mapViewer) {
         super(parent, false);
         this.project = project;
@@ -74,7 +74,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         double y = mapViewer.getLayers().getBounds().getCenterY();
         pointTextField.setText(x + ", " + y);
         
-        metricDlg = new MetricResultDialog(this, false, project.getDefaultScale().getCodes());
+        metricDlg = new MetricResultDialog(this, false, project.getDefaultScaleData().getCodes());
     }
 
 
@@ -360,7 +360,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 for(double res : multiResult.getViews().keySet()) {
                     try {
                         GridEnvelope2D env = multiResult.getZones().get(res);
-                        addRasterViewShedLayer(multiResult.getViews().get(res).createTranslatedChild(0, 0), project.getScaleDatas().get(res).getGridGeometry().gridToWorld(env), (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+                        addRasterViewShedLayer(multiResult.getViews().get(res).createTranslatedChild(0, 0), project.getScaleData(res).getGridGeometry().gridToWorld(env), (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
                     } catch (TransformException ex) {
                         Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
                     }
@@ -383,7 +383,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         Layer layer;
         if(rasterRadioButton.isSelected()) {
             layer = new RasterLayer("Viewshed-" + name, new RasterShape(result.getView(),
-                        project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle( 
+                        project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle( 
                                 new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true), project.getCRS());
         } else {
             layer = new FeatureLayer("Viewshed-" + name, Arrays.asList(new DefaultFeature(name, result.getPolygon())), 

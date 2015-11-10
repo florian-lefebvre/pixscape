@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.util.Arrays;
 import java.util.Set;
@@ -18,8 +12,8 @@ import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for showing results for interactive metric calculation
+ * @author Gilles Vuidel
  */
 public class MetricResultDialog extends javax.swing.JDialog {
 
@@ -27,7 +21,12 @@ public class MetricResultDialog extends javax.swing.JDialog {
     private ViewResult result;
     private Set<Integer> codes;
     
-    /** Creates new form MetricResultDialog */
+    /** 
+     * Creates new form MetricResultDialog 
+     * @param parent the parent frame
+     * @param isTan is tangential view ? or planimetric ?
+     * @param codes the landuse codes
+     */
     public MetricResultDialog(java.awt.Window parent, boolean isTan, Set<Integer> codes) {
         super(parent);
         initComponents();
@@ -36,6 +35,10 @@ public class MetricResultDialog extends javax.swing.JDialog {
         this.isTan = isTan;
     }
 
+    /**
+     * Sets the view result and update metrics if the form is visible.
+     * @param result 
+     */
     public void setResult(ViewResult result) {
         this.result = result;
         if(isVisible()) {
@@ -43,7 +46,10 @@ public class MetricResultDialog extends javax.swing.JDialog {
         }
     }
     
-    public void updateMetric() {
+    /**
+     * Calculates the metrics and update values in the table
+     */
+    private void updateMetric() {
         if(result == null) {
             return;
         }

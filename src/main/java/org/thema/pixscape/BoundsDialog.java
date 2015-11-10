@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -16,15 +10,22 @@ import javax.swing.JComponent;
 import javax.swing.KeyStroke;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for editing Bounds.
+ * 
+ * @author Gilles Vuidel
  */
 public class BoundsDialog extends javax.swing.JDialog {
 
+    /** Does user have validated the form ? */
     public boolean isOk = false;
+    /** The new bounds */
     public Bounds bounds;
 
-    /** Creates new form BoundsDialog */
+    /** 
+     * Creates new form BoundsDialog
+     * @param parent parent frame
+     * @param bounds the current bounds
+     */
     public BoundsDialog(java.awt.Frame parent, Bounds bounds) {
         super(parent, true);
         initComponents();
@@ -101,12 +102,6 @@ public class BoundsDialog extends javax.swing.JDialog {
         jLabel2.setText("Distance max.");
 
         jLabel3.setText("Orientation");
-
-        orienTextField.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                orienTextFieldActionPerformed(evt);
-            }
-        });
 
         jLabel4.setText("Amplitude");
 
@@ -227,10 +222,6 @@ public class BoundsDialog extends javax.swing.JDialog {
     private void closeDialog(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_closeDialog
         doClose();
     }//GEN-LAST:event_closeDialog
-
-    private void orienTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_orienTextFieldActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_orienTextFieldActionPerformed
 
     private void doClose() {
         setVisible(false);

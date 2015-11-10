@@ -1,18 +1,11 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
@@ -29,27 +22,41 @@ import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.MetricDialog;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for setting parameters for launching metric calculations with GridMetricTask or PointMetricTask.
+ * 
+ * @author Gilles Vuidel
  */
 public class ViewMetricDialog extends javax.swing.JDialog {
 
     private final boolean isTan;
     private final SortedSet<Integer> codes;
     
+    /** Does user have validated the form ? */
     public boolean isOk = false;
     
     public boolean direct;
+    /** The 3D limits of the sight */
     public Bounds bounds;
-    
+    /** Is grid sampling ? or point samping from  shapefile ? */
     public boolean gridSampling;
+    /** For grid sampling only */
     public int sample;
+    /** Land use codes restriction for grid sampling only*/
     public Set<Integer> selCodes;
+    /** The shapefile for point sampling */
     public File pointFile;
+    /** the identifier field name for point sampling */
     public String idField;
+    /** The metrics to calculate */
     public List<Metric> metrics;
 
-    /** Creates new form AggregateViewDialog */
+    /** 
+     * Creates new form ViewMetricDialog .
+     * 
+     * @param parent the parent frame
+     * @param tangent is tangential view ? or planimetric ?
+     * @param codes the project landuse codes
+     */
     public ViewMetricDialog(java.awt.Frame parent, boolean tangent, SortedSet<Integer> codes) {
         super(parent, true);
         this.isTan = tangent;
@@ -418,11 +425,6 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         setVisible(false);
         dispose();
     }
-
-    public boolean isTangent() {
-        return isTan;
-    }
-
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addAllButton;

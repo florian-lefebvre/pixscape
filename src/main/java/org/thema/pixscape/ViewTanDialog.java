@@ -1,11 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
-
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -33,8 +27,9 @@ import org.thema.drawshape.ui.MapViewer;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
- *
- * @author gvuidel
+ * Dialog form for iteractively calculates tangential view.
+ * 
+ * @author Gilles Vuidel
  */
 public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.ShapeMouseListener {
 
@@ -49,9 +44,13 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
     private RasterShape viewshed;
     
     private final MetricResultDialog metricDlg;
-
     
-    /** Creates new form ViewShedDialog */
+    /** 
+     * Creates new form ViewShedDialog 
+     * @param parent the parent frame
+     * @param project the current project
+     * @param mapViewer the map viewer for refreshing view
+     */
     public ViewTanDialog(Frame parent, Project project, MapViewer mapViewer) {
         super(parent, false);
         initComponents();
@@ -65,7 +64,7 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
         double y = mapViewer.getLayers().getBounds().getCenterY();
         pointTextField.setText(x + ", " + y);
         
-        metricDlg = new MetricResultDialog(this, true, project.getDefaultScale().getCodes());
+        metricDlg = new MetricResultDialog(this, true, project.getDefaultScaleData().getCodes());
     }
 
 
@@ -307,7 +306,7 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
             Raster view = project.getDefaultComputeView().calcViewShed(
                     new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, true, bounds).getView();
             viewshed = new RasterShape(view,
-                    project.getDefaultScale().getGridGeometry().getEnvelope2D(), new RasterStyle(
+                    project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(
                             new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true);
             mapViewer.getMap().addShape(viewshed);
         }

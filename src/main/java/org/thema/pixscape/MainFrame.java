@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 
 package org.thema.pixscape;
 
@@ -12,12 +7,14 @@ import java.awt.Color;
 import java.awt.GraphicsEnvironment;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EventObject;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -26,7 +23,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
@@ -47,6 +46,7 @@ import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
 import org.thema.drawshape.layer.FeatureLayer;
+import org.thema.drawshape.layer.LayerListener;
 import org.thema.drawshape.layer.RasterLayer;
 import org.thema.drawshape.style.FeatureStyle;
 import org.thema.drawshape.style.PointStyle;
@@ -56,8 +56,9 @@ import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
 
 /**
- *
- * @author gvuidel
+ * The main frame and main entry point of PixScape.
+ * 
+ * @author Gilles Vuidel
  */
 public class MainFrame extends javax.swing.JFrame {
     
@@ -308,8 +309,8 @@ public class MainFrame extends javax.swing.JFrame {
         }
         closeProject();
         try {
-            project = Project.loadProject(file);
-            rootLayer = project.getLayers();
+            project = Project.load(file);
+            rootLayer = createLayers();
             mapViewer.setRootLayer(rootLayer);
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -336,7 +337,7 @@ public class MainFrame extends javax.swing.JFrame {
             project.setLandUse(cov);
             rootLayer.addLayerFirst(new RasterLayer("Land use", new CoverageShape(cov, new RasterStyle(
                     new UniqueColorTable((Map)project.getLandColors())))));
-        } catch (Exception ex) {
+        } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Error : " + ex.getLocalizedMessage());
         }
@@ -418,7 +419,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_multiViewshedMenuItemActionPerformed
 
     private void newProjectMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newProjectMenuItemActionPerformed
-        NewProjectDialog dlg = new NewProjectDialog(this, true);
+        NewProjectDialog dlg = new NewProjectDialog(this);
         dlg.setVisible(true);
         if(!dlg.isOk) {
             return;
@@ -428,7 +429,7 @@ public class MainFrame extends javax.swing.JFrame {
         try {
             GridCoverage2D dtm = IOImage.loadCoverage(dlg.dtm);
             project = new Project(dlg.name, dlg.path, dtm, dlg.resZ);
-            rootLayer = project.getLayers();
+            rootLayer = createLayers();
             mapViewer.setRootLayer(rootLayer);
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -442,7 +443,7 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_formWindowClosed
 
     private void genMSMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_genMSMenuItemActionPerformed
-        double r = project.getDefaultScale().getResolution();
+        double r = project.getDefaultScaleData().getResolution();
         
         String res = JOptionPane.showInputDialog(this, "Create multi scale database", (int)(r*4) + ", " + (int)(r*16) + ", " + (int)(r*64));
         if(res == null || res.isEmpty()) {
@@ -460,11 +461,11 @@ public class MainFrame extends javax.swing.JFrame {
         }
         
         try {
-            project.removeScaleData();
+            project.removeMultiScaleData();
             
-            Raster dtm = project.getDefaultScale().getDtm();
-            Raster dsm = project.getDefaultScale().getDsm();
-            Raster land = project.getDefaultScale().getLand();
+            Raster dtm = project.getDefaultScaleData().getDtm();
+            Raster dsm = project.getDefaultScaleData().getDsm();
+            Raster land = project.getDefaultScaleData().getLand();
             for(Double resol : resolutions) {
                 int scale = (int)(resol/r);
                 WritableRaster dtmSamp = samplingDEM(dtm, scale);
@@ -479,7 +480,7 @@ public class MainFrame extends javax.swing.JFrame {
                 project.addScaleData(dataScale);
             }
             
-            rootLayer = project.getLayers();
+            rootLayer = createLayers();
             mapViewer.setRootLayer(rootLayer);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
@@ -590,7 +591,7 @@ public class MainFrame extends javax.swing.JFrame {
         dlg.setVisible(true);
         
         if(dlg.isOk) {
-            rootLayer = project.getLayers();
+            rootLayer = createLayers();
             mapViewer.setRootLayer(rootLayer);
         }
     }//GEN-LAST:event_addScaleMenuItemActionPerformed
@@ -717,8 +718,86 @@ public class MainFrame extends javax.swing.JFrame {
         viewtanDlg = null;
     }
     
+    private DefaultGroupLayer createLayers() {
+        DefaultGroupLayer layers = createScaleDataLayers(project.getDefaultScaleData());
+        layers.setName(project.getName());
+        layers.setExpanded(true);
+        
+        layers.getLayerFirst().setVisible(true);
+        
+        if(project.hasMultiScale()) {
+            DefaultGroupLayer gl = new DefaultGroupLayer("Other scales", false);
+            for(ScaleData data : project.getScaleDatas()) {
+                if(data == project.getDefaultScaleData()) {
+                    continue;
+                }
+                gl.addLayerLast(createScaleDataLayers(data));
+            }
+            layers.addLayerLast(gl);
+        }
+        
+        return layers;
+    } 
+
+    private DefaultGroupLayer createScaleDataLayers(final ScaleData data) {
+        DefaultGroupLayer gl = new DefaultGroupLayer(""+data.getResolution(), false) {
+
+            @Override
+            public JPopupMenu getContextMenu() {
+                if(data == project.getDefaultScaleData()) {
+                    return null;
+                }
+                JPopupMenu menu = new JPopupMenu();
+                menu.add(new AbstractAction("Remove...") {
+                    @Override
+                    public void actionPerformed(ActionEvent e) {
+                        int res = JOptionPane.showConfirmDialog(null, "Do you want to remove the scale " + getName() + " ?",
+                        "Suppression...", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        if(res == JOptionPane.YES_OPTION) {
+                            try {
+                                project.removeScaleData(Double.parseDouble(getName()));
+                                getParent().removeLayer(getParent().getLayer(getName()));
+                            } catch (IOException ex) {
+                                throw new RuntimeException(ex);
+                            }
+                        }
+                    }
+                });
+                return menu;
+            }
+            
+        };
+        
+        gl.addLayerFirst(new RasterLayer("DTM", new CoverageShape(data.getDtmCov(), new RasterStyle(ColorRamp.RAMP_DEM))));
+        if(data.getDsm() != null) {
+            gl.addLayerFirst(new RasterLayer("DSM", new RasterShape(data.getDsm(), data.getDtmCov().getEnvelope2D(), 
+                    new RasterStyle(ColorRamp.RAMP_TEMP), true)));
+        }
+        if(project.hasLandUse()) {
+            final UniqueColorTable colorTable = new UniqueColorTable((Map)project.getLandColors());
+            RasterLayer l = new RasterLayer("Land use", new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
+                    new RasterStyle(colorTable, false), true));
+            l.addLayerListener(new LayerListener() {
+                @Override
+                public void layerVisibilityChanged(EventObject e) {                    
+                }
+                @Override
+                public void layerStyleChanged(EventObject e) {
+                    for(Double code : project.getLandColors().keySet()) {
+                        project.getLandColors().put(code, colorTable.getColor(code));
+                    }
+                    
+                }
+            });
+            gl.addLayerFirst(l);
+        }
+        gl.setLayersVisible(false);
+        return gl;
+    } 
+    
     /**
      * Main program entry point.
+     * Starts MPI, CLI or UI mode
      * @param args the command line arguments
      */
     public static void main(String args[]) throws Exception {
