@@ -64,7 +64,6 @@ public class OptionDialog extends javax.swing.JDialog {
     private void initComponents() {
         bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
-        buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
@@ -218,7 +217,6 @@ public class OptionDialog extends javax.swing.JDialog {
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField aPrecjTextField;
-    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox gpuCheckBox;
     private javax.swing.JLabel jLabel1;

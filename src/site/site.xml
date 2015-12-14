@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<project name="${project.name}">
+    <skin>
+        <groupId>lt.velykis.maven.skins</groupId>
+        <artifactId>reflow-maven-skin</artifactId>
+        <version>1.1.1</version>
+    </skin>
+    <bannerLeft>
+        <name>${project.name}</name>
+    </bannerLeft>
+    <body>
+        <menu name="Project">
+            <item name="Home" href="index.html"/>
+        </menu>
+        <menu ref="reports"/>
+    </body>
+    <custom>
+        <reflowSkin>
+            <theme>bootswatch-spacelab</theme>
+            <brand>
+                <name>PixScape</name>
+                <href>http://dev.umrthema.univ-fcomte.fr/projects/pixscape/</href>
+            </brand>
+            <titleTemplate>%2$s | %1$s</titleTemplate>
+        </reflowSkin>
+    </custom>
+</project>

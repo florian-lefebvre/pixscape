@@ -11,6 +11,7 @@ import java.util.SortedMap;
 import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.thema.common.collection.HashMapList;
 import org.thema.pixscape.view.ViewResult;
@@ -123,7 +124,7 @@ public abstract class AbstractMetric implements Metric {
         try {
             return getCodeName() + " - " + java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle").getString(getShortName());
         } catch(MissingResourceException e) {
-            Logger.getLogger(AbstractMetric.class.getName()).info("No name for metric " + getShortName());
+            Logger.getLogger(AbstractMetric.class.getName()).log(Level.INFO, "No name for metric " + getShortName(), e);
             return getCodeName();
         }
     }

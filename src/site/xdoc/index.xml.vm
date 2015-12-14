@@ -2,16 +2,23 @@
 
 <document>
   <body>
-    <section name="Download">
-	<p>
-	Download last version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar">${project.version}</a>
-	</p>
-	<p>
-	View changelog : <a href="changelog">changelog</a>
-	</p>
-	<p>
-	Download previous version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/">Previous versions</a>
-	</p>
-    </section>
-  </body>
+        <img src="logo.png"/>
+
+        <section name="Analyzing the landscape sights">
+            <p>
+            </p>
+
+            <subsection name="Download">
+                <p>
+                    Download last version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar">${project.version}</a>
+                </p>
+                <p>
+                    View changelog : <a href="changelog.html">changelog</a>
+                </p>
+                <p>
+                    Download previous version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/">Previous versions</a>
+                </p>
+            </subsection>
+        </section>
+    </body> 
 </document>

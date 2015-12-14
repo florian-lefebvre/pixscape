@@ -60,7 +60,7 @@ public final class ScaleData {
             noData = ((Number)dtmCov.getProperty("GC_NODATA")).doubleValue();
         }
         RenderedImage img = dtmCov.getRenderedImage();
-        if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 && !Double.isNaN(noData)) {
+        if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 || !Double.isNaN(noData)) {
             RandomIter r = RandomIterFactory.create(img, null);
             WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
             for(int y = 0; y < img.getHeight(); y++) {

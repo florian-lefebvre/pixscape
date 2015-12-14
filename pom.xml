@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>0.3.9</version>
+    <version>0.3.10</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <build>
@@ -57,12 +57,26 @@
                 </executions>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>2.3.2</version>
-                <configuration>
-                    <debug>true</debug>
-                </configuration>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.4</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.maven.wagon</groupId>
+                        <artifactId>wagon-webdav-jackrabbit</artifactId>
+                        <version>2.6</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>lt.velykis.maven.skins</groupId>
+                        <artifactId>reflow-velocity-tools</artifactId>
+                        <version>1.1.1</version>
+                    </dependency>
+                    <!-- Reflow skin requires Velocity >= 1.7  -->
+                    <dependency>
+                        <groupId>org.apache.velocity</groupId>
+                        <artifactId>velocity</artifactId>
+                        <version>1.7</version>
+                    </dependency>
+                </dependencies>
             </plugin>
         </plugins>
     </build>
@@ -101,9 +115,9 @@
             <version>3.3</version>
         </dependency>
         <dependency>
-            <groupId>org.scalanlp</groupId>
+            <groupId>org.nd4j</groupId>
             <artifactId>jcuda</artifactId>
-            <version>0.5.5</version>
+            <version>6.5</version>
         </dependency>
     </dependencies>
     <properties>
@@ -128,6 +142,13 @@
             <name>Gilles Vuidel</name>
         </developer>
     </developers>
+    <licenses>
+        <license>
+            <name>GNU General Public License, Version 3.0</name>
+            <url>http://www.gnu.org/licenses/gpl-3.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
     <reporting>
         <plugins>
             <plugin>

@@ -31,6 +31,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
      */
     public Bounds bounds;
     
+    /** Is vector output or raster ? */
+    public boolean vectorOutput;
     /** 
      * Creates new form PathViewDialog 
      * @param parent the parent frame
@@ -63,11 +65,15 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        buttonGroup1 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         boundsButton = new javax.swing.JButton();
         pointShpPanel = new org.thema.pixscape.PointShpPanel();
         directCheckBox = new javax.swing.JCheckBox();
+        jPanel1 = new javax.swing.JPanel();
+        vectorRadioButton = new javax.swing.JRadioButton();
+        rasterRadioButton = new javax.swing.JRadioButton();
 
         setTitle("Multi Viewshed");
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -100,6 +106,36 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         directCheckBox.setSelected(true);
         directCheckBox.setText("Direct");
 
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Output"));
+
+        buttonGroup1.add(vectorRadioButton);
+        vectorRadioButton.setSelected(true);
+        vectorRadioButton.setText("Vector (polygons)");
+
+        buttonGroup1.add(rasterRadioButton);
+        rasterRadioButton.setText("Raster");
+
+        org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(vectorRadioButton)
+                    .add(rasterRadioButton))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .add(vectorRadioButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(rasterRadioButton)
+                .addContainerGap())
+        );
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -107,19 +143,20 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 431, Short.MAX_VALUE)
+                    .add(layout.createSequentialGroup()
                         .add(directCheckBox)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                             .add(layout.createSequentialGroup()
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(cancelButton))
                             .add(layout.createSequentialGroup()
-                                .add(49, 49, 49)
+                                .add(43, 43, 43)
                                 .add(boundsButton)
-                                .add(0, 0, Short.MAX_VALUE)))))
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))
                 .addContainerGap())
         );
 
@@ -131,13 +168,18 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(pointShpPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(boundsButton)
-                    .add(directCheckBox))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 15, Short.MAX_VALUE)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(cancelButton)
-                    .add(okButton))
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(layout.createSequentialGroup()
+                        .add(directCheckBox)
+                        .add(0, 0, Short.MAX_VALUE))
+                    .add(layout.createSequentialGroup()
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                            .add(boundsButton))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 21, Short.MAX_VALUE)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                            .add(cancelButton)
+                            .add(okButton))))
                 .addContainerGap())
         );
 
@@ -182,10 +224,14 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton boundsButton;
+    private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox directCheckBox;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JButton okButton;
     private org.thema.pixscape.PointShpPanel pointShpPanel;
+    private javax.swing.JRadioButton rasterRadioButton;
+    private javax.swing.JRadioButton vectorRadioButton;
     // End of variables declaration//GEN-END:variables
 
 }

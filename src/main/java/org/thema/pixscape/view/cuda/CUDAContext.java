@@ -34,7 +34,6 @@ class CUDAContext {
     private float[] dtmBuf;
     private float[] dsmBuf;
     private byte[] landBuf;
-    private final int nDev;
     private final int w;
     private final int h;
     private final int size;
@@ -68,7 +67,6 @@ class CUDAContext {
      * @throws IOException 
      */
     public CUDAContext(ScaleData data, int nDev) throws IOException {
-        this.nDev = nDev;
         this.data = data;
         CUdevice device = new CUdevice();
         JCudaDriver.cuDeviceGet(device, nDev);
@@ -341,7 +339,14 @@ class CUDAContext {
         if (viewBuf.length != size) {
             throw new IllegalArgumentException("Bad size buffer");
         }
-        JCudaDriver.cuMemcpyDtoH(Pointer.to(viewBuf), viewDev, size * Sizeof.CHAR);
+        
+        Pointer pointer = new Pointer();
+        JCudaDriver.cuMemAllocHost(pointer, size * Sizeof.CHAR);
+        JCudaDriver.cuMemcpyDtoH(pointer, viewDev, size * Sizeof.CHAR);
+        pointer.getByteBuffer(0, size * Sizeof.CHAR).get(viewBuf);
+        JCudaDriver.cuMemFreeHost(pointer);
+        
+//        JCudaDriver.cuMemcpyDtoH(Pointer.to(viewBuf), viewDev, size * Sizeof.CHAR);
     }
 
     /**

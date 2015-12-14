@@ -198,7 +198,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
             int res = cuInit(0);
             return res == CUresult.CUDA_SUCCESS;
         } catch(LinkageError e) {
-            Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.INFO, null, e);
+            Logger.getLogger(ComputeViewCUDA.class.getName()).log(Level.WARNING, null, e);
             return false;
         }
     }

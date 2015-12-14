@@ -8,6 +8,8 @@ import java.awt.GraphicsEnvironment;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -46,6 +48,7 @@ import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
 import org.thema.drawshape.layer.FeatureLayer;
+import org.thema.drawshape.layer.Layer;
 import org.thema.drawshape.layer.LayerListener;
 import org.thema.drawshape.layer.RasterLayer;
 import org.thema.drawshape.style.FeatureStyle;
@@ -54,6 +57,7 @@ import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.ColorRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
+import org.thema.pixscape.view.ViewShedResult;
 
 /**
  * The main frame and main entry point of PixScape.
@@ -388,20 +392,37 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
-                    List<DefaultFeature> viewSheds = new ArrayList<>();
+                    List<DefaultFeature> viewSheds = dlg.vectorOutput ? new ArrayList<DefaultFeature>() : null;
+                    Raster viewshedRast = !dlg.vectorOutput ? Raster.createBandedRaster(DataBuffer.TYPE_INT, project.getDtm().getWidth(), project.getDtm().getHeight(), 1, null) : null;
                     List<DefaultFeature> points = GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
                     progressBar.setMaximum(points.size());
                     progressBar.setProgress(0);
                     for(Feature point : points) {
                         Point p = point.getGeometry().getCentroid();
                         Bounds b = dlg.bounds.updateBounds(point);
-                        Geometry view = project.getDefaultComputeView().calcViewShed(
+                        ViewShedResult viewshed = project.getDefaultComputeView().calcViewShed(
                                 new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), 
-                                -1, dlg.direct, b).getPolygon();
-                        viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), view));
+                                -1, dlg.direct, b);
+                        if(dlg.vectorOutput) {
+                            viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon()));
+                        } else {
+                            int[] viewTot = ((DataBufferInt)viewshedRast.getDataBuffer()).getData();
+                            DataBuffer viewBuf = viewshed.getView().getDataBuffer();
+                            for(int i = 0; i < viewBuf.getSize(); i++) {
+                                if(viewBuf.getElem(i) > 0) {
+                                    viewTot[i]++;
+                                }
+                            }
+                        }
+                        
                         progressBar.incProgress(1);
                     }
-                    FeatureLayer l = new FeatureLayer("Multi viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());
+                    Layer l;
+                    if(dlg.vectorOutput) {
+                        l = new FeatureLayer("Multi viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
+                    } else {
+                        l = new RasterLayer("Multi viewshed", viewshedRast, project.getDefaultScaleData().getGridGeometry().getEnvelope2D());
+                    }
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                     l = new FeatureLayer("Points", points, new PointStyle());
