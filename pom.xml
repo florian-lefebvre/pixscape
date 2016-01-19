@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>0.3.10</version>
+    <version>0.3.11</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <build>

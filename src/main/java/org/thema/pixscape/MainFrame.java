@@ -1,7 +1,6 @@
 
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 import java.awt.Color;
 import java.awt.GraphicsEnvironment;
@@ -520,7 +519,7 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Metrics...");
                 if(dlg.gridSampling) {
-                    GridMetricTask task = new GridMetricTask(project, project.getStartZ(), -1, 
+                    GridMetricTask task = new GridMetricTask(project, project.getStartZ(), dlg.zDest, 
                             dlg.direct, dlg.bounds, dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
                     ExecutorService.execute(task);
                     Map<String, WritableRaster> result = task.getResult();

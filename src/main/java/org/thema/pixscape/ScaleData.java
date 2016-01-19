@@ -74,9 +74,9 @@ public final class ScaleData {
                 }
             }
             init(new GridCoverageFactory().create("", dtmFloat, dtmCov.getEnvelope2D()), land, dsm);
+        } else {
+            init(dtmCov, land, dsm);
         }
-
-        init(dtmCov, land, dsm);
     }
     
     /**

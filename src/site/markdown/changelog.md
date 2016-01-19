@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 0.3.11 (19/01/2016)
+- UI : add Z dest option for viewshed metric calculation
+- Project creation, in some cases, does not save the dtm in float number
+
 ##### version 0.3.10 (14/12/2015)
 - Project creation, in some cases, does not save the dtm in float number
 - Multi viewshed : add raster output option

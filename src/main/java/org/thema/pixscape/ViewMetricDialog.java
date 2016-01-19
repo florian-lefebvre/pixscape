@@ -49,6 +49,8 @@ public class ViewMetricDialog extends javax.swing.JDialog {
     public String idField;
     /** The metrics to calculate */
     public List<Metric> metrics;
+    
+    public double zDest;
 
     /** 
      * Creates new form ViewMetricDialog .
@@ -122,6 +124,8 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         addButton = new javax.swing.JButton();
         addAllButton = new javax.swing.JButton();
         removeButton = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        zDestTextField = new javax.swing.JTextField();
 
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
@@ -286,6 +290,10 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                 .addContainerGap())
         );
 
+        jLabel3.setText("Z dest");
+
+        zDestTextField.setText("-1");
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -300,6 +308,10 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                         .add(cancelButton))
                     .add(layout.createSequentialGroup()
                         .add(directCheckBox)
+                        .add(18, 18, 18)
+                        .add(jLabel3)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(zDestTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(boundsButton))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -315,7 +327,10 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(directCheckBox)
-                    .add(boundsButton))
+                    .add(boundsButton)
+                    .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                        .add(jLabel3)
+                        .add(zDestTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(jPanel2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -358,7 +373,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
             pointFile = pointShpPanel.getPointFile();
             idField = pointShpPanel.getIdField();
         }
-        
+        zDest = Double.parseDouble(zDestTextField.getText());
         metrics = (List)Arrays.asList(((DefaultListModel)metricList.getModel()).toArray());
         isOk = true;
         doClose();
@@ -435,6 +450,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private javax.swing.JCheckBox directCheckBox;
     private javax.swing.JRadioButton gridRadioButton;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JScrollPane jScrollPane1;
@@ -447,6 +463,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
     private javax.swing.JButton removeButton;
     private javax.swing.JRadioButton sampingRadioButton;
     private javax.swing.JSpinner sampleSpinner;
+    private javax.swing.JTextField zDestTextField;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 
