@@ -29,7 +29,7 @@ import org.thema.pixscape.ScaleData;
 class CUDAContext {
     private final int NCORE = 512;
     
-    private final ScaleData data;
+    private final ComputeViewCUDA compute;
     private Raster dtm;
     private float[] dtmBuf;
     private float[] dsmBuf;
@@ -62,12 +62,12 @@ class CUDAContext {
     /**
      * Creates a new CUDAContext for the given GPU device index.
      * Loads functions, allocate GPU memory and copy scaledata to GPU memory.
-     * @param data the monoscale data
+     * @param compute the ComputeView for CUDA
      * @param nDev the GPU device index
      * @throws IOException 
      */
-    public CUDAContext(ScaleData data, int nDev) throws IOException {
-        this.data = data;
+    public CUDAContext(ComputeViewCUDA compute, int nDev) throws IOException {
+        this.compute = compute;
         CUdevice device = new CUdevice();
         JCudaDriver.cuDeviceGet(device, nDev);
         ctx = new CUcontext();
@@ -100,6 +100,7 @@ class CUDAContext {
         JCudaDriver.cuModuleGetFunction(funClearView, module, "clearView");
         funClearViewTan = new CUfunction();
         JCudaDriver.cuModuleGetFunction(funClearViewTan, module, "clearViewTan");
+        ScaleData data = compute.getData();
         dtm = data.getDtm();
         dtmBuf = ((DataBufferFloat) dtm.getDataBuffer()).getData();
         if (data.hasLandUse()) {
@@ -177,10 +178,17 @@ class CUDAContext {
         Pointer viewShedParam;
         CUfunction fun;
         if (bounds.isUnbounded()) {
-            viewShedParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new float[]{startZ}), Pointer.to(new float[]{destZ}), Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), Pointer.to(new float[]{(float) data.getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), Pointer.to(viewDev));
+            viewShedParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new float[]{startZ}), Pointer.to(new float[]{destZ}), 
+                    Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), 
+                    Pointer.to(new float[]{(float) compute.getData().getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), 
+                    Pointer.to(new int[]{compute.isEarthCurv() ? 1 : 0}), Pointer.to(new float[]{(float) compute.getCoefRefraction()}), Pointer.to(viewDev));
             fun = direct ? funViewShed : funViewShedInd;
         } else {
-            viewShedParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new float[]{startZ}), Pointer.to(new float[]{destZ}), Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), Pointer.to(new float[]{(float) data.getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), Pointer.to(viewDev), Pointer.to(new float[]{(float) bounds.getDmin2()}), Pointer.to(new float[]{(float) bounds.getDmax2()}), Pointer.to(new float[]{(float) bounds.getTheta1Left()}), Pointer.to(new float[]{(float) bounds.getTheta1Right()}), Pointer.to(new float[]{(float) bounds.getSlopemin2()}), Pointer.to(new float[]{(float) bounds.getSlopemax2()}));
+            viewShedParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new float[]{startZ}), Pointer.to(new float[]{destZ}), 
+                    Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), 
+                    Pointer.to(new float[]{(float) compute.getData().getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), 
+                    Pointer.to(new int[]{compute.isEarthCurv() ? 1 : 0}), Pointer.to(new float[]{(float) compute.getCoefRefraction()}), Pointer.to(viewDev), 
+                    Pointer.to(new float[]{(float) bounds.getDmin2()}), Pointer.to(new float[]{(float) bounds.getDmax2()}), Pointer.to(new float[]{(float) bounds.getTheta1Left()}), Pointer.to(new float[]{(float) bounds.getTheta1Right()}), Pointer.to(new float[]{(float) bounds.getSlopemin2()}), Pointer.to(new float[]{(float) bounds.getSlopemax2()}));
             fun = direct ? funViewShedBounded : funViewShedIndBounded;
         }
         JCudaDriver.cuLaunchKernel(fun, 2 * (w + h) / NCORE + 1, 1, 1, // Grid dimension
@@ -217,7 +225,12 @@ class CUDAContext {
         }
         clearViewTan();
 
-        Pointer viewTanParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new double[]{startZ}), Pointer.to(dtmDev), Pointer.to(new int[]{w}), Pointer.to(new int[]{h}), Pointer.to(new double[]{(double) data.getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), Pointer.to(viewTanDev), Pointer.to(new int[]{wa}), Pointer.to(new double[]{ares}), Pointer.to(new double[]{(double) bounds.getDmin()}), Pointer.to(new double[]{(double) bounds.getDmax()}), Pointer.to(new double[]{(double) bounds.getTheta1Left()}), Pointer.to(new double[]{(double) bounds.getTheta1Right()}), Pointer.to(new double[]{(double) bounds.getSlopemin()}), Pointer.to(new double[]{(double) bounds.getSlopemax()}));
+        Pointer viewTanParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new double[]{startZ}), 
+                Pointer.to(dtmDev), Pointer.to(new int[]{w}), Pointer.to(new int[]{h}), 
+                Pointer.to(new double[]{(double) compute.getData().getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), 
+                Pointer.to(new int[]{compute.isEarthCurv() ? 1 : 0}), Pointer.to(new float[]{(float) compute.getCoefRefraction()}), 
+                Pointer.to(viewTanDev), Pointer.to(new int[]{wa}), Pointer.to(new double[]{ares}), 
+                Pointer.to(new double[]{(double) bounds.getDmin()}), Pointer.to(new double[]{(double) bounds.getDmax()}), Pointer.to(new double[]{(double) bounds.getTheta1Left()}), Pointer.to(new double[]{(double) bounds.getTheta1Right()}), Pointer.to(new double[]{(double) bounds.getSlopemin()}), Pointer.to(new double[]{(double) bounds.getSlopemax()}));
         JCudaDriver.cuLaunchKernel(funViewTan, wa / NCORE + 1, 1, 1, // Grid dimension
         NCORE, 1, 1, // Block dimension
         0, null, // Shared memory size and stream

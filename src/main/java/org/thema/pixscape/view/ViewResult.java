@@ -57,11 +57,6 @@ public interface ViewResult {
     GridGeometry2D getGrid();
 
     /**
-     * @return the landuse included in the datascale
-     */
-    Raster getLanduse();
-
-    /**
      * @return the resolution of the datascale
      */
     double getRes2D();

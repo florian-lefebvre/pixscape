@@ -22,7 +22,7 @@ public class SimpleViewTanResultTest {
     
     @BeforeClass
     public static void setUpClass() {
-        tanResult = (SimpleViewTanResult) new ComputeViewJava(TestTools.createRandomData(10), 0.1).calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
+        tanResult = (SimpleViewTanResult) new ComputeViewJava(TestTools.createRandomData(10), 0.1, false, 0).calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
     }
     
 

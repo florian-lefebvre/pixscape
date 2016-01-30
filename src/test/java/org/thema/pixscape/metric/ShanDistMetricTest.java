@@ -25,7 +25,7 @@ public class ShanDistMetricTest {
     
     @BeforeClass
     public static void setUpClass() {
-        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, 1), 0.1);
+        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, 1), 0.1, false, 0);
     }
     
     /**

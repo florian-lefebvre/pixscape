@@ -30,32 +30,14 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     }
     
     @Override
+    public final Raster getLanduse() {
+        return compute.getData().getLand();
+    }
+    
+    @Override
     public synchronized double getPerimeter() {
         if (perim == -1) {
-            double p = 0;
-            final Raster view = getView();
-            final int w = view.getWidth();
-            final int h = view.getHeight();
-            for(int y = 0; y < h; y++) {
-                for(int x = 0; x < w; x++) {
-                    if(view.getSample(x, y, 0) != 1) {
-                        continue;
-                    }
-                    if(x == 0 || view.getSample(x-1, y, 0) != 1) {
-                        p++;
-                    }
-                    if(y == 0 || view.getSample(x, y-1, 0) != 1) {
-                        p++;
-                    }
-                    if(x == w-1 || view.getSample(x+1, y, 0) != 1) {
-                        p++;
-                    }
-                    if(y == h-1 || view.getSample(x, y+1, 0) != 1) {
-                        p++;
-                    }
-                }
-            }
-            perim = p * getRes2D();
+            perim = calcPerimeter(getView()) * getRes2D();
         }
         return perim;
     }
@@ -133,4 +115,34 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         return poly;
     }
 
+    /**
+     * Calculates the full perimeter (including holes) of the viewshed in pixel unit
+     * @param view the viewshed
+     * @return the full perimeter in pixel unit
+     */
+    public static double calcPerimeter(Raster view) {
+        double p = 0;
+        final int w = view.getWidth();
+        final int h = view.getHeight();
+        for(int y = 0; y < h; y++) {
+            for(int x = 0; x < w; x++) {
+                if(view.getSample(x, y, 0) != 1) {
+                    continue;
+                }
+                if(x == 0 || view.getSample(x-1, y, 0) != 1) {
+                    p++;
+                }
+                if(y == 0 || view.getSample(x, y-1, 0) != 1) {
+                    p++;
+                }
+                if(x == w-1 || view.getSample(x+1, y, 0) != 1) {
+                    p++;
+                }
+                if(y == h-1 || view.getSample(x, y+1, 0) != 1) {
+                    p++;
+                }
+            }
+        }
+        return p;
+    }
 }

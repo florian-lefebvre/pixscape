@@ -17,6 +17,7 @@ import org.opengis.referencing.operation.TransformException;
 import org.thema.common.JTS;
 import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
+import static org.thema.pixscape.view.SimpleViewShedResult.calcPerimeter;
 import org.thema.process.Vectorizer;
 
 /**
@@ -26,6 +27,9 @@ import org.thema.process.Vectorizer;
  */
 public class MultiViewShedResult extends MultiViewResult implements ViewShedResult {
 
+    private double perim = -1;
+    private TreeMap<Double, Raster> views;
+    
     /**
      * Creates a new MultiViewShedResult.
      * 
@@ -35,12 +39,35 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
      * @param compute the compute view used
      */
     MultiViewShedResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
-        super(cg, views, zones, compute);
+        super(cg, zones, compute);
+        this.views = views;
     }
 
+    /**
+     * @return the viewshed for each scale
+     */
+    public final TreeMap<Double, Raster> getViews() {
+        return views;
+    }
+    
+    /**
+     * Returns the landuse in the first scale grid geometry.
+     * {@inheritDoc }
+     */
     @Override
-    public double getPerimeter() {
-        throw new UnsupportedOperationException("Perimeter is not supported with multi resolution data"); 
+    public final synchronized Raster getLanduse() {
+        if(land == null) {
+            calcViewLand();
+        }
+        return land;
+    }
+    
+    @Override
+    public synchronized double getPerimeter() {
+        if (perim == -1) {
+            perim = calcPerimeter(getView()) * getRes2D();
+        }
+        return perim;
     }
 
     @Override
@@ -110,6 +137,10 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
             GridEnvelope2D zone = getZones().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
+                    int val = v.getSample(x, y, 0);
+                    if(val != 1) {
+                        continue;
+                    }
                     try {
                         Rectangle r = firstGrid.worldToGrid(grid.gridToWorld(new GridEnvelope2D(x, y, 1, 1)));
                         if(!r.intersects(view.getBounds())) {
@@ -121,7 +152,7 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
                         if(tab.length != r.width*r.height) {
                             tab = new int[r.width*r.height];
                         }
-                        Arrays.fill(tab, v.getSample(x, y, 0));
+                        Arrays.fill(tab, val);
                         view.setSamples(r.x, r.y, r.width, r.height, 0, tab);
                         if(land != null) {
                             Arrays.fill(tab, l.getSample(x, y, 0));

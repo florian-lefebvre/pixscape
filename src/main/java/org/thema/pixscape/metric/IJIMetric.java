@@ -41,9 +41,9 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                 if(view.getSample(x, y, 0) != 1) {
                     continue;
                 }
-                final int l = land.getSample(x, y, 0);
+                final int l = land.getSample(x, y, 0) & 0xff;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
-                    final int l1 = land.getSample(x+1, y, 0);
+                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
                     if(l != l1) {
                         border[l][l1]++;
                         border[l1][l]++;
@@ -51,7 +51,7 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
-                    final int l1 = land.getSample(x, y+1, 0);
+                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
                     if(l != l1) {
                         border[l][l1]++;
                         border[l1][l]++;
@@ -68,7 +68,7 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
     public Double[] calcMetric(ViewTanResult result) {
         int[][] border = new int[256][256];
         Raster view = result.getView();
-        byte[] land = ((DataBufferByte)result.getLanduse().getDataBuffer()).getData();
+        Raster land = result.getLanduseView();
         int tot = 0;
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
@@ -76,9 +76,9 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                 if(ind == -1) {
                     continue;
                 }
-                final int l = land[ind];
+                final int l = land.getSample(x, y, 0) & 0xff;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
-                    final int l1 = land[view.getSample(x+1, y, 0)] & 0xff;
+                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
                     if(l != l1) {
                         border[l][l1]++;
                         border[l1][l]++;
@@ -86,7 +86,7 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
                     }
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
-                    final int l1 = land[view.getSample(x, y+1, 0)] & 0xff;
+                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
                     if(l != l1) {
                         border[l][l1]++;
                         border[l1][l]++;

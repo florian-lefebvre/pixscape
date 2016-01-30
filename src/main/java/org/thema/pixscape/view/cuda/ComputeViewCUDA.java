@@ -14,7 +14,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import jcuda.driver.CUresult;
 import jcuda.driver.JCudaDriver;
-import static jcuda.driver.JCudaDriver.cuCtxSynchronize;
 import static jcuda.driver.JCudaDriver.cuDeviceGetCount;
 import static jcuda.driver.JCudaDriver.cuInit;
 import org.geotools.coverage.grid.GridCoordinates2D;
@@ -47,11 +46,13 @@ public class ComputeViewCUDA extends SimpleComputeView {
      * Creates one thread for each GPU device
      * @param data the data for this resolution
      * @param aPrec the precision in degree for tangential view
+     * @param earthCurv take into account earth curvature ?
+     * @param coefRefraction refraction correction, 0 for no correction
      * @param nbGPU the number of GPU devices to use, must be > 0
      */
-    public ComputeViewCUDA(ScaleData data, double aPrec, int nbGPU) {
-        super(data, aPrec);
-
+    public ComputeViewCUDA(ScaleData data, double aPrec, boolean earthCurv, double coefRefraction, int nbGPU) {
+        super(data, aPrec, earthCurv, coefRefraction);
+        
         // Enable exceptions and omit all subsequent error checks
         JCudaDriver.setExceptionsEnabled(true);
         
@@ -131,7 +132,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
             public List<Double[]> run(CUDAContext cudaContext) {
                 long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewTan(cg, (float) startZ, (float) aPrec, bounds);
+                cudaContext.viewTan(cg, (float) startZ, (float) getRadaPrec(), bounds);
 
                 CUDAViewTanResult view = new CUDAViewTanResult(cg, cudaContext, ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
@@ -159,7 +160,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
             public ViewTanResult run(CUDAContext cudaContext) {
                 long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewTan(cg, (double) startZ, (double) aPrec, bounds);
+                cudaContext.viewTan(cg, (double) startZ, (double) getRadaPrec(), bounds);
 
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, cudaContext.getWa(), cudaContext.getHa(), 1, null);
                 int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
@@ -221,7 +222,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
         @Override
         public void run() {
             try {
-                context = new CUDAContext(getData(), dev);
+                context = new CUDAContext(ComputeViewCUDA.this, dev);
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }

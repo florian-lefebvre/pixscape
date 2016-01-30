@@ -15,17 +15,26 @@ import org.thema.pixscape.metric.ViewTanMetric;
  */
 public abstract class ComputeView {
     
+    public static final double EARTH_DIAM = 12740000;
+    
     /**
      * Alpha precision in radian
      */
-    protected double aPrec;
+    private double aPrec;
 
+    private boolean earthCurv;
+    private double coefRefraction;
+    
     /**
      * Creates a new instance of ComputeView
      * @param aPrec the precision in degree for tangential view
+     * @param earthCurv take into account earth curvature ?
+     * @param coefRefraction refraction correction, 0 for no correction
      */
-    public ComputeView(double aPrec) {
+    public ComputeView(double aPrec, boolean earthCurv, double coefRefraction) {
         setaPrec(aPrec);
+        this.earthCurv = earthCurv;
+        this.coefRefraction = coefRefraction;
     }
     
     /**
@@ -104,7 +113,7 @@ public abstract class ComputeView {
      * 
      * @return the precision in radian for tangential view
      */
-    public double getRadaPrec() {
+    protected double getRadaPrec() {
         return aPrec;
     }
     
@@ -124,6 +133,36 @@ public abstract class ComputeView {
     public final void setaPrec(double aPrec) {
         this.aPrec = aPrec * Math.PI / 180;
     }
-    
+
+    /**
+     * @return true if taking into account earth curvature
+     */
+    final public boolean isEarthCurv() {
+        return earthCurv;
+    }
+
+    /**
+     * Sets earth curvature option
+     * @param earthCurv take into account earth curvature ?
+     */
+    public void setEarthCurv(boolean earthCurv) {
+        this.earthCurv = earthCurv;
+    }
+
+    /**
+     * @return the current refraction correction coefficient (default 0.13), 0 for no correction
+     */
+    final public double getCoefRefraction() {
+        return coefRefraction;
+    }
+
+    /**
+     * Sets the refraction correction coefficient.
+     * Set to 0 for no correction, default is 0.13
+     * @param coefRefraction the new refraction correction coefficient
+     */
+    public void setCoefRefraction(double coefRefraction) {
+        this.coefRefraction = coefRefraction;
+    }
     
 }

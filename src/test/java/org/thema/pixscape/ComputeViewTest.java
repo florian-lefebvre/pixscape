@@ -75,7 +75,7 @@ public class ComputeViewTest {
         testViewShed(0);
     }
     
-//    @Test
+    @Test
     public void testCalcViewShedJavaMulti() throws IOException, TransformException {
         System.out.println("calcViewShedJava static mnt only");
         testViewShed(1);
@@ -94,7 +94,15 @@ public class ComputeViewTest {
      */
     @Test
     public void testCalcViewTanJava() throws IOException, TransformException {
-        testViewTan(false);
+        testViewTan(0);
+    }
+    
+    /**
+     * Test of calcViewTan method, of class MultiComputeViewJava.
+     */
+    @Test
+    public void testCalcViewTanMulti() throws IOException, TransformException {
+        testViewTan(1);
     }
     
     /**
@@ -103,7 +111,7 @@ public class ComputeViewTest {
     @Test
     public void testCalcViewTanCUDA() throws IOException, TransformException {
         if(ComputeViewCUDA.isCUDAAvailable()) {
-            testViewTan(true);
+            testViewTan(2);
         }
     }
     
@@ -118,17 +126,17 @@ public class ComputeViewTest {
         
         int size = 10;
         ScaleData data = TestTools.createRandomData(size);
-        ComputeViewCUDA cuda = new ComputeViewCUDA(data, 0, 1);
-        ComputeViewJava java = new ComputeViewJava(data, 0);
+        ComputeViewCUDA cuda = new ComputeViewCUDA(data, 0, false, 0, 1);
+        ComputeViewJava java = new ComputeViewJava(data, 0, false, 0);
         double startZ = 2;
         for(int y = 0; y < size; y++) {
             for(int x = 0; x < size; x++) {
                 for(Double destZ : Arrays.asList(-1.0, 1.0, 3.0)) {
                     DirectPosition2D p = new DirectPosition2D(x, y);
                     System.out.println("x : " + x + ", y : " + y +  ", destZ : " + destZ + " direct");
-                    compJavaCUDA(p, startZ, destZ, true, cuda, java);
+                    compComputeView(p, startZ, destZ, true, cuda, java);
                     System.out.println("x : " + x + ", y : " + y +  ", destZ : " + destZ + " indirect");
-                    compJavaCUDA(p, startZ, destZ, false, cuda, java);
+                    compComputeView(p, startZ, destZ, false, cuda, java);
                 }
             }
         }
@@ -137,23 +145,23 @@ public class ComputeViewTest {
     }
     
     /**
-     * Test of calcViewShed method, of class ComputeView.
+     * Test of calcViewShed method, of class MultiComputeView.
+     * Randomly results are not equals...
      */
-//    @Test
     public void testViewShedJavaMulti() throws IOException, TransformException {  
         int size = 5;
         ScaleData data = TestTools.createRandomData(size);
-        MultiComputeViewJava multi = new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0);
-        ComputeViewJava java = new ComputeViewJava(data, 0);
+        MultiComputeViewJava multi = new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0, false, 0);
+        ComputeViewJava java = new ComputeViewJava(data, 0, false, 0);
         double startZ = 2;
         for(int y = 0; y < size; y++) {
             for(int x = 0; x < size; x++) {
                 for(Double destZ : Arrays.asList(-1.0, 1.0, 3.0)) {
                     DirectPosition2D p = new DirectPosition2D(x, y);
                     System.out.println("x : " + x + ", y : " + y +  ", destZ : " + destZ + " direct");
-                    compJavaCUDA(p, startZ, destZ, true, multi, java);
+                    compComputeView(p, startZ, destZ, true, multi, java);
                     System.out.println("x : " + x + ", y : " + y +  ", destZ : " + destZ + " indirect");
-                    compJavaCUDA(p, startZ, destZ, false, multi, java);
+                    compComputeView(p, startZ, destZ, false, multi, java);
                 }
             }
         }
@@ -161,7 +169,37 @@ public class ComputeViewTest {
         java.dispose();
     }
     
-    private void compJavaCUDA(DirectPosition2D p, double startZ, double destZ, boolean direct, 
+    /**
+     * Test of viewshed with earh curvature and refraction of classes ComputeViewJava and MultiComputeViewJava.
+     */
+    @Test
+    public void testEarthCurvature() throws IOException, TransformException {  
+        ComputeView compute = new ComputeViewJava(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0);
+        double area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(4153, area, 0); // aproximative radius = 36 = round(sqrt(0.0001 * 12 740 000))
+
+        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0.5);
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+        
+        if(ComputeViewCUDA.isCUDAAvailable()) {
+            compute = new ComputeViewCUDA(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0.5, 1);
+            area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+            Assert.assertEquals(8139, area, 0); 
+            area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+            Assert.assertEquals(8139, area, 0); 
+        }
+        
+        compute = new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(1.0, TestTools.createFlatDataWithLand(100, 1))), 1000, 0.1, true, 0.5);
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+    }
+    
+    private void compComputeView(DirectPosition2D p, double startZ, double destZ, boolean direct, 
             ComputeView cuda, ComputeView java) throws TransformException {
         Raster resCuda = cuda.calcViewShed(p, startZ, destZ, direct, new Bounds()).getView();
         Raster resJava = java.calcViewShed(p, startZ, destZ, direct, new Bounds()).getView();
@@ -213,9 +251,9 @@ public class ComputeViewTest {
                         }
                     }
                     ScaleData data = new ScaleData(mntCov, null, null, 1);
-                    compute = type == 2 ? new ComputeViewCUDA(data, 0, 1) : (
-                            type == 1 ? new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0)
-                            : new ComputeViewJava(data, 0));
+                    compute = type == 2 ? new ComputeViewCUDA(data, 0, false, 0, 1) : (
+                            type == 1 ? new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0, false, 0)
+                            : new ComputeViewJava(data, 0, false, 0));
                 } else {
                     System.out.println("Test with : " + line);
                     String[] tokens = line.split(" ");
@@ -277,7 +315,7 @@ public class ComputeViewTest {
         }
     }
     
-    private void testViewTan(boolean cuda) throws IOException, TransformException {
+    private void testViewTan(int type) throws IOException, TransformException {
         ComputeView compute = null;
         WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, 5, 5, 1), null);
         GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, 5, 5));
@@ -304,8 +342,8 @@ public class ComputeViewTest {
                     }
                     
                     ScaleData data = new ScaleData(mntCov, null, null, 1);
-                    compute = cuda ? new ComputeViewCUDA(data, 0, 1) 
-                            : new ComputeViewJava(data, 0);
+                    compute = type == 2 ? new ComputeViewCUDA(data, 0, false, 0, 1) 
+                            : type == 1 ? new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(data.getResolution(), data)), 100, 0, false, 0) : new ComputeViewJava(data, 0, false, 0);
                 } else {
                     System.out.println("Test with : " + line);
                     String[] tokens = line.split(" ");

@@ -61,6 +61,7 @@ public class CLITools {
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
                     "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]\n" +
                     "[-multi dmin=val| -mono]\n" +
+                    "[-earth flat|curved [refrac=val]]\n" +
                     " commands\n\n" +
                     "Commands list :\n" +
                     "--viewshed [indirect] x y\n" +
@@ -173,6 +174,18 @@ public class CLITools {
                 case "-mono":
                     project.setMinDistMS(0);
                     break;
+                case "-earth":
+                    p = args.remove(0);
+                    if(p.equals("curved")) {
+                        project.setEarthCurv(true);
+                        if(!args.isEmpty() && args.get(0).startsWith("refrac=")) {
+                            p = args.remove(0);
+                            project.setCoefRefraction(Double.parseDouble(p.split("=")[1]));
+                        }
+                    } else {
+                        project.setEarthCurv(false);
+                    }
+                    break;
                 default:
                     throw new IllegalArgumentException("Unknown option " + p);
             }
@@ -250,12 +263,12 @@ public class CLITools {
         }
         Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
         new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-elev.tif")).write(
-                new GridCoverageFactory().create("view", result.getElevationView(), env), null);
+                new GridCoverageFactory().create("view", (WritableRaster)result.getElevationView(), env), null);
         new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-dist.tif")).write(
-                new GridCoverageFactory().create("view", result.getDistanceView(), env), null);
+                new GridCoverageFactory().create("view", (WritableRaster)result.getDistanceView(), env), null);
         if(project.hasLandUse()) {
             new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-land.tif")).write(
-                    new GridCoverageFactory().create("view", result.getLanduseView(), env), null);
+                    new GridCoverageFactory().create("view", (WritableRaster)result.getLanduseView(), env), null);
         }
 
     }

@@ -13,7 +13,7 @@ import javax.swing.KeyStroke;
 
 /**
  * Dialog form for setting global options :
- * eye height, angular precision, multi scale mode, GPU
+ * eye height, angular precision, earth curvature, refraction, multi scale mode, GPU
  * 
  * @author Gilles Vuidel
  */
@@ -47,6 +47,8 @@ public class OptionDialog extends javax.swing.JDialog {
         multiScaleCheckBox.setEnabled(project.hasMultiScale());
         zEyeTextField.setText(""+project.getStartZ());
         aPrecjTextField.setText(""+project.getAlphaPrec());
+        earthCurvCheckBox.setSelected(project.isEarthCurv());
+        coefRefracTextField.setText(""+project.getCoefRefraction());
         multiScaleCheckBox.setEnabled(project.hasMultiScale());
         multiScaleCheckBox.setSelected(project.isMSComputation());
         minDistTextField.setText(""+project.getMinDistMS());
@@ -74,6 +76,9 @@ public class OptionDialog extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         aPrecjTextField = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
+        earthCurvCheckBox = new javax.swing.JCheckBox();
+        coefRefracTextField = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
 
         setTitle("Options");
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -100,7 +105,7 @@ public class OptionDialog extends javax.swing.JDialog {
 
         zEyeTextField.setText("1.8");
 
-        multiScaleCheckBox.setText("Multi scale - Min distance : ");
+        multiScaleCheckBox.setText("Multi scale - Min distance:");
 
         minDistTextField.setText("500");
 
@@ -114,6 +119,18 @@ public class OptionDialog extends javax.swing.JDialog {
         aPrecjTextField.setText("0.1");
 
         jLabel3.setText("°");
+
+        earthCurvCheckBox.setText("Earth curvature");
+
+        coefRefracTextField.setText("0.13");
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), coefRefracTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        jLabel4.setText("Refraction correction:");
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), jLabel4, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -143,8 +160,14 @@ public class OptionDialog extends javax.swing.JDialog {
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                                 .add(aPrecjTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(3, 3, 3)
-                                .add(jLabel3)))
-                        .add(0, 0, Short.MAX_VALUE)))
+                                .add(jLabel3))
+                            .add(earthCurvCheckBox)
+                            .add(layout.createSequentialGroup()
+                                .add(12, 12, 12)
+                                .add(jLabel4)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                .add(coefRefracTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 56, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+                        .add(0, 1, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -162,13 +185,19 @@ public class OptionDialog extends javax.swing.JDialog {
                     .add(jLabel1)
                     .add(aPrecjTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(jLabel3))
-                .add(13, 13, 13)
+                .add(18, 18, 18)
+                .add(earthCurvCheckBox)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(coefRefracTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel4))
+                .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(multiScaleCheckBox)
                     .add(minDistTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                .add(18, 18, 18)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
                 .add(gpuCheckBox)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 20, Short.MAX_VALUE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cancelButton)
                     .add(okButton))
@@ -185,6 +214,12 @@ public class OptionDialog extends javax.swing.JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         project.setStartZ(Double.parseDouble(zEyeTextField.getText()));
         project.setAlphaPrec(Double.parseDouble(aPrecjTextField.getText()));
+        project.setEarthCurv(earthCurvCheckBox.isSelected());
+        if(earthCurvCheckBox.isSelected()) {
+            project.setCoefRefraction(Double.parseDouble(coefRefracTextField.getText()));
+        } else {
+            project.setCoefRefraction(0.0);
+        }
         if(multiScaleCheckBox.isSelected()) {
             project.setMinDistMS(Double.parseDouble(minDistTextField.getText()));
         } else {
@@ -218,10 +253,13 @@ public class OptionDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTextField aPrecjTextField;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JTextField coefRefracTextField;
+    private javax.swing.JCheckBox earthCurvCheckBox;
     private javax.swing.JCheckBox gpuCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JTextField minDistTextField;
     private javax.swing.JCheckBox multiScaleCheckBox;
     private javax.swing.JButton okButton;

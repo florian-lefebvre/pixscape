@@ -30,8 +30,8 @@ public class ShannonMetricTest {
     
     @BeforeClass
     public static void setUpClass() {
-        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, NLAND), 1);
-        computeAggr = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, NLAND_AGGR), 1);
+        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, NLAND), 1, false, 0);
+        computeAggr = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, NLAND_AGGR), 1, false, 0);
     }
 
     /**

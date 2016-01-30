@@ -1,11 +1,11 @@
 package org.thema.pixscape.view;
 
-import java.awt.image.WritableRaster;
+import java.awt.image.Raster;
 
 /**
  * Results from tangential view computation.
  * 
- * @author Gilles
+ * @author Gilles Vuidel
  */
 public interface ViewTanResult extends ViewResult {
     
@@ -39,13 +39,6 @@ public interface ViewTanResult extends ViewResult {
      */
     double getDistance(int theta1, int theta2);
     
-    /**
-     * Returns the landuse code seen at this position
-     * @param theta1 the orientation in pixel [0 getThetaWidth()[
-     * @param theta2 the z angle in pixel [0 getThetaHeight()[
-     * @return the landuse code seen at this position or -1 if nothing is visible
-     */
-    int getLandUse(int theta1, int theta2);
     
     /**
      * Returns the elevation of the pixel seen at this position
@@ -58,13 +51,13 @@ public interface ViewTanResult extends ViewResult {
     /**
      * @return the tangential view of the distance to the seen pixels
      */
-    WritableRaster getDistanceView();
+    Raster getDistanceView();
     /**
      * @return the tangential view of the elevation of the seen pixels
      */    
-    WritableRaster getElevationView();
+    Raster getElevationView();
     /**
      * @return the tangential view of the landuse of the seen pixels
      */    
-    WritableRaster getLanduseView();
+    Raster getLanduseView();
 }

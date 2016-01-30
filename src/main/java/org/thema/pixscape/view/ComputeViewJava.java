@@ -29,8 +29,8 @@ public class ComputeViewJava extends SimpleComputeView {
      * @param data the data for this resolution
      * @param aPrec the precision in degree for tangential view
      */
-    public ComputeViewJava(ScaleData data, double aPrec) {
-        super(data, aPrec);
+    public ComputeViewJava(ScaleData data, double aPrec, boolean earthCurv, double coefRefraction) {
+        super(data, aPrec, earthCurv, coefRefraction);
         this.dtm = data.getDtm();
         this.dtmBuf = ((DataBufferFloat)dtm.getDataBuffer()).getData();
         if(data.getDsm() != null) {
@@ -64,16 +64,16 @@ public class ComputeViewJava extends SimpleComputeView {
     @Override
     public ViewTanResult calcViewTan(DirectPosition2D p, double startZ, Bounds bounds)  {
         long time = System.currentTimeMillis();
-        int n = (int)Math.ceil(bounds.getAmplitudeRad()/aPrec);
-        WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/aPrec), 1, null);
+        int n = (int)Math.ceil(bounds.getAmplitudeRad() / getRadaPrec());
+        WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/getRadaPrec()), 1, null);
         int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();
         Arrays.fill(viewBuf, -1);
         GridCoordinates2D cg = getWorld2Grid(p);
         double aStart = bounds.getTheta1Left();
         for(int ax = 0; ax < n; ax++) {
-            double a = (aStart - ax*aPrec + 2*Math.PI) % (2*Math.PI);
+            double a = (aStart - ax*getRadaPrec() + 2*Math.PI) % (2*Math.PI);
             if(bounds.isTheta1Included(a)) {
-                calcRayTan(cg, startZ, bounds, viewBuf, a, n, ax, aPrec);
+                calcRayTan(cg, startZ, bounds, viewBuf, a, n, ax, getRadaPrec());
             }
         }
         Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
@@ -96,6 +96,7 @@ public class ComputeViewJava extends SimpleComputeView {
             final double a, final int wa, final int ax, final double ares) {
         final int w = dtm.getWidth();
         final int h = dtm.getHeight();
+        final double res = getData().getResolution();
         int y1 = a >= 0 && a < Math.PI ? 0 : h-1; // haut ou bas ?
         int x1 = a >= Math.PI/2 && a < 1.5*Math.PI ? 0 : w-1; // droite ou gauche ?
         int sens = x1 == 0 ? -1 : +1;
@@ -122,14 +123,14 @@ public class ComputeViewJava extends SimpleComputeView {
         final int ind1 = x1 + y1*w;
         
         if(bounds.getDmin() == 0) {
-            final double si = Math.min(-startZ / (getData().getResolution()/2), bounds.getSlopemax());
+            final double si = Math.min(-startZ / (res/2), bounds.getSlopemax());
             final int zi1 = (int) ((Math.PI/2 - Math.atan(si)) / ares);
             final int zi2 = (int) ((Math.PI/2 - Math.atan(bounds.getSlopemin())) / ares);
             for(int yz = zi1; yz < zi2; yz++) {
                 view[yz*wa + ax] = (int) ind;
             }
         }
-        double maxSlope = Math.max(-startZ / (getData().getResolution()/2), bounds.getSlopemin());
+        double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
         double maxZ = Double.NEGATIVE_INFINITY;
         while(ind != ind1) {
             final int e2 = err * 2;
@@ -144,24 +145,27 @@ public class ComputeViewJava extends SimpleComputeView {
                 ind += sy*w;
             }
 
-            final double z = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            double z = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
             if(Double.isNaN(z)) {
                 return;
             }
             if(maxSlope >= 0 && z <= maxZ) {
                 continue;
             }
-            final double dist = getData().getResolution() * Math.sqrt(xx*xx + yy*yy) - Math.signum(z-z0)*getData().getResolution()/2;
-            if(dist > bounds.getDmax()) {
+            final double dist = res * Math.sqrt(xx*xx + yy*yy) - Math.signum(z-z0)*res/2;
+            if(dist >= bounds.getDmax()) {
                 return;
             }
-            final double slope = (z - z0) / (dist);
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * dist*dist / EARTH_DIAM;
+            }
+            final double slope = (z - z0) / dist;
             if(slope > maxSlope) {
                 if(dist >= bounds.getDmin()) {
                     final double s2 = Math.min(bounds.getSlopemax(), slope);
                     // tester Math.round à la place de ceil
-                    final int z2 = (int) Math.round((Math.PI/2 - Math.atan2(maxSlope*dist, dist)) / ares);
-                    final int z1 = (int) ((Math.PI/2 - Math.atan2(s2*dist, dist)) / ares);
+                    final int z2 = (int) Math.round((Math.PI/2 - Math.atan(maxSlope)) / ares);
+                    final int z1 = (int) ((Math.PI/2 - Math.atan(s2)) / ares);
 
                     for(int yz = z1; yz < z2; yz++) {
                         final int i = yz*wa + ax;
@@ -214,7 +218,8 @@ public class ComputeViewJava extends SimpleComputeView {
      * @param bounds the limits of the view
      * @param view the result view (buffer of the size of dtm data)
      */
-    private void calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, final double destZ, Bounds bounds, final byte[] view) {
+    private void calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, 
+            final double destZ, Bounds bounds, final byte[] view) {
         final double res2D2 = getData().getResolution()*getData().getResolution();
         final double z0 = dtm.getSampleDouble(c0.x, c0.y, 0) + startZ;
         final int w = dtm.getWidth();
@@ -245,21 +250,26 @@ public class ComputeViewJava extends SimpleComputeView {
                 yy += sy;
                 ind += sy*w;
             }
-
-            final double zSurf = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
-            if(Double.isNaN(zSurf)) {
-                return;
-            }
-            final double zView = destZ == -1 ? zSurf : (dtmBuf[ind] + destZ);
             
-            if(maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
-                continue;
+            double z = dtmBuf[ind];
+            if(Double.isNaN(z)) {
+                return;
             }
             
             // distance au carré
             final double d2 = res2D2 * (xx*xx + yy*yy);
             if(d2 >= bounds.getDmax2()) {
                 return;
+            }
+            
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * d2 / EARTH_DIAM;
+            }
+            final double zSurf = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double zView = destZ == -1 ? zSurf : (z + destZ);
+            
+            if(maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
+                continue;
             }
             
             final double zzSurf = (zSurf - z0);
@@ -336,18 +346,23 @@ public class ComputeViewJava extends SimpleComputeView {
                 yy += sy;
                 ind += sy*w;
             }
-            final double z = dtmBuf[ind];
+            
+            double z = dtmBuf[ind];
             if(Double.isNaN(z)) {
                 return;
             }
-            if(maxSlope >= 0 && z+startZ <= maxZ) {
-                continue;
-            }
-
+            
             final double d2 = getData().getResolution()*getData().getResolution() * (xx*xx + yy*yy);
             if(d2 >= bounds.getDmax2()) {
                 return;
             }
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * d2 / EARTH_DIAM;
+            }
+            if(maxSlope >= 0 && z+startZ <= maxZ) {
+                continue;
+            }
+                        
             double zz = z + startZ - z0;
             final double slopeEye = zz*Math.abs(zz) / d2;
             if(slopeEye > maxSlope) {

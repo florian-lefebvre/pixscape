@@ -1,5 +1,10 @@
 ## Changelog
 
+##### version 0.4 (30/01/2016)
+- Tangential calculation supports multiscale mode
+- Add earth curvature and refraction correction options
+- P and C metrics can be calculated with multiscale mode
+
 ##### version 0.3.11 (19/01/2016)
 - UI : add Z dest option for viewshed metric calculation
 - Project creation, in some cases, does not save the dtm in float number

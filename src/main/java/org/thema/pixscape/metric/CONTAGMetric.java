@@ -44,15 +44,15 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
                 if(view.getSample(x, y, 0) != 1) {
                     continue;
                 }
-                final int l = land.getSample(x, y, 0);
+                final int l = land.getSample(x, y, 0) & 0xff;
                 count[l]++;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
-                    final int l1 = land.getSample(x+1, y, 0);
+                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
                     border[l][l1]++;
                     border[l1][l]++;
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
-                    final int l1 = land.getSample(x, y+1, 0);
+                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
                     border[l][l1]++;
                     border[l1][l]++;
                 }
@@ -67,23 +67,22 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
         int [] count = new int[256];
         int[][] border = new int[256][256];
         Raster view = result.getView();
-        byte[] land = ((DataBufferByte)result.getLanduse().getDataBuffer()).getData();
+        Raster land = result.getLanduseView();
 
         for(int y = 0; y < view.getHeight(); y++) {
             for(int x = 0; x < view.getWidth(); x++) {
-                final int ind = view.getSample(x, y, 0);
-                if(ind == -1) {
+                if(view.getSample(x, y, 0) == -1) {
                     continue;
                 }
-                final int l = land[ind];
+                final int l = land.getSample(x, y, 0) & 0xff;
                 count[l]++;
                 if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
-                    final int l1 = land[view.getSample(x+1, y, 0)];
+                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
                     border[l][l1]++;
                     border[l1][l]++;
                 }
                 if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
-                    final int l1 = land[view.getSample(x, y+1, 0)];
+                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
                     border[l][l1]++;
                     border[l1][l]++;
                 }

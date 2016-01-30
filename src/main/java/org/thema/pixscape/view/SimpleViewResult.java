@@ -41,11 +41,6 @@ public abstract class SimpleViewResult extends AbstractViewResult {
     }
 
     @Override
-    public final Raster getLanduse() {
-        return compute.getData().getLand();
-    }
-
-    @Override
     public final GridGeometry2D getGrid() {
         return compute.getData().getGridGeometry();
     }

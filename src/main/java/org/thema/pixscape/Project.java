@@ -77,6 +77,8 @@ public final class Project {
     private int nbGPU = 0;
     private double startZ = 1.8;
     private double aPrec = 0.1;
+    private boolean earthCurv = true;
+    private double coefRefraction = 0.13;
     private double minDistMS = -1;
 
     /**
@@ -377,6 +379,43 @@ public final class Project {
     }
 
     /**
+     * @return true if taking into account earth curvature
+     */
+    public boolean isEarthCurv() {
+        return earthCurv;
+    }
+
+    /**
+     * Sets earth curvature option
+     * @param earthCurv take into account earth curvature ?
+     */
+    public void setEarthCurv(boolean earthCurv) {
+        this.earthCurv = earthCurv;
+        if(simpleComputeView != null) {
+            simpleComputeView.setEarthCurv(earthCurv);
+        }
+    }
+
+    /**
+     * @return the current refraction correction coefficient (default 0.13), 0 for no correction
+     */
+    public double getCoefRefraction() {
+        return coefRefraction;
+    }
+
+    /**
+     * Sets the refraction correction coefficient.
+     * Set to 0 for no correction, default is 0.13
+     * @param coefRefraction the new refraction correction coefficient
+     */
+    public void setCoefRefraction(double coefRefraction) {
+        this.coefRefraction = coefRefraction;
+        if(simpleComputeView != null) {
+            simpleComputeView.setCoefRefraction(coefRefraction);
+        }
+    }
+
+    /**
      * @return minimum distance in meter to change to coarser resolution in multiscale computation
      */
     public double getMinDistMS() {
@@ -424,7 +463,7 @@ public final class Project {
         if(simpleComputeView == null) {
             if(isUseCUDA()) {
                 try {
-                    simpleComputeView = new ComputeViewCUDA(getDefaultScaleData(), aPrec, nbGPU);
+                    simpleComputeView = new ComputeViewCUDA(getDefaultScaleData(), aPrec, earthCurv, coefRefraction, nbGPU);
                 } catch (Exception ex) {
                     Logger.getLogger(Project.class.getName()).log(Level.WARNING, null, ex);
                     Logger.getLogger(Project.class.getName()).info("CUDA is not available, continue in Java mode");
@@ -432,7 +471,7 @@ public final class Project {
                 }
             } 
             if(simpleComputeView == null) {
-                simpleComputeView = new ComputeViewJava(getDefaultScaleData(), aPrec);
+                simpleComputeView = new ComputeViewJava(getDefaultScaleData(), aPrec, earthCurv, coefRefraction);
             }
         }
         
@@ -451,7 +490,7 @@ public final class Project {
         }
         
         MultiComputeViewJava compute = new MultiComputeViewJava(scaleDatas, 
-            (int) Math.ceil(distMin/getDefaultScaleData().getResolution()), aPrec);
+            (int) Math.ceil(distMin/getDefaultScaleData().getResolution()), aPrec, earthCurv, coefRefraction);
 
         return compute;
     }

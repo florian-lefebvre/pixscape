@@ -22,9 +22,8 @@ import org.thema.pixscape.ScaleData;
  */
 public abstract class MultiViewResult extends AbstractViewResult {
 
-    private final TreeMap<Double, Raster> views;
     private final TreeMap<Double, GridEnvelope2D> zones;
-    private final MultiComputeViewJava compute;
+    protected final MultiComputeViewJava compute;
     
     private final TreeMap<Double, Point2D> coords;
     
@@ -34,14 +33,12 @@ public abstract class MultiViewResult extends AbstractViewResult {
      * Creates a new MultiViewResult.
      * 
      * @param cg the point of view or observed point in grid coordinate
-     * @param views the viewfor each scale
      * @param zones the zone where viewshed has been calculated for each scale
      * @param compute the compute view used
      */
-    public MultiViewResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
+    public MultiViewResult(GridCoordinates2D cg, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
         super(cg);
         this.compute = compute;
-        this.views = views;
         this.zones = zones;
         this.coords = new TreeMap<>();
         try {    
@@ -52,13 +49,6 @@ public abstract class MultiViewResult extends AbstractViewResult {
         } catch (TransformException ex) {
             Logger.getLogger(MultiViewResult.class.getName()).log(Level.SEVERE, null, ex);
         }
-    }
-
-    /**
-     * @return the viewshed for each scale
-     */
-    public final TreeMap<Double, Raster> getViews() {
-        return views;
     }
 
     /**
@@ -95,18 +85,6 @@ public abstract class MultiViewResult extends AbstractViewResult {
         return view;
     }
 
-    /**
-     * Returns the landuse in the first scale grid geometry.
-     * {@inheritDoc }
-     */
-    @Override
-    public final synchronized Raster getLanduse() {
-        if(land == null) {
-            calcViewLand();
-        }
-        return land;
-    }
-
     @Override
     public final GridGeometry2D getGrid() {
         return compute.getDatas().firstEntry().getValue().getGridGeometry();
@@ -127,7 +105,7 @@ public abstract class MultiViewResult extends AbstractViewResult {
     }
     
     /**
-     * Calculates the viewshed and the landuse at the first scale and stores them into view and land.
+     * Calculates the view and the landuse at the first scale and stores them into view and land.
      */
     protected abstract void calcViewLand();
     

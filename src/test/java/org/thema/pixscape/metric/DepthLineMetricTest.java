@@ -25,7 +25,7 @@ public class DepthLineMetricTest {
     
     @BeforeClass
     public static void setUpClass() {
-        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, 1), 45);
+        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(SIZE, 1), 45, false, 0);
     }
     
     /**

@@ -2,14 +2,17 @@
 #include <cuda.h>
 #include <stdlib.h>
 #include <math.h>
+#include <math_constants.h>
 
 #define NCORE 512   
 
-// TODO stop ray tracing when fall on dtm NaN value
+#define EARTH_DIAM 12740000
+
+// TODO merge calcRay Bounds and Unbounded if the speed up is negligible
 
 extern "C"
 __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-        float res2D, int hasdsm, float * dsm, unsigned char *view) {
+        float res2D, int hasdsm, float * dsm, int earthCurv, float coefRefrac, unsigned char *view) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
     if (tid < w) {
@@ -53,14 +56,26 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
             yy += sy;
             ind += sy*w;
         }
-        const float zSurf = dtm[ind] + (hasdsm ? dsm[ind] : 0);
-        const float zView = destZ == -1 ? zSurf : (dtm[ind] + destZ);
-            
-        if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ)
-            continue;
-
-        const float zzSurf = (zSurf - z0);
+        
+        float z = dtm[ind];    
+        if(z == CUDART_NAN_F) {
+            return;
+        }
+        
         const float d2 = res2D*res2D * (xx*xx + yy*yy);
+        
+        if(earthCurv) {
+            z -= (1 - coefRefrac) * d2 / EARTH_DIAM;
+        }
+        
+        const float zSurf = z + (hasdsm ? dsm[ind] : 0);
+        const float zView = destZ == -1 ? zSurf : (z + destZ);
+        
+        if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
+            continue;
+        }
+        
+        const float zzSurf = (zSurf - z0);
         const float slopeSurf = zzSurf * fabs(zzSurf) / d2;
         if(zView >= zSurf) {
             if(zView == zSurf && slopeSurf > maxSlope) {
@@ -84,7 +99,7 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
 
 extern "C"
 __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-        float res2D, int hasdsm, float * dsm, unsigned char *view) {
+        float res2D, int hasdsm, float * dsm, int earthCurv, float coefRefrac, unsigned char *view) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
     if (tid < w) {
@@ -132,11 +147,17 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
             yy += sy;
             ind += sy*w;
         }
-        const float z = dtm[ind];
-        if (maxSlope >= 0 && z + startZ <= maxZ)
-            continue;
-
+        float z = dtm[ind];
+        if(z == CUDART_NAN_F) {
+            return;
+        }
         const float dist = res2D * res2D * (xx * xx + yy * yy);
+        if(earthCurv) {
+            z -= (1 - coefRefrac) * dist / EARTH_DIAM;
+        }
+        if (maxSlope >= 0 && z + startZ <= maxZ) {
+            continue;
+        }
         float zz = (z + startZ - z0);
         float slope = zz * fabs(zz) / dist;
         if (slope > maxSlope) {
@@ -154,7 +175,7 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
 
 extern "C"
 __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-            float res2D, int hasdsm, float * dsm, unsigned char *view,
+            float res2D, int hasdsm, float * dsm, int earthCurv, float coefRefrac, unsigned char *view,
             // bounds
             float dMin2, float dMax2, float aleft, float aright, float sMin2, float sMax2) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
@@ -208,15 +229,26 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
             yy += sy;
             ind += sy*w;
         }
-        const float zSurf = dtm[ind] + (hasdsm ? dsm[ind] : 0);
-        const float zView = destZ == -1 ? zSurf : (dtm[ind] + destZ);
-            
-        if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ)
-            continue;
         
-        const float d2 = (res2D*res2D * (xx * xx + yy * yy));
-        if(d2 >= dMax2)
+        float z = dtm[ind];
+        if(z == CUDART_NAN_F) {
             return;
+        }
+        const float d2 = (res2D*res2D * (xx * xx + yy * yy));
+        if(d2 >= dMax2) {
+            return;
+        }
+        
+        if(earthCurv) {
+            z -= (1 - coefRefrac) * d2 / EARTH_DIAM;
+        }
+        
+        const float zSurf = z + (hasdsm ? dsm[ind] : 0);
+        const float zView = destZ == -1 ? zSurf : (z + destZ);
+            
+        if (maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
+            continue;
+        }
         const float zzSurf = (zSurf - z0);
         const float slopeSurf = zzSurf * fabs(zzSurf) / d2;
         if(slopeSurf > sMax2)
@@ -243,7 +275,7 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
 
 extern "C"
 __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ, float * dtm, int w, int h, 
-            float res2D, int hasdsm, float * dsm, unsigned char *view,
+            float res2D, int hasdsm, float * dsm, int earthCurv, float coefRefrac, unsigned char *view,
             float dMin2, float dMax2, float aleft, float aright, float sMin2, float sMax2) {
     const int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int x1, y1;
@@ -259,21 +291,24 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
     } else if (tid < 2 * w + 2 * h) {
         x1 = 0;
         y1 = tid - (2 * w + h);
-    } else
+    } else {
         return;
+    }
     
     double a = atan2((double)y0-y1, (double)x1-x0);
-    if(a < 0)
+    if(a < 0) {
         a += 2*M_PI;
-    if(!(aright < aleft && a >= aright && a <= aleft || (aright >= aleft && (a >= aright || a <= aleft))))
+    }
+    if(!(aright < aleft && a >= aright && a <= aleft || (aright >= aleft && (a >= aright || a <= aleft)))) {
         return;
-    
+    }
     int ind = x0 + y0*w;
     const int ind1 = x1 + y1*w;
     
     const float dsmZ = hasdsm ? dsm[ind] : 0;
-    if(destZ != -1 && destZ < dsmZ)
+    if(destZ != -1 && destZ < dsmZ) {
         return;
+    }
     const float z0 = dtm[ind] + (destZ != -1 ? destZ : dsmZ);
     const int dx = abs(x1 - x0);
     const int dy = abs(y1 - y0);
@@ -283,8 +318,9 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
     int xx = 0;
     int yy = 0;
 
-    if(sMin2 == -INFINITY && dMin2 == 0)
+    if(sMin2 == -INFINITY && dMin2 == 0) {
         view[ind] = 1;
+    }
     
     float maxSlope = sMin2;
     float maxZ = -1e127;
@@ -300,13 +336,22 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
             yy += sy;
             ind += sy*w;
         }
-        const float z = dtm[ind];
-        if (maxSlope >= 0 && z + startZ <= maxZ)
-            continue;
-
-        const float d2 = res2D*res2D * (xx * xx + yy * yy);
-        if(d2 >= dMax2)
+        float z = dtm[ind];
+        if(z == CUDART_NAN_F) {
             return;
+        }
+        const float d2 = res2D*res2D * (xx * xx + yy * yy);
+        if(d2 >= dMax2) {
+            return;
+        }
+        
+        if(earthCurv) {
+            z -= (1 - coefRefrac) * d2 / EARTH_DIAM;
+        }
+        if (maxSlope >= 0 && z + startZ <= maxZ) {
+            continue;
+        }
+        
         float zz = (z + startZ - z0);
         const float slopeEye = zz * fabs(zz) / d2;
         if (slopeEye > maxSlope) {
@@ -316,18 +361,21 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
         const float ztot = z + (hasdsm ? dsm[ind] : 0);
         zz = ztot - z0;
         const float slope = zz * fabs(zz) / d2;
-        if (slope > maxSlope)
+        if (slope > maxSlope) {
             maxSlope = slope;
-        if(maxSlope > sMax2)
+        }
+        if(maxSlope > sMax2) {
             return;
-        if (ztot > maxZ)
+        }
+        if (ztot > maxZ) {
             maxZ = ztot;
+        }
     }
 }
 
 extern "C"
 __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, int h, 
-            double res2D, int hasdsm, float * dsm, int *view, int wa, double ares,
+            double res2D, int hasdsm, float * dsm, int earthCurv, float coefRefrac, int *view, int wa, double ares,
             double dMin, double dMax, double aleft, double aright, double sMin, double sMax) {
     
     const int ax = blockIdx.x * blockDim.x + threadIdx.x;
@@ -449,32 +497,43 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
             yy += sy;
             ind += sy*w;
         }
-        const double z = dtm[ind] + (hasdsm ? dsm[ind] : 0);
-        if(maxSlope >= 0 && z <= maxZ)
-            continue;
-        const double dist = res2D * sqrt((double)(xx*xx + yy*yy)) - copysign(1.0, z-z0)*res2D/2;
-        if(dist > dMax)
+        double z = dtm[ind] + (hasdsm ? dsm[ind] : 0);
+        if(z == CUDART_NAN) {
             return;
-        const double slope = (z - z0) / (dist);
+        }
+        if(maxSlope >= 0 && z <= maxZ) {
+            continue;
+        }
+        const double dist = res2D * sqrt((double)(xx*xx + yy*yy)) - copysign(1.0, z-z0)*res2D/2;
+        if(dist > dMax) {
+            return;
+        }
+        if(earthCurv) {
+            z -= (1 - coefRefrac) * dist*dist / EARTH_DIAM;
+        }
+        const double slope = (z - z0) / dist;
         if(slope > maxSlope) {
             if(dist >= dMin) {
                 const double s2 = min(sMax, slope);
                 // tester Math.round à la place de ceil
-                const int z2 = (int) round((M_PI/2 - atan2(maxSlope*dist, dist)) / ares);
-                const int z1 = (int) ((M_PI/2 - atan2(s2*dist, dist)) / ares);
+                const int z2 = (int) round((M_PI/2 - atan(maxSlope)) / ares);
+                const int z1 = (int) ((M_PI/2 - atan(s2)) / ares);
 
                 for(int yz = z1; yz < z2; yz++) {
                     const int i = yz*wa + ax;
-                    if(view[i] == -1)
+                    if(view[i] == -1) {
                         view[i] = (int) ind;
+                    }
                 }
             }   
             maxSlope = slope;
         }
-        if(maxSlope > sMax)
+        if(maxSlope > sMax) {
             return;
-        if(z > maxZ)
+        }
+        if(z > maxZ) {
             maxZ = z;
+        }
     }
 
 }

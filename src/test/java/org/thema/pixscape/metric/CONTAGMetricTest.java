@@ -29,8 +29,8 @@ public class CONTAGMetricTest {
     
     @BeforeClass
     public static void setUpClass() {
-        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(10, NLAND), 0.1);
-        computeAggr = new ComputeViewJava(TestTools.createFlatDataWithLand(10, NLAND_AGGR), 0.1);
+        compute = new ComputeViewJava(TestTools.createFlatDataWithLand(10, NLAND), 0.1, false, 0);
+        computeAggr = new ComputeViewJava(TestTools.createFlatDataWithLand(10, NLAND_AGGR), 0.1, false, 0);
     }
     
 

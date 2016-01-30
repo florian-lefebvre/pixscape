@@ -19,9 +19,11 @@ public abstract class SimpleComputeView extends ComputeView {
      * Creates a new SimpleComputeView.
      * @param data the data for this resolution
      * @param aPrec the precision in degree for tangential view
+     * @param earthCurv take into account earth curvature ?
+     * @param coefRefraction refraction correction, 0 for no correction
      */
-    public SimpleComputeView(ScaleData data, double aPrec) {
-        super(aPrec);
+    public SimpleComputeView(ScaleData data, double aPrec, boolean earthCurv, double coefRefraction) {
+        super(aPrec, earthCurv, coefRefraction);
         this.data = data;
     }
 
