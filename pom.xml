@@ -6,6 +6,8 @@
     <version>0.4</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
+    <description>A multiscale model for locating new residential developments</description>
+    <url>https://sourcesup.renater.fr/${project.artifactId}/</url>
     <build>
         <plugins>
             <plugin>
@@ -149,6 +151,12 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+    <distributionManagement>
+        <site>
+            <id>sourcesup</id>
+            <url>dav:https://sourcesup.renater.fr/${project.artifactId}/maven</url>
+        </site>
+    </distributionManagement>
     <reporting>
         <plugins>
             <plugin>
