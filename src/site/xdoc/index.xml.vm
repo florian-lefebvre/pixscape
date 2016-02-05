@@ -10,13 +10,13 @@
 
             <subsection name="Download">
                 <p>
-                    Download last version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar">${project.version}</a>
+                    Download last version : <a href="http://sourcesup.renater.fr/nexus/content/repositories/${project.artifactId}-releases/org/thema/${project.artifactId}/${project.version}/${project.artifactId}-${project.version}.jar">${project.artifactId}-${project.version}</a>
                 </p>
                 <p>
                     View changelog : <a href="changelog.html">changelog</a>
                 </p>
                 <p>
-                    Download previous version : <a href="http://dev.umrthema.univ-fcomte.fr/repository/org/thema/${project.artifactId}/">Previous versions</a>
+                    Download previous version : <a href="http://sourcesup.renater.fr/nexus/content/repositories/${project.artifactId}-releases/org/thema/${project.artifactId}/">Previous versions</a>
                 </p>
             </subsection>
         </section>

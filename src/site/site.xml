@@ -17,9 +17,10 @@
     <custom>
         <reflowSkin>
             <theme>bootswatch-spacelab</theme>
+            <protocolRelativeURLs>true</protocolRelativeURLs>
             <brand>
                 <name>PixScape</name>
-                <href>http://dev.umrthema.univ-fcomte.fr/projects/pixscape/</href>
+                <href>https://sourcesup.renater.fr/pixscape/</href>
             </brand>
             <titleTemplate>%2$s | %1$s</titleTemplate>
         </reflowSkin>
