@@ -317,14 +317,14 @@ public final class ScaleData {
      * @throws IOException 
      */
     void save(File dir) throws IOException {
-        new GeoTiffWriter(new File(dir, "dtm-" + getResolution() + ".tif")).write(dtmCov, null);
+        IOImage.saveTiffCoverage(new File(dir, "dtm-" + getResolution() + ".tif"), dtmCov);
         if(dsm != null) {
             GridCoverage2D dsmCov = new GridCoverageFactory().create("", new RasterImage(dsm), dtmCov.getEnvelope2D());
-            new GeoTiffWriter(new File(dir, "dsm-" + getResolution() + ".tif")).write(dsmCov, null);
+            IOImage.saveTiffCoverage(new File(dir, "dsm-" + getResolution() + ".tif"), dsmCov);
         }
         if(hasLandUse()) {
             GridCoverage2D landCov = new GridCoverageFactory().create("", new RasterImage(land), dtmCov.getEnvelope2D());
-            new GeoTiffWriter(new File(dir, "land-" + getResolution() + ".tif")).write(landCov, null);
+            IOImage.saveTiffCoverage(new File(dir, "land-" + getResolution() + ".tif"), landCov);
         }
     }
 }

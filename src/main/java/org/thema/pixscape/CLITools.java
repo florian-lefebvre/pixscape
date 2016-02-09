@@ -30,14 +30,12 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.feature.SchemaException;
-import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
-import org.opengis.referencing.operation.TransformException;
 import org.thema.common.swing.TaskMonitor;
+import org.thema.data.IOImage;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
@@ -77,12 +75,12 @@ public class CLITools {
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
                     "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]\n" +
-                    "[-multi dmin=val| -mono]\n" +
+                    "[-multi dmin=val | -mono]\n" +
                     "[-earth flat|curved [refrac=val]]\n" +
                     " commands\n\n" +
                     "Commands list :\n" +
-                    "--viewshed [indirect] x y\n" +
-                    "--viewtan [prec=deg] x y\n" +
+                    "--viewshed [indirect] x y [resfile=raster.tif]\n" +
+                    "--viewtan [prec=deg] x y [resname=name]\n" +
                     "--viewmetric [indirect] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
                     "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n");
             return;
@@ -250,11 +248,17 @@ public class CLITools {
             direct = false;
             args.remove(0);
         }
-
+        
         DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
+        
+        File f = new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif");
+        if(!args.isEmpty() && args.get(0).startsWith("resfile=")) {
+            f = new File(resDir, args.remove(0).split("=")[1]);
+        }
+        
         Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, direct, bounds).getView();
-        new GeoTiffWriter(new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif")).write(
-                new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()), null);
+        IOImage.saveTiffCoverage(f,
+                new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()));
 
     }
     
@@ -270,22 +274,22 @@ public class CLITools {
         }
    
         DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
+        
+        String name = "viewtan-" + p.x + "," + p.y;
+        if(!args.isEmpty() && args.get(0).startsWith("resname=")) {
+            name = args.remove(0).split("=")[1];
+        }
+        
         ViewTanResult result = project.getDefaultComputeView().calcViewTan(p, zEye, bounds);
 
-        GridCoordinates2D c;
-        try {
-            c = project.getDtmCov().getGridGeometry().worldToGrid(p);
-        } catch (TransformException ex) {
-            throw new IllegalArgumentException(ex);
-        }
         Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
-        new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-elev.tif")).write(
-                new GridCoverageFactory().create("view", (WritableRaster)result.getElevationView(), env), null);
-        new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-dist.tif")).write(
-                new GridCoverageFactory().create("view", (WritableRaster)result.getDistanceView(), env), null);
+        IOImage.saveTiffCoverage(new File(resDir, name + "-elev.tif"),
+                new GridCoverageFactory().create("view", (WritableRaster)result.getElevationView(), env));
+        IOImage.saveTiffCoverage(new File(resDir, name + "-dist.tif"),
+                new GridCoverageFactory().create("view", (WritableRaster)result.getDistanceView(), env));
         if(project.hasLandUse()) {
-            new GeoTiffWriter(new File(resDir, "viewtan-" + c.x + "," + c.y + "-land.tif")).write(
-                    new GridCoverageFactory().create("view", (WritableRaster)result.getLanduseView(), env), null);
+            IOImage.saveTiffCoverage(new File(resDir, name + "-land.tif"),
+                    new GridCoverageFactory().create("view", (WritableRaster)result.getLanduseView(), env));
         }
 
     }

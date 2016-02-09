@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 0.4.1 (09/02/2016)
+- Save tif files with tfw world file when no crs is supplied
+
 ##### version 0.4 (30/01/2016)
 - Tangential calculation supports multiscale mode
 - Add earth curvature and refraction correction options

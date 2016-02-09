@@ -409,7 +409,7 @@ class CUDAContext {
 
     private void extract(String jarpath, File file) throws IOException {
         byte[] buf = new byte[8192];
-        try (final InputStream stream = ComputeViewCUDA.class.getResourceAsStream(jarpath);final FileOutputStream fout = new FileOutputStream(file)) {
+        try (InputStream stream = ComputeViewCUDA.class.getResourceAsStream(jarpath); FileOutputStream fout = new FileOutputStream(file)) {
             int nb;
             while ((nb = stream.read(buf)) != -1) {
                 fout.write(buf, 0, nb);

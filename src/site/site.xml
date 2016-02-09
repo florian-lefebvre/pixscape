@@ -19,8 +19,8 @@
             <theme>bootswatch-spacelab</theme>
             <protocolRelativeURLs>true</protocolRelativeURLs>
             <brand>
-                <name>PixScape</name>
-                <href>https://sourcesup.renater.fr/pixscape/</href>
+                <name>${project.name}</name>
+                <href>${project.url}</href>
             </brand>
             <titleTemplate>%2$s | %1$s</titleTemplate>
         </reflowSkin>
