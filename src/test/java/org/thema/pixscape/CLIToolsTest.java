@@ -40,6 +40,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thema.data.IOImage;
 import static org.thema.pixscape.TestTools.printArray;
+import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
  *
@@ -62,7 +63,9 @@ public class CLIToolsTest {
     
     @Test
     public void testViewshedCUDA() throws Exception {
-        testViewshed(Arrays.asList("-cuda", "1"), Collections.EMPTY_LIST);
+        if(ComputeViewCUDA.isCUDAAvailable()) {
+            testViewshed(Arrays.asList("-cuda", "1"), Collections.EMPTY_LIST);
+        }
     }
     
     private void testViewshed(List<String> opt1, List<String> opt2) throws Exception {
@@ -133,7 +136,9 @@ public class CLIToolsTest {
     
     @Test
     public void testMetricCUDA() throws Exception {
-        testMetric(Arrays.asList("-cuda", "1"), Collections.EMPTY_LIST);
+        if(ComputeViewCUDA.isCUDAAvailable()) {
+            testMetric(Arrays.asList("-cuda", "1"), Collections.EMPTY_LIST);
+        }
     }
     
     @Test
@@ -193,7 +198,7 @@ public class CLIToolsTest {
                         }
                         // compare
                         float[] result = ((DataBufferFloat)IOImage.loadTiff(new File(project.getDirectory(), resultFile)).getRenderedImage().getData().getDataBuffer()).getData();
-                        printArray(result);
+
                         Assert.assertArrayEquals(test, result, 0);
                         
                         resultFile = r.readLine();
