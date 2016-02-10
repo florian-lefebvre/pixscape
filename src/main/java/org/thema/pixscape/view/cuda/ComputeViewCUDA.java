@@ -150,7 +150,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
             public List<Double[]> run(CUDAContext cudaContext) {
                 long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewTan(cg, (float) startZ, (float) getRadaPrec(), bounds);
+                cudaContext.viewTan(cg, startZ, getRadaPrec(), bounds);
 
                 CUDAViewTanResult view = new CUDAViewTanResult(cg, cudaContext, ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
@@ -178,7 +178,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
             public ViewTanResult run(CUDAContext cudaContext) {
                 long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewTan(cg, (double) startZ, (double) getRadaPrec(), bounds);
+                cudaContext.viewTan(cg, startZ, getRadaPrec(), bounds);
 
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, cudaContext.getWa(), cudaContext.getHa(), 1, null);
                 int [] viewBuf = ((DataBufferInt)view.getDataBuffer()).getData();

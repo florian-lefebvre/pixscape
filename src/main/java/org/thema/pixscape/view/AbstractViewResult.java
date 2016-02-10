@@ -95,20 +95,12 @@ public abstract class AbstractViewResult implements ViewResult {
 
         @Override
         public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (getClass() != obj.getClass()) {
+            if (obj == null || getClass() != obj.getClass()) {
                 return false;
             }
             final Pair other = (Pair) obj;
-            if (Double.doubleToLongBits(this.min) != Double.doubleToLongBits(other.min)) {
-                return false;
-            }
-            if (Double.doubleToLongBits(this.max) != Double.doubleToLongBits(other.max)) {
-                return false;
-            }
-            return true;
+            return Double.doubleToLongBits(this.min) == Double.doubleToLongBits(other.min) &&
+                Double.doubleToLongBits(this.max) == Double.doubleToLongBits(other.max);
         }
         
     }

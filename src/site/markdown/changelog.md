@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 0.4.2 (10/02/2016)
+- CUDA : ray is not stopped with NaN DEM value
+
 ##### version 0.4.1 (09/02/2016)
 - Save tif files with tfw world file when no crs is supplied
 

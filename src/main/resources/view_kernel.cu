@@ -76,8 +76,8 @@ __global__ void calcRayDirect(int x0, int y0, float startZ, float destZ, float *
         }
         
         float z = dtm[ind];    
-        if(z == CUDART_NAN_F) {
-            return;
+        if(isnan(z)) {
+            return; 
         }
         
         const float d2 = res2D*res2D * (xx*xx + yy*yy);
@@ -166,7 +166,7 @@ __global__ void calcRayIndirect(int x0, int y0, float startZ, float destZ, float
             ind += sy*w;
         }
         float z = dtm[ind];
-        if(z == CUDART_NAN_F) {
+        if(isnan(z)) {
             return;
         }
         const float dist = res2D * res2D * (xx * xx + yy * yy);
@@ -249,7 +249,7 @@ __global__ void calcRayDirectBounded(int x0, int y0, float startZ, float destZ, 
         }
         
         float z = dtm[ind];
-        if(z == CUDART_NAN_F) {
+        if(isnan(z)) {
             return;
         }
         const float d2 = (res2D*res2D * (xx * xx + yy * yy));
@@ -355,7 +355,7 @@ __global__ void calcRayIndirectBounded(int x0, int y0, float startZ, float destZ
             ind += sy*w;
         }
         float z = dtm[ind];
-        if(z == CUDART_NAN_F) {
+        if(isnan(z)) {
             return;
         }
         const float d2 = res2D*res2D * (xx * xx + yy * yy);
@@ -516,7 +516,7 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
             ind += sy*w;
         }
         double z = dtm[ind] + (hasdsm ? dsm[ind] : 0);
-        if(z == CUDART_NAN) {
+        if(isnan(z)) {
             return;
         }
         if(maxSlope >= 0 && z <= maxZ) {

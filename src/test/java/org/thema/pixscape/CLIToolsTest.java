@@ -23,6 +23,7 @@ import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferFloat;
+import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
@@ -121,6 +122,98 @@ public class CLIToolsTest {
                     byte[] result = ((DataBufferByte)IOImage.loadTiff(new File(project.getDirectory(), "viewshed.tif")).getRenderedImage().getData().getDataBuffer()).getData();
 
                     Assert.assertArrayEquals(test, result);
+                }
+                
+                line = r.readLine();
+            }
+        }
+
+    }
+    
+    @Test
+    public void testViewtanJava() throws Exception {
+        testViewtan(Arrays.asList("-proc", "1"), Collections.EMPTY_LIST);
+    }
+    
+    @Test
+    public void testViewtanMulti() throws Exception {
+        testViewtan(Collections.EMPTY_LIST, Arrays.asList("-multi", "dmin=100"));
+    }
+    
+    @Test
+    public void testViewtanCUDA() throws Exception {
+        if(ComputeViewCUDA.isCUDAAvailable()) {
+            testViewtan(Arrays.asList("-cuda", "1"), Collections.EMPTY_LIST);
+        }
+    }
+    
+    private void testViewtan(List<String> opt1, List<String> opt2) throws Exception {
+        Project project = null;
+        int size = 5;
+        
+        try (BufferedReader r = new BufferedReader(new FileReader(new File("target/test-classes/test-viewtan-cli.txt")))) {
+            String line = r.readLine();
+            while(line != null) {
+                line = line.trim();
+                if(line.isEmpty()) {
+                    line = r.readLine();
+                    continue;
+                }
+                // read mnt
+                if(line.startsWith("--")) {
+                    if(project != null) {
+                        project.close();
+                    }
+                    System.out.println("Load mnt");
+                    size = Integer.parseInt(r.readLine().trim());
+                    WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
+                    GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, size, size));
+                    for(int i = 0; i < size; i++) {
+                        line = r.readLine().trim();
+                        String[] values = line.split(" ");
+                        for(int j = 0; j < size; j++) {
+                            mnt.setSample(j, i, 0, Double.parseDouble(values[j]));
+                        }
+                    }
+                    ScaleData data = new ScaleData(mntCov, null, null, 1);
+                    project = new Project("test", Files.createTempDirectory("pixscape").toFile(), data);
+                } else {
+                    System.out.println("Test command line : " + line);
+                    String[] tokens = line.split("\\s+");
+                    String[] sizes = r.readLine().trim().split("\\s+");
+                    int w = Integer.parseInt(sizes[0]);
+                    int h = Integer.parseInt(sizes[1]);
+                    float [] dist = new float[w*h];
+                    for(int i = 0; i < h; i++) {
+                        line = r.readLine().trim();
+                        String[] values = line.split(" ");
+                        for(int j = 0; j < w; j++) {
+                            dist[i*w+j] = Float.parseFloat(values[j]);
+                        }
+                    }
+                    float [] elev = new float[w*h];
+                    for(int i = 0; i < h; i++) {
+                        line = r.readLine().trim();
+                        String[] values = line.split(" ");
+                        for(int j = 0; j < w; j++) {
+                            elev[i*w+j] = Float.parseFloat(values[j]);
+                        }
+                    }
+                    ArrayList<String> params = new ArrayList<>(opt1);
+                    params.addAll(Arrays.asList("--project", project.getProjectFile().getAbsolutePath()));
+                    params.addAll(opt2);
+                    params.addAll(Arrays.asList(tokens));
+                    params.add("resname=viewtan");
+                    new CLITools().execute(params.toArray(new String[0]));
+                    
+                    // compare
+                    float[] result = ((DataBufferFloat)IOImage.loadTiff(new File(project.getDirectory(), "viewtan-dist.tif")).getRenderedImage().getData().getDataBuffer()).getData();
+                    printArray(result, w, h);
+                    Assert.assertArrayEquals(dist, result, 0);
+                    
+                    result = ((DataBufferFloat)IOImage.loadTiff(new File(project.getDirectory(), "viewtan-elev.tif")).getRenderedImage().getData().getDataBuffer()).getData();
+                    printArray(result, w, h);
+                    Assert.assertArrayEquals(elev, result, 0);
                 }
                 
                 line = r.readLine();
