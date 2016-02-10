@@ -99,6 +99,9 @@ public abstract class AbstractMetric implements Metric {
      * @return true if some landuse codes are grouped
      */
     public boolean hasCodeGroup() {
+        if(!isCodeSupported()) {
+            throw new IllegalStateException("Codes are not supported for metric : " + this);
+        }
         return codes.size() > new HashSet(codes.values()).size();
     }
     

@@ -208,11 +208,9 @@ public class CLIToolsTest {
                     
                     // compare
                     float[] result = ((DataBufferFloat)IOImage.loadTiff(new File(project.getDirectory(), "viewtan-dist.tif")).getRenderedImage().getData().getDataBuffer()).getData();
-                    printArray(result, w, h);
                     Assert.assertArrayEquals(dist, result, 0);
                     
                     result = ((DataBufferFloat)IOImage.loadTiff(new File(project.getDirectory(), "viewtan-elev.tif")).getRenderedImage().getData().getDataBuffer()).getData();
-                    printArray(result, w, h);
                     Assert.assertArrayEquals(elev, result, 0);
                 }
                 

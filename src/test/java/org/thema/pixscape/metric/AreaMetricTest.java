@@ -19,7 +19,6 @@ package org.thema.pixscape.metric;
 import java.util.Arrays;
 import java.util.TreeSet;
 import org.geotools.geometry.DirectPosition2D;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
