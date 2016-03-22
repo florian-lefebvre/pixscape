@@ -79,9 +79,9 @@ public class CLITools {
                     "[-earth flat|curved [refrac=val]]\n" +
                     " commands\n\n" +
                     "Commands list :\n" +
-                    "--viewshed [indirect] x y [resfile=raster.tif]\n" +
+                    "--viewshed [inverse] x y [resfile=raster.tif]\n" +
                     "--viewtan [prec=deg] x y [resname=name]\n" +
-                    "--viewmetric [indirect] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
+                    "--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
                     "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n");
             return;
         }
@@ -222,7 +222,7 @@ public class CLITools {
                     case "--viewtan":
                         viewTan(args);
                         break;
-                    case "--viewmetric":
+                    case "--planmetric":
                         viewMetric(args);
                         break;
                     case "--tanmetric":
@@ -235,7 +235,7 @@ public class CLITools {
                 p = !args.isEmpty() ? args.remove(0) : null;
             }
         } finally {
-            project.close();
+            project.dispose();
         }
     }
 
@@ -243,20 +243,20 @@ public class CLITools {
         if(args.size() < 2) {
             throw new IllegalArgumentException("viewshed command needs at least 2 parameters");
         }
-        boolean direct = true;
-        if(args.get(0).equals("indirect")) {
-            direct = false;
+        boolean inverse = false;
+        if(args.get(0).equals("inverse")) {
+            inverse = true;
             args.remove(0);
         }
         
         DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
         
-        File f = new File(resDir, "viewshed-" + c.x + "," + c.y + "-" + (direct ? "direct" : "indirect") + ".tif");
+        File f = new File(resDir, "viewshed-" + c.x + "," + c.y + (inverse ? "-inverse" : "") + ".tif");
         if(!args.isEmpty() && args.get(0).startsWith("resfile=")) {
             f = new File(resDir, args.remove(0).split("=")[1]);
         }
         
-        Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, direct, bounds).getView();
+        Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, inverse, bounds).getView();
         IOImage.saveTiffCoverage(f,
                 new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()));
 
@@ -295,9 +295,9 @@ public class CLITools {
     }
 
     private void viewMetric(List<String> args) throws IOException {
-        boolean direct = true;
-        if(!args.isEmpty() && args.get(0).equals("indirect")) {
-            direct = false;
+        boolean inverse = false;
+        if(!args.isEmpty() && args.get(0).equals("inverse")) {
+            inverse = true;
             args.remove(0);
         }
         List<ViewShedMetric> metrics = new ArrayList<>();
@@ -311,9 +311,9 @@ public class CLITools {
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(project, zEye, zDest, direct, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(project, zEye, zDest, inverse, bounds, from, metrics, sample, resDir, null);
         } else {
-            task = new PointMetricTask(project, zEye, zDest, direct, bounds, metrics, pointFile, idField, resDir, null);
+            task = new PointMetricTask(project, zEye, zDest, inverse, bounds, metrics, pointFile, idField, resDir, null);
         }
         
         ExecutorService.execute(task);

@@ -113,7 +113,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         pointTextField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
         zEyeTextField = new javax.swing.JTextField();
-        directCheckBox = new javax.swing.JCheckBox();
+        inverseCheckBox = new javax.swing.JCheckBox();
         boundsButton = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         zDestTextField = new javax.swing.JTextField();
@@ -125,7 +125,8 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         vectorRadioButton = new javax.swing.JRadioButton();
         metricsButton = new javax.swing.JButton();
 
-        setTitle("Viewshed");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("ViewShedDialog.title")); // NOI18N
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent evt) {
                 formComponentShown(evt);
@@ -135,64 +136,63 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
             }
         });
 
-        okButton.setText("Close");
+        okButton.setText(bundle.getString("ViewShedDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("ViewShedDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Point");
+        jLabel1.setText(bundle.getString("ViewShedDialog.jLabel1.text")); // NOI18N
 
-        pointTextField.setText("0.0 , 0.0 ");
+        pointTextField.setText(bundle.getString("ViewShedDialog.pointTextField.text")); // NOI18N
 
-        jLabel2.setText("Z eye");
+        jLabel2.setText(bundle.getString("ViewShedDialog.jLabel2.text")); // NOI18N
 
-        zEyeTextField.setText("1.8");
+        zEyeTextField.setText(bundle.getString("ViewShedDialog.zEyeTextField.text")); // NOI18N
 
-        directCheckBox.setSelected(true);
-        directCheckBox.setText("direct");
+        inverseCheckBox.setText(bundle.getString("ViewShedDialog.inverseCheckBox.text")); // NOI18N
 
-        boundsButton.setText("Bounds...");
+        boundsButton.setText(bundle.getString("ViewShedDialog.boundsButton.text")); // NOI18N
         boundsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 boundsButtonActionPerformed(evt);
             }
         });
 
-        jLabel3.setText("Z dest");
+        jLabel3.setText(bundle.getString("ViewShedDialog.jLabel3.text")); // NOI18N
 
-        zDestTextField.setText("-1");
+        zDestTextField.setText(bundle.getString("ViewShedDialog.zDestTextField.text")); // NOI18N
 
-        updateButton.setText("Update");
+        updateButton.setText(bundle.getString("ViewShedDialog.updateButton.text")); // NOI18N
         updateButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 updateButtonActionPerformed(evt);
             }
         });
 
-        multiScaleCheckBox.setText("Multi scale - Min distance : ");
+        multiScaleCheckBox.setText(bundle.getString("ViewShedDialog.multiScaleCheckBox.text")); // NOI18N
 
-        minDistTextField.setText("500");
+        minDistTextField.setText(bundle.getString("ViewShedDialog.minDistTextField.text")); // NOI18N
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, multiScaleCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), minDistTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Result"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(bundle.getString("ViewShedDialog.jPanel1.border.title"))); // NOI18N
 
         buttonGroup1.add(rasterRadioButton);
         rasterRadioButton.setSelected(true);
-        rasterRadioButton.setText("Raster transparency");
+        rasterRadioButton.setText(bundle.getString("ViewShedDialog.rasterRadioButton.text")); // NOI18N
 
         buttonGroup1.add(vectorRadioButton);
-        vectorRadioButton.setText("Polygon");
+        vectorRadioButton.setText(bundle.getString("ViewShedDialog.vectorRadioButton.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -215,7 +215,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        metricsButton.setText("Metrics");
+        metricsButton.setText(bundle.getString("ViewShedDialog.metricsButton.text")); // NOI18N
         metricsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 metricsButtonActionPerformed(evt);
@@ -251,8 +251,8 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                             .add(layout.createSequentialGroup()
                                 .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                                 .add(18, 18, 18)
-                                .add(directCheckBox)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 74, Short.MAX_VALUE)
+                                .add(inverseCheckBox)
+                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 65, Short.MAX_VALUE)
                                 .add(boundsButton))))
                     .add(layout.createSequentialGroup()
                         .add(multiScaleCheckBox)
@@ -279,7 +279,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel2)
                     .add(zEyeTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                    .add(directCheckBox)
+                    .add(inverseCheckBox)
                     .add(boundsButton))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
@@ -373,24 +373,24 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
         if(multiScaleCheckBox.isSelected()) {
             MultiViewShedResult multiResult = project.getMultiComputeView(Double.parseDouble(minDistTextField.getText()))
                     .calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
-                            Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+                            Double.parseDouble(zDestTextField.getText()), inverseCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
             if(rasterRadioButton.isSelected()) {
                 for(double res : multiResult.getViews().keySet()) {
                     try {
                         GridEnvelope2D env = multiResult.getZones().get(res);
-                        addRasterViewShedLayer(multiResult.getViews().get(res).createTranslatedChild(0, 0), project.getScaleData(res).getGridGeometry().gridToWorld(env), (directCheckBox.isSelected()?"direct":"indirect") + "-" + res);
+                        addRasterViewShedLayer(multiResult.getViews().get(res).createTranslatedChild(0, 0), project.getScaleData(res).getGridGeometry().gridToWorld(env), (inverseCheckBox.isSelected()?"direct":"indirect") + "-" + res);
                     } catch (TransformException ex) {
                         Logger.getLogger(ViewShedDialog.class.getName()).log(Level.SEVERE, null, ex);
                     }
                 } 
             } else {
-                addViewShedLayer(multiResult, directCheckBox.isSelected()?"direct":"indirect");
+                addViewShedLayer(multiResult, inverseCheckBox.isSelected()?"direct":"inverse");
             }
             result = multiResult;
         } else {
             result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
-                Double.parseDouble(zDestTextField.getText()), directCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-            addViewShedLayer(result, directCheckBox.isSelected()?"direct":"indirect");
+                Double.parseDouble(zDestTextField.getText()), inverseCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
+            addViewShedLayer(result, inverseCheckBox.isSelected()?"direct":"inverse");
         }
 
         metricDlg.setResult(result);
@@ -436,7 +436,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     private javax.swing.JButton boundsButton;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelButton;
-    private javax.swing.JCheckBox directCheckBox;
+    private javax.swing.JCheckBox inverseCheckBox;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

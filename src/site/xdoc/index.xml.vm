@@ -4,7 +4,7 @@
   <body>
         <img src="logo.png"/>
 
-        <section name="Analyzing the landscape sights">
+        <section name="Analyzing landscape visibility">
             <p>
             </p>
 
@@ -18,6 +18,16 @@
                 <p>
                     Download previous version : <a href="http://sourcesup.renater.fr/nexus/content/repositories/${project.artifactId}-releases/org/thema/${project.artifactId}/">Previous versions</a>
                 </p>
+            </subsection>
+            <subsection name="Documentation">
+                <p>
+                    User manual :
+                    <ul>
+<!--                        <li>User manual (EN) <a href="manual-en.pdf">[PDF]</a> <a href="doc_en.html">[HTML]</a></li> -->
+                        <li>Manuel d'utilisation (FR) <a href="manual-fr.pdf">[PDF]</a> <a href="doc_fr.html">[HTML]</a></li>
+                    </ul>
+                </p>
+                
             </subsection>
         </section>
     </body> 

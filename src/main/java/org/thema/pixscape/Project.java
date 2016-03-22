@@ -93,7 +93,7 @@ public final class Project {
     
     // options
     private int nbGPU = 0;
-    private double startZ = 1.8;
+    private double startZ = 1.7;
     private double aPrec = 0.1;
     private boolean earthCurv = true;
     private double coefRefraction = 0.13;
@@ -596,13 +596,19 @@ public final class Project {
     public void close() {
         try {
             save();
-            if(simpleComputeView != null) {
-                simpleComputeView.dispose();
-            }
         } catch (IOException ex) {
             Logger.getLogger(Project.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+        dispose();
+    }
+    
+    /**
+     *  Releases computation ressources.
+     */
+    public void dispose() {
+        if(simpleComputeView != null) {
+            simpleComputeView.dispose();
+        }
     }
 
     //

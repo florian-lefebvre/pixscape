@@ -59,24 +59,6 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
      */
     public SimpleViewTanResult(GridCoordinates2D cg, Raster view, SimpleComputeView compute) {
         super(cg, view, compute);
-        if(compute.getData().hasLandUse()) {
-            final int w = view.getWidth();
-            final int h = view.getHeight();
-            Raster land = compute.getData().getLand();
-            WritableRaster landuse = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, w, h, 1), null);
-            for(int y = 0; y < h; y++) {
-                for(int x = 0; x < w; x++) {
-                    final int ind = getView().getSample(x, y, 0);
-                    if(ind == -1) {
-                        landuse.setSample(x, y, 0, -1);
-                    } else {
-                        landuse.setSample(x, y, 0, land.getSample(ind%getW(), ind/getW(), 0));
-                    }
-                    
-                }
-            }
-            this.landuse = landuse;
-        }
     }
 
     @Override
@@ -100,7 +82,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double[] count = new double[256];
         
         int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
-        byte[] landBuf = ((DataBufferByte) landuse.getDataBuffer()).getData();
+        byte[] landBuf = ((DataBufferByte) getLanduseView().getDataBuffer()).getData();
         for(int i = 0; i < buf.length; i++) {
             if(buf[i] > -1) {
                 count[landBuf[i]] += res;
@@ -133,7 +115,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double[] count = new double[256];
         
         int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
-        byte[] landBuf = ((DataBufferByte) landuse.getDataBuffer()).getData();
+        byte[] landBuf = ((DataBufferByte) getLanduseView().getDataBuffer()).getData();
         for(int i = 0; i < buf.length; i++) {
             final int ind = buf[i];
             final int x = ind % getW();
@@ -180,7 +162,25 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     }
 
     @Override
-    public Raster getLanduseView() {
+    public synchronized Raster getLanduseView() {
+        if(landuse == null && compute.getData().hasLandUse()) {
+            final int w = getView().getWidth();
+            final int h = getView().getHeight();
+            Raster land = compute.getData().getLand();
+            WritableRaster landuse = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, w, h, 1), null);
+            for(int y = 0; y < h; y++) {
+                for(int x = 0; x < w; x++) {
+                    final int ind = getView().getSample(x, y, 0);
+                    if(ind == -1) {
+                        landuse.setSample(x, y, 0, -1);
+                    } else {
+                        landuse.setSample(x, y, 0, land.getSample(ind%getW(), ind/getW(), 0));
+                    }
+                    
+                }
+            }
+            this.landuse = landuse;
+        }
         return landuse;
     }
     

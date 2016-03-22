@@ -3,3 +3,11 @@
 \.chg\..*$
 \.rej$
 \.conflict\~$
+manual.*\.pdf$
+\.out$ 
+\.toc$
+\.aux$
+\.log$
+\.bbl$
+\.blg$
+\.synctex\.gz$

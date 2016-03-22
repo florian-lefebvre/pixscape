@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<document>
+    <body>
+        <section name="Manuel d'utilisation">
+            <iframe src="manual-fr.html" width="100%" height="1000"></iframe>
+        </section>
+    </body>
+</document>

@@ -28,7 +28,7 @@
 1 1 1 1 1
 1 1 1 1 1
 
--zeye 1 --viewshed indirect 2 3
+-zeye 1 --viewshed inverse 2 3
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
@@ -63,7 +63,7 @@
 0 1 1 1 0
 0 0 0 0 0
 
--zeye 0 --viewshed indirect 2 3
+-zeye 0 --viewshed inverse 2 3
 0 0 0 0 0
 0 1 1 1 0
 0 1 1 1 0
@@ -92,7 +92,7 @@
 1 1 1 1 1
 1 1 1 1 0
 
--zeye 1 -zdest 3.5 --viewshed indirect 2 3
+-zeye 1 -zdest 3.5 --viewshed inverse 2 3
 1 1 1 1 0
 1 1 1 1 1
 1 1 1 1 1
@@ -124,7 +124,7 @@
 0 1 1 1 1 1 1 1 0 0 
 0 0 0 0 1 0 0 0 0 0
 
--zeye 0.000001 -earth curved refrac=0 --viewshed indirect 4 5
+-zeye 0.000001 -earth curved refrac=0 --viewshed inverse 4 5
 0 0 0 0 0 0 0 0 0 0 
 0 0 0 0 1 0 0 0 0 0 
 0 1 1 1 1 1 1 1 0 0 

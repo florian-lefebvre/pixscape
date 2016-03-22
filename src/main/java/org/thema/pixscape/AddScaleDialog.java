@@ -89,43 +89,45 @@ public class AddScaleDialog extends javax.swing.JDialog {
         resZTextField = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("AddScaleDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText(bundle.getString("AddScaleDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("AddScaleDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        dtmSelectFilePanel.setDescription("DTM");
-        dtmSelectFilePanel.setFileDesc("Raster");
-        dtmSelectFilePanel.setFileExts(".tif|.asc");
+        dtmSelectFilePanel.setDescription(bundle.getString("AddScaleDialog.dtmSelectFilePanel.description")); // NOI18N
+        dtmSelectFilePanel.setFileDesc(bundle.getString("AddScaleDialog.dtmSelectFilePanel.fileDesc")); // NOI18N
+        dtmSelectFilePanel.setFileExts(bundle.getString("AddScaleDialog.dtmSelectFilePanel.fileExts")); // NOI18N
 
-        dsmSelectFilePanel.setDescription("DSM");
-        dsmSelectFilePanel.setFileDesc("Raster");
-        dsmSelectFilePanel.setFileExts(".tif|.asc");
+        dsmSelectFilePanel.setDescription(bundle.getString("AddScaleDialog.dsmSelectFilePanel.description")); // NOI18N
+        dsmSelectFilePanel.setFileDesc(bundle.getString("AddScaleDialog.dsmSelectFilePanel.fileDesc")); // NOI18N
+        dsmSelectFilePanel.setFileExts(bundle.getString("AddScaleDialog.dsmSelectFilePanel.fileExts")); // NOI18N
 
-        landSelectFilePanel.setDescription("Land");
-        landSelectFilePanel.setFileDesc("Raster");
-        landSelectFilePanel.setFileExts(".tif|.asc");
+        landSelectFilePanel.setDescription(bundle.getString("AddScaleDialog.landSelectFilePanel.description")); // NOI18N
+        landSelectFilePanel.setFileDesc(bundle.getString("AddScaleDialog.landSelectFilePanel.fileDesc")); // NOI18N
+        landSelectFilePanel.setFileExts(bundle.getString("AddScaleDialog.landSelectFilePanel.fileExts")); // NOI18N
 
-        jLabel1.setText("Z resolution");
+        jLabel1.setText(bundle.getString("AddScaleDialog.jLabel1.text")); // NOI18N
 
-        resZTextField.setText("1");
+        resZTextField.setText(bundle.getString("AddScaleDialog.resZTextField.text")); // NOI18N
 
-        jLabel2.setText("meters");
+        jLabel2.setText(bundle.getString("AddScaleDialog.jLabel2.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

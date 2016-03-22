@@ -89,28 +89,31 @@ public class NewProjectDialog extends javax.swing.JDialog {
         dtmSelectFilePanel = new org.thema.common.swing.SelectFilePanel();
         jLabel1 = new javax.swing.JLabel();
         resZTextField = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("NewProjectDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText(bundle.getString("NewProjectDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("NewProjectDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        prjPathLabel.setText("Path");
+        prjPathLabel.setText(bundle.getString("NewProjectDialog.prjPathLabel.text")); // NOI18N
 
         selectPathButton.setText("..."); // NOI18N
         selectPathButton.addActionListener(new java.awt.event.ActionListener() {
@@ -119,17 +122,19 @@ public class NewProjectDialog extends javax.swing.JDialog {
             }
         });
 
-        prjNameLabel.setText("Project name");
+        prjNameLabel.setText(bundle.getString("NewProjectDialog.prjNameLabel.text")); // NOI18N
 
-        prjNameTextField.setText("Project1");
+        prjNameTextField.setText(bundle.getString("NewProjectDialog.prjNameTextField.text")); // NOI18N
 
-        dtmSelectFilePanel.setDescription("DTM");
-        dtmSelectFilePanel.setFileDesc("Raster image");
-        dtmSelectFilePanel.setFileExts(".tif|.asc");
+        dtmSelectFilePanel.setDescription(bundle.getString("NewProjectDialog.dtmSelectFilePanel.description")); // NOI18N
+        dtmSelectFilePanel.setFileDesc(bundle.getString("NewProjectDialog.dtmSelectFilePanel.fileDesc")); // NOI18N
+        dtmSelectFilePanel.setFileExts(bundle.getString("NewProjectDialog.dtmSelectFilePanel.fileExts")); // NOI18N
 
-        jLabel1.setText("Z resolution");
+        jLabel1.setText(bundle.getString("NewProjectDialog.jLabel1.text")); // NOI18N
 
-        resZTextField.setText("1");
+        resZTextField.setText(bundle.getString("NewProjectDialog.resZTextField.text")); // NOI18N
+
+        jLabel2.setText(bundle.getString("NewProjectDialog.jLabel2.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -153,7 +158,9 @@ public class NewProjectDialog extends javax.swing.JDialog {
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(resZTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(resZTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 69, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(jLabel2)
                         .add(0, 0, Short.MAX_VALUE))
                     .add(layout.createSequentialGroup()
                         .add(prjNameLabel)
@@ -181,7 +188,8 @@ public class NewProjectDialog extends javax.swing.JDialog {
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 22, Short.MAX_VALUE)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
-                    .add(resZTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(resZTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(jLabel2))
                 .add(16, 16, 16)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(cancelButton)
@@ -234,6 +242,7 @@ public class NewProjectDialog extends javax.swing.JDialog {
     private javax.swing.JButton cancelButton;
     private org.thema.common.swing.SelectFilePanel dtmSelectFilePanel;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JButton okButton;
     private javax.swing.JLabel prjNameLabel;
     private javax.swing.JTextField prjNameTextField;

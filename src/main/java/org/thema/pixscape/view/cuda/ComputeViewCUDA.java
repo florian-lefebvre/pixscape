@@ -88,14 +88,14 @@ public class ComputeViewCUDA extends SimpleComputeView {
     }
     
     @Override
-    public List<Double[]> aggrViewShed(final DirectPosition2D p, final double startZ, final double destZ, final boolean direct, 
+    public List<Double[]> aggrViewShed(final DirectPosition2D p, final double startZ, final double destZ, final boolean inverse, 
             final Bounds bounds, final List<? extends ViewShedMetric> metrics) {
         CUDAExec<List<Double[]>> r = new CUDAExec<List<Double[]>>() {
             @Override
             public List<Double[]> run(CUDAContext cudaContext) {
                 long time = System.currentTimeMillis();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewShed(cg, (float) startZ, (float) destZ, direct, bounds);
+                cudaContext.viewShed(cg, (float) startZ, (float) destZ, inverse, bounds);
 
                 CUDAViewShedResult view = new CUDAViewShedResult(cg, cudaContext, org.thema.pixscape.view.cuda.ComputeViewCUDA.this);
                 List<Double[]> results = new ArrayList<>(metrics.size());
@@ -117,7 +117,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
     
     @Override
     public ViewShedResult calcViewShed(final DirectPosition2D p, final double startZ, final double destZ, 
-            final boolean direct, final Bounds bounds)  {
+            final boolean inverse, final Bounds bounds)  {
             
         CUDAExec<ViewShedResult> r = new CUDAExec<ViewShedResult>() {
             @Override
@@ -126,7 +126,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
                 WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, getData().getDtm().getWidth(), getData().getDtm().getHeight(), 1, null);
                 byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
                 GridCoordinates2D cg = getWorld2Grid(p);
-                cudaContext.viewShed(cg, (float) startZ, (float) destZ, direct, bounds);
+                cudaContext.viewShed(cg, (float) startZ, (float) destZ, inverse, bounds);
                 cudaContext.getView(viewBuf);
                 Logger.getLogger(ComputeViewCUDA.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
                 return new SimpleViewShedResult(cg, view, ComputeViewCUDA.this);

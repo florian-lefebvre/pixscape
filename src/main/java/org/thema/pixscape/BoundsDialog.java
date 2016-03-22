@@ -95,41 +95,43 @@ public class BoundsDialog extends javax.swing.JDialog {
         jLabel8 = new javax.swing.JLabel();
         jLabel9 = new javax.swing.JLabel();
 
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("BoundsDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText(bundle.getString("BoundsDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("BoundsDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Distance min.");
+        jLabel1.setText(bundle.getString("BoundsDialog.jLabel1.text")); // NOI18N
 
-        jLabel2.setText("Distance max.");
+        jLabel2.setText(bundle.getString("BoundsDialog.jLabel2.text")); // NOI18N
 
-        jLabel3.setText("Orientation");
+        jLabel3.setText(bundle.getString("BoundsDialog.jLabel3.text")); // NOI18N
 
-        jLabel4.setText("Amplitude");
+        jLabel4.setText(bundle.getString("BoundsDialog.jLabel4.text")); // NOI18N
 
-        jLabel5.setText("Z angle min.");
+        jLabel5.setText(bundle.getString("BoundsDialog.jLabel5.text")); // NOI18N
 
-        jLabel6.setText("Z angle max.");
+        jLabel6.setText(bundle.getString("BoundsDialog.jLabel6.text")); // NOI18N
 
-        jLabel8.setText("<html> In degree, starting from north in counter clock wise<br/> North=0 East=90 South=180</html> ");
+        jLabel8.setText(bundle.getString("BoundsDialog.jLabel8.text")); // NOI18N
 
-        jLabel9.setText("<html> In degree, between -90 to 90   </html> ");
+        jLabel9.setText(bundle.getString("BoundsDialog.jLabel9.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

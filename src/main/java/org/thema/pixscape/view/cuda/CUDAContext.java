@@ -190,7 +190,7 @@ class CUDAContext {
      * @param direct if true, observer is on c, else observed point is on c
      * @param bounds the limits of the viewshed
      */
-    public void viewShed(GridCoordinates2D c, float startZ, float destZ, boolean direct, Bounds bounds) {
+    public void viewShed(GridCoordinates2D c, float startZ, float destZ, boolean inverse, Bounds bounds) {
         clearView();
         
         Pointer viewShedParam;
@@ -200,14 +200,14 @@ class CUDAContext {
                     Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), 
                     Pointer.to(new float[]{(float) compute.getData().getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), 
                     Pointer.to(new int[]{compute.isEarthCurv() ? 1 : 0}), Pointer.to(new float[]{(float) compute.getCoefRefraction()}), Pointer.to(viewDev));
-            fun = direct ? funViewShed : funViewShedInd;
+            fun = inverse ? funViewShedInd : funViewShed;
         } else {
             viewShedParam = Pointer.to(Pointer.to(new int[]{c.x}), Pointer.to(new int[]{c.y}), Pointer.to(new float[]{startZ}), Pointer.to(new float[]{destZ}), 
                     Pointer.to(dtmDev), Pointer.to(new int[]{dtm.getWidth()}), Pointer.to(new int[]{dtm.getHeight()}), 
                     Pointer.to(new float[]{(float) compute.getData().getResolution()}), Pointer.to(new int[]{dsmBuf != null ? 1 : 0}), Pointer.to(dsmDev), 
                     Pointer.to(new int[]{compute.isEarthCurv() ? 1 : 0}), Pointer.to(new float[]{(float) compute.getCoefRefraction()}), Pointer.to(viewDev), 
                     Pointer.to(new float[]{(float) bounds.getDmin2()}), Pointer.to(new float[]{(float) bounds.getDmax2()}), Pointer.to(new float[]{(float) bounds.getTheta1Left()}), Pointer.to(new float[]{(float) bounds.getTheta1Right()}), Pointer.to(new float[]{(float) bounds.getSlopemin2()}), Pointer.to(new float[]{(float) bounds.getSlopemax2()}));
-            fun = direct ? funViewShedBounded : funViewShedIndBounded;
+            fun = inverse ? funViewShedIndBounded : funViewShedBounded;
         }
         JCudaDriver.cuLaunchKernel(fun, 2 * (w + h) / NCORE + 1, 1, 1, // Grid dimension
         NCORE, 1, 1, // Block dimension

@@ -89,39 +89,40 @@ public class PointAttributeDialog extends javax.swing.JDialog {
         jLabel1 = new javax.swing.JLabel();
         outputNameTextField = new javax.swing.JTextField();
 
-        setTitle("Set point attributes");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("PointAttributeDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText(bundle.getString("PointAttributeDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("PointAttributeDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        boundsButton.setText("Bounds...");
+        boundsButton.setText(bundle.getString("PointAttributeDialog.boundsButton.text")); // NOI18N
         boundsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 boundsButtonActionPerformed(evt);
             }
         });
 
-        pathOrienCheckBox.setText("Set path orientation");
+        pathOrienCheckBox.setText(bundle.getString("PointAttributeDialog.pathOrienCheckBox.text")); // NOI18N
 
-        jLabel1.setText("Output shapefile");
+        jLabel1.setText(bundle.getString("PointAttributeDialog.jLabel1.text")); // NOI18N
 
-        outputNameTextField.setText("pointfile.shp");
+        outputNameTextField.setText(bundle.getString("PointAttributeDialog.outputNameTextField.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

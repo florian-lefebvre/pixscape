@@ -187,27 +187,27 @@ public class ComputeViewTest {
     @Test
     public void testEarthCurvature() throws IOException, TransformException {  
         ComputeView compute = new ComputeViewJava(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0);
-        double area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        double area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
         Assert.assertEquals(4153, area, 0); // aproximative radius = 36 = round(sqrt(0.0001 * 12 740 000))
 
         compute = new ComputeViewJava(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0.5);
-        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
-        Assert.assertEquals(8139, area, 0); 
         area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
         Assert.assertEquals(8139, area, 0); 
         
         if(ComputeViewCUDA.isCUDAAvailable()) {
             compute = new ComputeViewCUDA(TestTools.createFlatDataWithLand(100, 1), 0.1, true, 0.5, 1);
-            area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
-            Assert.assertEquals(8139, area, 0); 
             area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+            Assert.assertEquals(8139, area, 0); 
+            area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
             Assert.assertEquals(8139, area, 0); 
         }
         
         compute = new MultiComputeViewJava(new TreeMap<>(Collections.singletonMap(1.0, TestTools.createFlatDataWithLand(100, 1))), 1000, 0.1, true, 0.5);
-        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
-        Assert.assertEquals(8139, area, 0); 
         area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, false, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
+        Assert.assertEquals(8139, area, 0); 
+        area = compute.aggrViewShed(new DirectPosition2D(50, 50), 0.0001, -1, true, new Bounds(), Arrays.asList(new AreaMetric())).get(0)[0];
         Assert.assertEquals(8139, area, 0); 
     }
     
@@ -291,21 +291,21 @@ public class ComputeViewTest {
                             test[i*5+j] = Byte.parseByte(values[j]);
                         }
                     }
-                    ViewShedResult viewshedResult = compute.calcViewShed(p, startZ, destZ, direct, bounds); 
+                    ViewShedResult viewshedResult = compute.calcViewShed(p, startZ, destZ, !direct, bounds); 
                     Raster result = viewshedResult.getView();
                     printArray(((DataBufferByte)result.getDataBuffer()).getData());
                     Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     if(destZ == -1) {
-                        result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView(); 
+                        result = compute.calcViewShed(p, startZ, 0, !direct, bounds).getView(); 
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     }
                     if(tokens[4].equals("?")) {
                         System.out.println("Test indirect");
                         direct = false;
-                        result = compute.calcViewShed(p, startZ, destZ, direct, bounds).getView();  
+                        result = compute.calcViewShed(p, startZ, destZ, !direct, bounds).getView();  
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         if(destZ == -1) {
-                            result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView();  
+                            result = compute.calcViewShed(p, startZ, 0, !direct, bounds).getView();  
                             Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         }
                     }

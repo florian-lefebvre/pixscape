@@ -75,7 +75,7 @@ public class MetricDialog extends javax.swing.JDialog {
             }
         });
         
-        metricComboBox.setModel(new DefaultComboBoxModel(Project.getMetrics(isTan ? ViewTanMetric.class : ViewShedMetric.class).toArray()));
+        metricComboBox.setModel(new DefaultComboBoxModel(Project.getMetrics((Class<? extends Metric>)(isTan ? ViewTanMetric.class : ViewShedMetric.class)).toArray()));
         hasCodes = codes != null && !codes.isEmpty();
 
         codesLabel.setEnabled(hasCodes);
@@ -104,28 +104,29 @@ public class MetricDialog extends javax.swing.JDialog {
         distLabel = new javax.swing.JLabel();
         distTextField = new javax.swing.JTextField();
 
-        setTitle("Metric");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/metric/Bundle"); // NOI18N
+        setTitle(bundle.getString("MetricDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("OK");
+        okButton.setText(bundle.getString("MetricDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("MetricDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Metric");
+        jLabel1.setText(bundle.getString("MetricDialog.jLabel1.text")); // NOI18N
 
         metricComboBox.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -133,18 +134,18 @@ public class MetricDialog extends javax.swing.JDialog {
             }
         });
 
-        codesLabel.setText("Codes");
+        codesLabel.setText(bundle.getString("MetricDialog.codesLabel.text")); // NOI18N
 
-        addAllButton.setText("All");
+        addAllButton.setText(bundle.getString("MetricDialog.addAllButton.text")); // NOI18N
         addAllButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addAllButtonActionPerformed(evt);
             }
         });
 
-        distLabel.setText("Distances");
+        distLabel.setText(bundle.getString("MetricDialog.distLabel.text")); // NOI18N
 
-        distTextField.setText("0, +Infinity");
+        distTextField.setText(bundle.getString("MetricDialog.distTextField.text")); // NOI18N
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);

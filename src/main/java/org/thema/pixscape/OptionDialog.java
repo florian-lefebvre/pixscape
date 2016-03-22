@@ -28,6 +28,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
  * Dialog form for setting global options :
@@ -71,6 +72,11 @@ public class OptionDialog extends javax.swing.JDialog {
         multiScaleCheckBox.setSelected(project.isMSComputation());
         minDistTextField.setText(""+project.getMinDistMS());
         gpuCheckBox.setSelected(project.isUseCUDA());
+        
+        if(!ComputeViewCUDA.isCUDAAvailable()) {
+            gpuCheckBox.setSelected(false);
+            gpuCheckBox.setEnabled(false);
+        }
     }
 
 
@@ -98,54 +104,55 @@ public class OptionDialog extends javax.swing.JDialog {
         coefRefracTextField = new javax.swing.JTextField();
         jLabel4 = new javax.swing.JLabel();
 
-        setTitle("Options");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("OptionDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText("Ok");
+        okButton.setText(bundle.getString("OptionDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText("Cancel");
+        cancelButton.setText(bundle.getString("OptionDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        jLabel2.setText("Z eye");
+        jLabel2.setText(bundle.getString("OptionDialog.jLabel2.text")); // NOI18N
 
-        zEyeTextField.setText("1.8");
+        zEyeTextField.setText(bundle.getString("OptionDialog.zEyeTextField.text")); // NOI18N
 
-        multiScaleCheckBox.setText("Multi scale - Min distance:");
+        multiScaleCheckBox.setText(bundle.getString("OptionDialog.multiScaleCheckBox.text")); // NOI18N
 
-        minDistTextField.setText("500");
+        minDistTextField.setText(bundle.getString("OptionDialog.minDistTextField.text")); // NOI18N
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, multiScaleCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), minDistTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        gpuCheckBox.setText("Use GPU when possible");
+        gpuCheckBox.setText(bundle.getString("OptionDialog.gpuCheckBox.text")); // NOI18N
 
-        jLabel1.setText("Angular precision (tangential view)");
+        jLabel1.setText(bundle.getString("OptionDialog.jLabel1.text")); // NOI18N
 
-        aPrecjTextField.setText("0.1");
+        aPrecjTextField.setText(bundle.getString("OptionDialog.aPrecjTextField.text")); // NOI18N
 
-        jLabel3.setText("°");
+        jLabel3.setText(bundle.getString("OptionDialog.jLabel3.text")); // NOI18N
 
-        earthCurvCheckBox.setText("Earth curvature");
+        earthCurvCheckBox.setText(bundle.getString("OptionDialog.earthCurvCheckBox.text")); // NOI18N
 
-        coefRefracTextField.setText("0.13");
+        coefRefracTextField.setText(bundle.getString("OptionDialog.coefRefracTextField.text")); // NOI18N
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), coefRefracTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        jLabel4.setText("Refraction correction:");
+        jLabel4.setText(bundle.getString("OptionDialog.jLabel4.text")); // NOI18N
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), jLabel4, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);

@@ -1,5 +1,12 @@
 ## Changelog
 
+##### version 0.4.3 (22/03/2016)
+- UI : french translation
+- UI : change direct checkbox to inverse checkbox
+- UI Multiviewshed : add Z dest param
+- UI Multiviewshed : result format was never used
+- Tangential : calculates landuse view only when needed, caused NPE with CUDA
+
 ##### version 0.4.2 (10/02/2016)
 - CUDA : ray is not stopped with NaN DEM value
 

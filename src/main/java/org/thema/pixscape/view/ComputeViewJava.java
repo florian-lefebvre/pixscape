@@ -57,7 +57,7 @@ public class ComputeViewJava extends SimpleComputeView {
     }
     
     @Override
-    public ViewShedResult calcViewShed(DirectPosition2D p, double startZ, double destZ, boolean direct, Bounds bounds)  {
+    public ViewShedResult calcViewShed(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds)  {
         long time = System.currentTimeMillis();
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
         byte [] viewBuf = ((DataBufferByte)view.getDataBuffer()).getData();
@@ -65,15 +65,15 @@ public class ComputeViewJava extends SimpleComputeView {
         GridCoordinates2D c = new GridCoordinates2D();
         for(c.x = 0; c.x < dtm.getWidth(); c.x++) {
             c.y = 0;
-            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
             c.y = dtm.getHeight()-1;
-            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
         }
         for(c.y = 1; c.y < dtm.getHeight()-1; c.y++) {
             c.x = 0;
-            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
             c.x = dtm.getWidth()-1;
-            calcRay(direct, cg, c, startZ, destZ, bounds, viewBuf);
+            calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
         }
         Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         return new SimpleViewShedResult(cg, view, this);
@@ -207,7 +207,7 @@ public class ComputeViewJava extends SimpleComputeView {
     /**
      * Calculates the ray starting from c0 to c1.
      * Set view to 1 when the pixel is seen from the point of view (direct) or sees the observed point (indirect).
-     * @param direct
+     * @param inverse
      * @param c0 the point of view if direct = true, the observed point otherwise, in grid coordinate
      * @param c1 the end point of the ray, in grid coordinate
      * @param startZ the height of the eye
@@ -215,13 +215,13 @@ public class ComputeViewJava extends SimpleComputeView {
      * @param bounds the limits of the view
      * @param view the resulting viewshed (buffer of the size of dtm data)
      */
-    private void calcRay(final boolean direct, final GridCoordinates2D c0, final GridCoordinates2D c1, 
+    private void calcRay(final boolean inverse, final GridCoordinates2D c0, final GridCoordinates2D c1, 
             final double startZ, final double destZ, Bounds bounds, final byte[] view) {
         if(bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
-            if(direct) {
-                calcRayDirect(c0, c1, startZ, destZ, bounds, view);
-            } else {
+            if(inverse) {
                 calcRayIndirect(c0, c1, startZ, destZ, bounds, view);
+            } else {
+                calcRayDirect(c0, c1, startZ, destZ, bounds, view);
             }
         }
     }

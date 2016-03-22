@@ -108,7 +108,7 @@ public class MultiComputeViewJava extends ComputeView {
     }
     
     @Override
-    public MultiViewShedResult calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean direct, Bounds bounds)  {
+    public MultiViewShedResult calcViewShed(DirectPosition2D c, double startZ, double destZ, boolean inverse, Bounds bounds)  {
 //        long t1 = System.currentTimeMillis();
         TreeMap<Double, byte[]> viewBufs = new TreeMap<>();
         TreeMap<Double, Raster> viewRasters = new TreeMap<>();
@@ -130,21 +130,21 @@ public class MultiComputeViewJava extends ComputeView {
             for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
                 double a = Math.atan2(-largestZone.getMinY(), x);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
                 a = Math.atan2(-(largestZone.getMaxY()-1), x);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
             }
             for(int y = largestZone.y+1; y < largestZone.getMaxY()-1; y++) {
                 double a = Math.atan2(-y, largestZone.getMinX());
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
                 a = Math.atan2(-y, largestZone.getMaxX()-1);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(direct, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
                 }
             }
 //            long t4 = System.currentTimeMillis();
@@ -159,7 +159,7 @@ public class MultiComputeViewJava extends ComputeView {
     /**
      * Calculates the ray starting from p0 with angle a, at several scales.
      * Set view to 1 when the pixel is seen from the point of view (direct) or sees the observed point (indirect).
-     * @param direct
+     * @param inverse
      * @param p0 the point of view if direct = true, the observed point otherwise, in world coordinate
      * @param startZ the height of the eye
      * @param destZ the eight of the observed point or -1
@@ -169,7 +169,7 @@ public class MultiComputeViewJava extends ComputeView {
      * @param zones the boundary of the view for each scale
      * @throws TransformException 
      */
-    private void calcRay(final boolean direct, final DirectPosition2D p0, final double startZ, 
+    private void calcRay(final boolean inverse, final DirectPosition2D p0, final double startZ, 
             final double destZ, Bounds bounds, final TreeMap<Double, byte[]> views, double a, 
             final TreeMap<Double, GridEnvelope2D> zones) throws TransformException {
 //        long t1 = System.nanoTime();
@@ -177,7 +177,7 @@ public class MultiComputeViewJava extends ComputeView {
         ScaleData dataInit = datas.firstEntry().getValue();
         GridCoordinates2D c0 = dataInit.getDtmCov().getGridGeometry().worldToGrid(p0);
         double z0 = dataInit.getDtm().getSampleDouble(c0.x, c0.y, 0);
-        if(direct) {
+        if(!inverse) {
              z0 += startZ;
         } else {
             // for indirect
@@ -207,7 +207,7 @@ public class MultiComputeViewJava extends ComputeView {
                 c0.y = c.y;
             }
 //            long t2 = System.nanoTime();
-            if(direct) {
+            if(!inverse) {
                 slopeMin2 = calcRayDirect(c0, c1, destZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2);
             } else {
                 slopeMin2 = calcRayIndirect(c0, c1, startZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2);

@@ -61,14 +61,14 @@ public abstract class ComputeView {
      * @param cg the point of view if direct=true, the observed point otherwise. cg is in world coordinate
      * @param startZ the height of the eye of the observer
      * @param destZ the height of the observed points, -1 if not used
-     * @param direct if true, observer is on cg, else observed point is on cg
+     * @param inverse if false, observer is on cg, else observed point is on cg
      * @param bounds the limits of the viewshed
      * @param metrics the metrics to calculate
      * @return the results of the metrics
      */
-    public List<Double[]> aggrViewShed(DirectPosition2D cg, double startZ, double destZ, boolean direct, Bounds bounds, List<? extends ViewShedMetric> metrics) {
+    public List<Double[]> aggrViewShed(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds, List<? extends ViewShedMetric> metrics) {
         
-        ViewShedResult view = calcViewShed(cg, startZ, destZ, direct, bounds); 
+        ViewShedResult view = calcViewShed(cg, startZ, destZ, inverse, bounds); 
         List<Double[]> results = new ArrayList<>(metrics.size());
         for(ViewShedMetric m : metrics) {
             results.add(m.calcMetric(view));
@@ -112,11 +112,11 @@ public abstract class ComputeView {
      * @param cg the point of view if direct=true, the observed point otherwise. cg is in world coordinate
      * @param startZ the height of the eye of the observer
      * @param destZ the height of the observed points, -1 if not used
-     * @param direct if true, observer is on cg, else observed point is on cg
+     * @param inverse if false, observer is on cg, else observed point is on cg
      * @param bounds the limits of the viewshed
      * @return the resulting viewshed
      */
-    public abstract ViewShedResult calcViewShed(DirectPosition2D cg, double startZ, double destZ, boolean direct, Bounds bounds) ;
+    public abstract ViewShedResult calcViewShed(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds) ;
     
     
     /**

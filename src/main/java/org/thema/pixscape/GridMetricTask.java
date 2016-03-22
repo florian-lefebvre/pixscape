@@ -76,7 +76,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     
     // options for viewshed
     private double destZ;
-    private boolean direct;
+    private boolean inverse;
     
     private final Bounds bounds;
     
@@ -102,7 +102,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
      * @param project the project (must be saved for MPI mode)
      * @param startZ the height of the eye of the observer
      * @param destZ the height of the observed points, -1 if not used
-     * @param direct if true the starting point is the observer, else the starting point is the observed point
+     * @param inverse if false the starting point is the observer, else the starting point is the observed point
      * @param bounds the 3D limits of the sight 
      * @param fromCode calculates only from this land use codes, may be null for calculating from all landuse codes
      * @param metrics the metrics to calculate
@@ -110,13 +110,13 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
      * @param resDir the directory for storing result files, may be null for not saving the results
      * @param monitor the progress monitor, may be null
      */
-    public GridMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
+    public GridMetricTask(Project project, double startZ, double destZ, boolean inverse, Bounds bounds, Set<Integer> fromCode, List<ViewShedMetric> metrics, int sample, File resDir, ProgressBar monitor) {
         super(monitor);
         this.project = project;
         this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.destZ = destZ;
-        this.direct = direct;
+        this.inverse = inverse;
         this.bounds = bounds;
         this.from = fromCode != null && !fromCode.isEmpty() ? new TreeSet<>(fromCode) : null;
         this.metrics = metrics;
@@ -205,7 +205,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                 if(isTan) {
                     values = compute.aggrViewTan(p, startZ, bounds, (List) metrics);
                 } else {
-                    values = compute.aggrViewShed(p, startZ, destZ, direct, bounds, (List) metrics);
+                    values = compute.aggrViewShed(p, startZ, destZ, inverse, bounds, (List) metrics);
                 }
                 for(int i = 0; i < metrics.size(); i++) {
                     int j = 0;
@@ -215,7 +215,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
                 }
                 long dt = System.currentTimeMillis()-time;
                 Logger.getLogger(GridMetricTask.class.getName()).fine(dt + " ms");
-            }
+            }                   
             incProgress(1);
         }
         Map<String, SerializableState> serialMap = new HashMap<>();
@@ -306,7 +306,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
         if(isTan) {
             return new File(resDir, resName + "-" + bounds + ".tif");
         } else {
-            return new File(resDir, resName + "-" + (direct ? "direct" : "indirect") + "-" + bounds + ".tif");
+            return new File(resDir, resName + (inverse ? "-inverse" : "") + "-" + bounds + ".tif");
         }
     }
 }

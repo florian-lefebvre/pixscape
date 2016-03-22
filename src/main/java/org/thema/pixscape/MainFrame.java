@@ -95,10 +95,10 @@ public class MainFrame extends javax.swing.JFrame {
      * Creates new form MainFrame
      */
     public MainFrame() {
-        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/thema/pixscape/icone64.png")));
+        setIconImage(Toolkit.getDefaultToolkit().getImage(getClass().getResource("/org/thema/pixscape/icone64.png"))); //NOI18N
         initComponents();
         setLocationRelativeTo(null);
-        setTitle("PixScape - " + JavaLoader.getVersion(MainFrame.class));
+        setTitle("PixScape - " + JavaLoader.getVersion(MainFrame.class)); //NOI18N
         mapViewer.putAddLayerButton();
         Config.setProgressBar(mapViewer.getProgressBar());
         logFrame = new LoggingDialog(this);
@@ -131,13 +131,12 @@ public class MainFrame extends javax.swing.JFrame {
         viewShedMenuItem = new javax.swing.JMenuItem();
         viewTanMenuItem = new javax.swing.JMenuItem();
         multiViewshedMenuItem = new javax.swing.JMenuItem();
-        jSeparator1 = new javax.swing.JPopupMenu.Separator();
-        optionsMenuItem = new javax.swing.JMenuItem();
         metricMenu = new javax.swing.JMenu();
         viewshedMetricMenuItem = new javax.swing.JMenuItem();
         tanMetricMenuItem = new javax.swing.JMenuItem();
         toolMenu = new javax.swing.JMenu();
         pathOrienMenuItem = new javax.swing.JMenuItem();
+        optionsMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
@@ -154,9 +153,10 @@ public class MainFrame extends javax.swing.JFrame {
 
         mapViewer.setTreeLayerVisible(true);
 
-        fileMenu.setText("File");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        fileMenu.setText(bundle.getString("MainFrame.fileMenu.text")); // NOI18N
 
-        newProjectMenuItem.setText("New project");
+        newProjectMenuItem.setText(bundle.getString("MainFrame.newProjectMenuItem.text")); // NOI18N
         newProjectMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 newProjectMenuItemActionPerformed(evt);
@@ -164,7 +164,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(newProjectMenuItem);
 
-        loadProjectMenuItem.setText("Load Project");
+        loadProjectMenuItem.setText(bundle.getString("MainFrame.loadProjectMenuItem.text")); // NOI18N
         loadProjectMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadProjectMenuItemActionPerformed(evt);
@@ -172,7 +172,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(loadProjectMenuItem);
 
-        prefMenuItem.setText("Preferences");
+        prefMenuItem.setText(bundle.getString("MainFrame.prefMenuItem.text")); // NOI18N
         prefMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 prefMenuItemActionPerformed(evt);
@@ -180,7 +180,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(prefMenuItem);
 
-        logMenuItem.setText("Log window");
+        logMenuItem.setText(bundle.getString("MainFrame.logMenuItem.text")); // NOI18N
         logMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 logMenuItemActionPerformed(evt);
@@ -188,7 +188,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         fileMenu.add(logMenuItem);
 
-        exitMenuItem.setText("Exit");
+        exitMenuItem.setText(bundle.getString("MainFrame.exitMenuItem.text")); // NOI18N
         exitMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 exitMenuItemActionPerformed(evt);
@@ -198,9 +198,9 @@ public class MainFrame extends javax.swing.JFrame {
 
         menuBar.add(fileMenu);
 
-        dataMenu.setText("Data");
+        dataMenu.setText(bundle.getString("MainFrame.dataMenu.text")); // NOI18N
 
-        loadDSMMenuItem.setText("Set DSM");
+        loadDSMMenuItem.setText(bundle.getString("MainFrame.loadDSMMenuItem.text")); // NOI18N
         loadDSMMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadDSMMenuItemActionPerformed(evt);
@@ -208,7 +208,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         dataMenu.add(loadDSMMenuItem);
 
-        loadLandUseMenuItem.setText("Set land use");
+        loadLandUseMenuItem.setText(bundle.getString("MainFrame.loadLandUseMenuItem.text")); // NOI18N
         loadLandUseMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 loadLandUseMenuItemActionPerformed(evt);
@@ -216,9 +216,9 @@ public class MainFrame extends javax.swing.JFrame {
         });
         dataMenu.add(loadLandUseMenuItem);
 
-        msMenu.setText("Multi scale");
+        msMenu.setText(bundle.getString("MainFrame.msMenu.text")); // NOI18N
 
-        genMSMenuItem.setText("Generate");
+        genMSMenuItem.setText(bundle.getString("MainFrame.genMSMenuItem.text")); // NOI18N
         genMSMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 genMSMenuItemActionPerformed(evt);
@@ -226,7 +226,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         msMenu.add(genMSMenuItem);
 
-        addScaleMenuItem.setText("Add scale");
+        addScaleMenuItem.setText(bundle.getString("MainFrame.addScaleMenuItem.text")); // NOI18N
         addScaleMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addScaleMenuItemActionPerformed(evt);
@@ -238,9 +238,9 @@ public class MainFrame extends javax.swing.JFrame {
 
         menuBar.add(dataMenu);
 
-        visMenu.setText("Visibility");
+        visMenu.setText(bundle.getString("MainFrame.visMenu.text")); // NOI18N
 
-        viewShedMenuItem.setText("Viewshed...");
+        viewShedMenuItem.setText(bundle.getString("MainFrame.viewShedMenuItem.text")); // NOI18N
         viewShedMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewShedMenuItemActionPerformed(evt);
@@ -248,7 +248,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         visMenu.add(viewShedMenuItem);
 
-        viewTanMenuItem.setText("Tangential...");
+        viewTanMenuItem.setText(bundle.getString("MainFrame.viewTanMenuItem.text")); // NOI18N
         viewTanMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewTanMenuItemActionPerformed(evt);
@@ -256,28 +256,19 @@ public class MainFrame extends javax.swing.JFrame {
         });
         visMenu.add(viewTanMenuItem);
 
-        multiViewshedMenuItem.setText("Multi Viewshed");
+        multiViewshedMenuItem.setText(bundle.getString("MainFrame.multiViewshedMenuItem.text")); // NOI18N
         multiViewshedMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 multiViewshedMenuItemActionPerformed(evt);
             }
         });
         visMenu.add(multiViewshedMenuItem);
-        visMenu.add(jSeparator1);
-
-        optionsMenuItem.setText("Options");
-        optionsMenuItem.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                optionsMenuItemActionPerformed(evt);
-            }
-        });
-        visMenu.add(optionsMenuItem);
 
         menuBar.add(visMenu);
 
-        metricMenu.setText("Metric");
+        metricMenu.setText(bundle.getString("MainFrame.metricMenu.text")); // NOI18N
 
-        viewshedMetricMenuItem.setText("Planimetric");
+        viewshedMetricMenuItem.setText(bundle.getString("MainFrame.viewshedMetricMenuItem.text")); // NOI18N
         viewshedMetricMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 viewshedMetricMenuItemActionPerformed(evt);
@@ -285,7 +276,7 @@ public class MainFrame extends javax.swing.JFrame {
         });
         metricMenu.add(viewshedMetricMenuItem);
 
-        tanMetricMenuItem.setText("Tangential");
+        tanMetricMenuItem.setText(bundle.getString("MainFrame.tanMetricMenuItem.text")); // NOI18N
         tanMetricMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 tanMetricMenuItemActionPerformed(evt);
@@ -295,15 +286,23 @@ public class MainFrame extends javax.swing.JFrame {
 
         menuBar.add(metricMenu);
 
-        toolMenu.setText("Tools");
+        toolMenu.setText(bundle.getString("MainFrame.toolMenu.text")); // NOI18N
 
-        pathOrienMenuItem.setText("Set point attributes");
+        pathOrienMenuItem.setText(bundle.getString("MainFrame.pathOrienMenuItem.text")); // NOI18N
         pathOrienMenuItem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 pathOrienMenuItemActionPerformed(evt);
             }
         });
         toolMenu.add(pathOrienMenuItem);
+
+        optionsMenuItem.setText(bundle.getString("MainFrame.optionsMenuItem.text")); // NOI18N
+        optionsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                optionsMenuItemActionPerformed(evt);
+            }
+        });
+        toolMenu.add(optionsMenuItem);
 
         menuBar.add(toolMenu);
 
@@ -324,7 +323,7 @@ public class MainFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void loadProjectMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadProjectMenuItemActionPerformed
-        File file = Util.getFile(".xml", "Project file");
+        File file = Util.getFile(".xml", "Project file"); //NOI18N
         if(file == null) {
             return;
         }
@@ -335,7 +334,7 @@ public class MainFrame extends javax.swing.JFrame {
             mapViewer.setRootLayer(rootLayer);
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(this, "Error while loading project : " + ex.getLocalizedMessage());
+            JOptionPane.showMessageDialog(this, "Error while loading project : " + ex.getLocalizedMessage()); 
         }
     }//GEN-LAST:event_loadProjectMenuItemActionPerformed
 
@@ -349,14 +348,14 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_viewShedMenuItemActionPerformed
 
     private void loadLandUseMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadLandUseMenuItemActionPerformed
-        File file = Util.getFile(".tif|.asc", "Raster");
+        File file = Util.getFile(".tif|.asc", "Raster"); //NOI18N
         if(file == null) {
             return;
         }
         try {
             GridCoverage2D cov = IOImage.loadCoverage(file);
             project.setLandUse(cov);
-            rootLayer.addLayerFirst(new RasterLayer("Land use", new CoverageShape(cov, new RasterStyle(
+            rootLayer.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), new CoverageShape(cov, new RasterStyle(
                     new UniqueColorTable((Map)project.getLandColors())))));
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
@@ -365,14 +364,14 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_loadLandUseMenuItemActionPerformed
 
     private void loadDSMMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadDSMMenuItemActionPerformed
-        File file = Util.getFile(".tif|.asc", "Raster");
+        File file = Util.getFile(".tif|.asc", "Raster"); //NOI18N
         if(file == null) {
             return;
         }
         try {
             GridCoverage2D cov = IOImage.loadCoverage(file);
             project.setDSM(cov);
-            rootLayer.addLayerFirst(new RasterLayer("DSM", new CoverageShape(cov, new RasterStyle(ColorRamp.RAMP_TEMP))));
+            rootLayer.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DSM"), new CoverageShape(cov, new RasterStyle(ColorRamp.RAMP_TEMP))));
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Error : " + ex.getLocalizedMessage());
@@ -419,7 +418,7 @@ public class MainFrame extends javax.swing.JFrame {
                         Bounds b = dlg.bounds.updateBounds(point);
                         ViewShedResult viewshed = project.getDefaultComputeView().calcViewShed(
                                 new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), 
-                                -1, dlg.direct, b);
+                                dlg.zDest, dlg.inverse, b);
                         if(dlg.vectorOutput) {
                             viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon()));
                         } else {
@@ -438,7 +437,8 @@ public class MainFrame extends javax.swing.JFrame {
                     if(dlg.vectorOutput) {
                         l = new FeatureLayer("Multi viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
                     } else {
-                        l = new RasterLayer("Multi viewshed", viewshedRast, project.getDefaultScaleData().getGridGeometry().getEnvelope2D());
+                        l = new RasterLayer("Multi viewshed", new RasterShape(viewshedRast, 
+                                project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(), true), project.getCRS());
                     }
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
@@ -483,12 +483,13 @@ public class MainFrame extends javax.swing.JFrame {
     private void genMSMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_genMSMenuItemActionPerformed
         double r = project.getDefaultScaleData().getResolution();
         
-        String res = JOptionPane.showInputDialog(this, "Create multi scale database", (int)(r*4) + ", " + (int)(r*16) + ", " + (int)(r*64));
+        String res = JOptionPane.showInputDialog(this, java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("CREATE MULTI SCALE DATABASE"), 
+                (int)(r*3) + ", " + (int)(r*9) + ", " + (int)(r*27) + ", " + (int)(r*81)); //NOI18N
         if(res == null || res.isEmpty()) {
             return;
         }
         NavigableSet<Double> resolutions = new TreeSet<>();
-        for(String s : res.split(",")) {
+        for(String s : res.split(",")) { //NOI18N
             if(!s.trim().isEmpty()) {
                 resolutions.add(Double.parseDouble(s.trim()));
             }
@@ -510,7 +511,7 @@ public class MainFrame extends javax.swing.JFrame {
                 Envelope2D env = project.getDtmCov().getEnvelope2D();
                 env = new Envelope2D(env.getCoordinateReferenceSystem(), 
                         env.x, env.y-r*(dtmSamp.getHeight()*scale-dtm.getHeight()), dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
-                GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env);
+                GridCoverage2D dtmCov = new GridCoverageFactory().create("", dtmSamp, env); //NOI18N
                 ScaleData dataScale = new ScaleData(dtmCov, 
                         land != null ? samplingLanduse(land, scale) : null, 
                         dsm != null ? samplingDEM(dsm, scale) : null, 
@@ -535,13 +536,13 @@ public class MainFrame extends javax.swing.JFrame {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                ProgressBar progressBar = Config.getProgressBar("Metrics...");
+                ProgressBar progressBar = Config.getProgressBar(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRICS..."));
                 if(dlg.gridSampling) {
                     GridMetricTask task = new GridMetricTask(project, project.getStartZ(), dlg.zDest, 
-                            dlg.direct, dlg.bounds, dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
+                            dlg.inverse, dlg.bounds, dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
                     ExecutorService.execute(task);
                     Map<String, WritableRaster> result = task.getResult();
-                    DefaultGroupLayer gl = new DefaultGroupLayer("Metric grid result", true);
+                    DefaultGroupLayer gl = new DefaultGroupLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC GRID RESULT"), true);
                     gl.setRemovable(true);
                     for(String name : result.keySet()) {
                         RasterStyle s = new RasterStyle();
@@ -556,11 +557,11 @@ public class MainFrame extends javax.swing.JFrame {
                     rootLayer.addLayerFirst(gl);
                 } else {
                     PointMetricTask task = new PointMetricTask(project, project.getStartZ(), -1, 
-                            dlg.direct, dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
+                            dlg.inverse, dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
                     
-                    FeatureLayer l = new FeatureLayer("Metric point result", features);
+                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features);
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                 }
@@ -585,13 +586,13 @@ public class MainFrame extends javax.swing.JFrame {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                ProgressBar progressBar = Config.getProgressBar("Metrics...");
+                ProgressBar progressBar = Config.getProgressBar(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRICS..."));
                 if(dlg.gridSampling) {
                     GridMetricTask task = new GridMetricTask(project, project.getStartZ(), dlg.bounds, 
                             dlg.selCodes, (List)dlg.metrics, dlg.sample, null, progressBar);
                     ExecutorService.execute(task);
                     Map<String, WritableRaster> result = task.getResult();
-                    DefaultGroupLayer gl = new DefaultGroupLayer("Metric grid result", true);
+                    DefaultGroupLayer gl = new DefaultGroupLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC GRID RESULT"), true);
                     gl.setRemovable(true);
                     for(String name : result.keySet()) {
                         RasterStyle s = new RasterStyle();
@@ -609,7 +610,7 @@ public class MainFrame extends javax.swing.JFrame {
                             dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
-                    FeatureLayer l = new FeatureLayer("Metric point result", features);
+                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features);
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                 }
@@ -750,7 +751,7 @@ public class MainFrame extends javax.swing.JFrame {
         if(project != null) {
             project.close();
         }
-        mapViewer.setRootLayer(new DefaultGroupLayer(""));
+        mapViewer.setRootLayer(new DefaultGroupLayer("")); //NOI18N
         project = null;
         viewshedDlg = null;
         viewtanDlg = null;
@@ -764,7 +765,7 @@ public class MainFrame extends javax.swing.JFrame {
         layers.getLayerFirst().setVisible(true);
         
         if(project.hasMultiScale()) {
-            DefaultGroupLayer gl = new DefaultGroupLayer("Other scales", false);
+            DefaultGroupLayer gl = new DefaultGroupLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("OTHER SCALES"), false);
             for(ScaleData data : project.getScaleDatas()) {
                 if(data == project.getDefaultScaleData()) {
                     continue;
@@ -778,7 +779,7 @@ public class MainFrame extends javax.swing.JFrame {
     } 
 
     private DefaultGroupLayer createScaleDataLayers(final ScaleData data) {
-        DefaultGroupLayer gl = new DefaultGroupLayer(""+data.getResolution(), false) {
+        DefaultGroupLayer gl = new DefaultGroupLayer(""+data.getResolution(), false) { //NOI18N
 
             @Override
             public JPopupMenu getContextMenu() {
@@ -786,11 +787,11 @@ public class MainFrame extends javax.swing.JFrame {
                     return null;
                 }
                 JPopupMenu menu = new JPopupMenu();
-                menu.add(new AbstractAction("Remove...") {
+                menu.add(new AbstractAction(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("REMOVE...")) {
                     @Override
                     public void actionPerformed(ActionEvent e) {
-                        int res = JOptionPane.showConfirmDialog(null, "Do you want to remove the scale " + getName() + " ?",
-                        "Suppression...", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                        int res = JOptionPane.showConfirmDialog(null, java.text.MessageFormat.format(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DO YOU WANT TO REMOVE THE SCALE {0} ?"), new Object[] {getName()}),
+                        java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("REMOVE..."), JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                         if(res == JOptionPane.YES_OPTION) {
                             try {
                                 project.removeScaleData(Double.parseDouble(getName()));
@@ -806,14 +807,14 @@ public class MainFrame extends javax.swing.JFrame {
             
         };
         
-        gl.addLayerFirst(new RasterLayer("DTM", new CoverageShape(data.getDtmCov(), new RasterStyle(ColorRamp.RAMP_DEM))));
+        gl.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DTM"), new CoverageShape(data.getDtmCov(), new RasterStyle(ColorRamp.RAMP_DEM))));
         if(data.getDsm() != null) {
-            gl.addLayerFirst(new RasterLayer("DSM", new RasterShape(data.getDsm(), data.getDtmCov().getEnvelope2D(), 
+            gl.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DSM"), new RasterShape(data.getDsm(), data.getDtmCov().getEnvelope2D(), 
                     new RasterStyle(ColorRamp.RAMP_TEMP), true)));
         }
         if(project.hasLandUse()) {
             final UniqueColorTable colorTable = new UniqueColorTable((Map)project.getLandColors());
-            RasterLayer l = new RasterLayer("Land use", new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
+            RasterLayer l = new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
                     new RasterStyle(colorTable, false), true));
             l.addLayerListener(new LayerListener() {
                 @Override
@@ -839,15 +840,13 @@ public class MainFrame extends javax.swing.JFrame {
      * @param args the command line arguments
      */
     public static void main(String args[]) throws Exception {
-                      
-        Locale.setDefault(Locale.ENGLISH);
         
         // MPI Execution
-        if(args.length > 0 && args[0].equals("-mpi")) {
+        if(args.length > 0 && args[0].equals("-mpi")) { //NOI18N
             new MpiLauncher(Arrays.copyOfRange(args, 1, args.length)).run();
             return;
         }
-
+        
         // CLI execution
         if(args.length > 0 && !args[0].equals(JavaLoader.NOFORK)) {        
             if(!GraphicsEnvironment.isHeadless() && SplashScreen.getSplashScreen() != null) {
@@ -855,6 +854,8 @@ public class MainFrame extends javax.swing.JFrame {
             }
             new CLITools().execute(args);
         } else { // UI execution
+            Config.setNodeClass(MainFrame.class);
+            PreferencesDialog.initLanguage();
             JavaLoader.launchGUI(MainFrame.class, args.length == 0, 2048);
         }
     }
@@ -865,7 +866,6 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenuItem genMSMenuItem;
-    private javax.swing.JPopupMenu.Separator jSeparator1;
     private javax.swing.JMenuItem loadDSMMenuItem;
     private javax.swing.JMenuItem loadLandUseMenuItem;
     private javax.swing.JMenuItem loadProjectMenuItem;

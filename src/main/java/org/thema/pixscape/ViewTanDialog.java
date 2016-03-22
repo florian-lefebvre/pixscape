@@ -110,7 +110,8 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
         metricsButton = new javax.swing.JButton();
         viewshedCheckBox = new javax.swing.JCheckBox();
 
-        setTitle("Tangential view");
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
+        setTitle(bundle.getString("ViewTanDialog.title")); // NOI18N
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent evt) {
                 formComponentShown(evt);
@@ -125,46 +126,46 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
             }
         });
 
-        closeButton.setText("Close");
+        closeButton.setText(bundle.getString("ViewTanDialog.closeButton.text")); // NOI18N
         closeButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 closeButtonActionPerformed(evt);
             }
         });
 
-        jLabel1.setText("Point");
+        jLabel1.setText(bundle.getString("ViewTanDialog.jLabel1.text")); // NOI18N
 
-        pointTextField.setText("0.0 , 0.0 ");
+        pointTextField.setText(bundle.getString("ViewTanDialog.pointTextField.text")); // NOI18N
 
-        jLabel2.setText("Z eye");
+        jLabel2.setText(bundle.getString("ViewTanDialog.jLabel2.text")); // NOI18N
 
-        zEyeTextField.setText("1.8");
+        zEyeTextField.setText(bundle.getString("ViewTanDialog.zEyeTextField.text")); // NOI18N
 
-        boundsButton.setText("Bounds...");
+        boundsButton.setText(bundle.getString("ViewTanDialog.boundsButton.text")); // NOI18N
         boundsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 boundsButtonActionPerformed(evt);
             }
         });
 
-        updateButton.setText("Update");
+        updateButton.setText(bundle.getString("ViewTanDialog.updateButton.text")); // NOI18N
         updateButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 updateButtonActionPerformed(evt);
             }
         });
 
-        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder("Result"));
+        jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(bundle.getString("ViewTanDialog.jPanel1.border.title"))); // NOI18N
 
         buttonGroup1.add(landRadioButton);
         landRadioButton.setSelected(true);
-        landRadioButton.setText("Land use");
+        landRadioButton.setText(bundle.getString("ViewTanDialog.landRadioButton.text")); // NOI18N
 
         buttonGroup1.add(distRadioButton);
-        distRadioButton.setText("Distance");
+        distRadioButton.setText(bundle.getString("ViewTanDialog.distRadioButton.text")); // NOI18N
 
         buttonGroup1.add(zRadioButton);
-        zRadioButton.setText("Elevation");
+        zRadioButton.setText(bundle.getString("ViewTanDialog.zRadioButton.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -190,14 +191,14 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
                 .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
-        metricsButton.setText("Metrics");
+        metricsButton.setText(bundle.getString("ViewTanDialog.metricsButton.text")); // NOI18N
         metricsButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 metricsButtonActionPerformed(evt);
             }
         });
 
-        viewshedCheckBox.setText("Viewshed");
+        viewshedCheckBox.setText(bundle.getString("ViewTanDialog.viewshedCheckBox.text")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -224,7 +225,7 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(boundsButton))
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(updateButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 72, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(updateButton)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .add(closeButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())

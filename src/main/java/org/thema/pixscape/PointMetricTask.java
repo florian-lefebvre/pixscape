@@ -57,7 +57,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     
     // options for viewshed
     private double destZ;
-    private boolean direct;
+    private boolean inverse;
     
     private final Bounds bounds;
     
@@ -80,7 +80,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
      * @param project the project (must be saved for MPI mode)
      * @param startZ the height of the eye of the observer
      * @param destZ the height of the observed points, -1 if not used
-     * @param direct if true the starting point is the observer, else the starting point is the observed point
+     * @param inverse if false the starting point is the observer, else the starting point is the observed point
      * @param bounds the 3D limits of the sight 
      * @param metrics the metrics to calculate
      * @param pointFile the sampling point shapefile
@@ -88,13 +88,13 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
      * @param resDir the directory for storing result file, may be null for not saving the results
      * @param monitor the progress monitor, may be null
      */
-    public PointMetricTask(Project project, double startZ, double destZ, boolean direct, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
+    public PointMetricTask(Project project, double startZ, double destZ, boolean inverse, Bounds bounds, List<ViewShedMetric> metrics, File pointFile, String idField, File resDir, ProgressBar monitor) {
         super(monitor);
         this.project = project;
         this.prjFile = project.getProjectFile();
         this.startZ = startZ;
         this.destZ = destZ;
-        this.direct = direct;
+        this.inverse = inverse;
         this.bounds = bounds;
         this.metrics = metrics;
         this.pointFile = pointFile;
@@ -165,7 +165,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
             if(isTan) {
                 values = compute.aggrViewTan(gc, startZ, b, (List) metrics);
             } else {
-                values = compute.aggrViewShed(gc, startZ, destZ, direct, b, (List) metrics);
+                values = compute.aggrViewShed(gc, startZ, destZ, inverse, b, (List) metrics);
             }
             map.put(points.get(i).getId(), values);
             incProgress(1);
@@ -220,7 +220,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         if(isTan) {
             return new File(resDir, "metrics-" + pointFile.getName());
         } else {
-            return new File(resDir, "metrics-" + (direct ? "direct" : "indirect") + "-" + pointFile.getName());
+            return new File(resDir, "metrics" + (inverse ? "-inverse" : "") + "-" + pointFile.getName());
         }
     }
 
