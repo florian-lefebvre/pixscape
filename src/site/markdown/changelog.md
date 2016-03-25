@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 0.4.4 
+- Multi-resolution viewshed : exception thrown in some cases at the border
+- UI : show vectorial metric result with proportionnal circle
+
 ##### version 0.4.3 (22/03/2016)
 - UI : french translation
 - UI : change direct checkbox to inverse checkbox

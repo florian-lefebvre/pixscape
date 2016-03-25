@@ -18,6 +18,7 @@
 
 package org.thema.pixscape.view;
 
+import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Logger;
+import org.apache.commons.math3.exception.OutOfRangeException;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
@@ -99,7 +101,7 @@ public class MultiComputeViewJava extends ComputeView {
                 GridGeometry2D gridUpper = datas.higherEntry(data.getResolution()).getValue().getDtmCov().getGridGeometry();
                 rLim = grid.worldToGrid(gridUpper.gridToWorld(gridUpper.worldToGrid(grid.gridToWorld(rLim))));
                 rect = rect.intersection(rLim);
-                rect.add(c0); // ensure point is in zone
+                rect.add(new Rectangle(c0, new Dimension(1, 1))); // ensure point is in zone
             }
             largestZone = largestZone.union(new Rectangle(rect.x-c0.x, rect.y-c0.y, rect.width, rect.height));
             viewZones.put(data.getResolution(), new GridEnvelope2D(rect));
@@ -287,6 +289,9 @@ public class MultiComputeViewJava extends ComputeView {
                 return Double.NaN;
             }
             
+            if(indv >= view.length) {
+                throw new RuntimeException();
+            }
             if(view[indv] == -1) {
                 view[indv] = 0;
             }

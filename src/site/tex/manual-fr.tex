@@ -76,13 +76,10 @@ Le logiciel Pixscape est dédié à l'analyse du paysage visible à partir de do
 
 
 \subsection{Auteurs}
-Le programme Pixscape a été développé au laboratoire \href{http://thema.univ-fcomte.fr}{ThéMA} (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) par Gilles Vuidel . Le logo a été réalisé par Xavier Girardet.
+Le programme Pixscape a été développé au laboratoire \href{http://thema.univ-fcomte.fr}{ThéMA} (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) par Gilles Vuidel en collaboration avec Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. Le logo a été réalisé par Xavier Girardet.
 
 \subsection{Conditions d’utilisation}
 Le programme Pixscape est disponible librement sous licence GPL. Le code source est téléchargeable à partir du dépôt Git : \url{git://git.renater.fr/pixscape.git}.
-Les utilisateurs de PixScape sont invités à citer la référence ??? dans leurs travaux :
-
-Réf
 
 
 \section{Configuration requise}
@@ -104,7 +101,8 @@ Pixscape est téléchargeable à cette adresse : \url{http://sourcesup.renater.f
 Pixscape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
 L'interface graphique permet de créer un projet, visualiser les données, calculer de manière interactive les vues et les métriques, et de calculer des métriques de visibilité sur son ordinateur local. L'interface en ligne de commande permet quant à elle, de lancer ces même calculs sur des ordinateurs distants ainsi que sur des clusters.
 
-Le chapitre suivant décrit les principes des calculs de visibilité dans PixScape, puis l'ensemble des fonctionnalités du logiciel disponibles à partir de l'interface graphique sont décrites dans le chapitre \ref{gui}. Le chapitre \ref{cli} détaille comment utiliser Pixscape en ligne de commande. 
+Le chapitre suivant décrit l'ensemble des fonctionnalités du logiciel disponibles à partir de l'interface graphique. Le chapitre \ref{cli} détaille comment utiliser Pixscape en ligne de commande. Le chapitre \ref{principles} explique comment sont implémentés les calculs de visibilité dans PixScape. L'ensemble des métriques disponibles sont détaillées dans le chapitre \ref{metrics}. Et le chapitre \ref{perf} revient sur les modes de parallélisation, les performances et la gestion mémoire.
+
 
 
 
@@ -363,6 +361,7 @@ Les paramètres spécifiques à la vue sont affichés en haut de la fenêtre (fi
 Les autres paramètres pour la vue (Hauteur de l'oeil, ...) doivent être définis en amont dans la fenêtre Options (cf. \nameref{options}).
 
 \subsection{Echantillonnage}
+\label{sampling}
 Les points d'observation peuvent être donnés en raster (option Grille) ou en vectoriel (option Points). Le format du résultat (raster ou vectoriel) est lié au type choisi.
 
 \subsubsection{Échantillonnage raster}
@@ -398,12 +397,54 @@ Pour chaque point d'observation, un ensemble de métriques pourra être calculé
 
 La figure \ref{metric_param_dlg} montre le paramétrage de la métrique A. Dans cet exemple, la métrique A sera calculée uniquement sur les classes d'occupation du sol 1, 3, 4 et 5 pour 3 intervalles de distance [0-100[, [100-1000[ et [1000-10000[. Le résultat contiendra pour chaque point d'observation 3 valeurs, une pour chaque intervalle de distance.
 
+Le bouton "Ajout chaque" permet d'ajouter une métrique plusieurs fois : pour chaque catégorie d'occupation du sol sélectionnée.
+
+Les catégories d'occupation du sol peuvent aussi être regroupées pour ne former qu'une seule classe dans le calcul d'une métrique avec le caractère "-" (figure \ref{metric_param_group_dlg}). Cela permet de garder une occupation du sol détaillée et dans le même temps de réaliser certaines analyses sur des classes plus générales.
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/metric_param_group-fr.png} 
+	\caption{Paramétrage de la métrique S. Les catégories d'occupation du sol sont regroupées en 4 classes.}
+	\label{metric_param_group_dlg}
+\end{figure}
+
+Le regroupement des catégories d'occupation du sol n'est pas utile pour la métrique A. En effet cette métrique ne différencie pas les catégories sélectionnées en classe. Par exemple, \verb|1,3,4,5| et \verb|1-3,4-5| donnera le même résultat.
+
 \subsection{Résultats}
 
+Le résultat du calcul de métriques est affiché sur la carte par une ou plusieurs couches au format raster ou vectoriel selon le format d'entrée utilisé pour l'échantillonnage. Chaque couche est exportable par un clic droit sur le nom de la couche et le menu "Exporter...".
+
 \subsubsection{Raster}
+En raster, le résultat correspond à un ensemble de couche raster, une pour chaque métrique et chaque intervalle de distance. Chaque couche peut être exportée au format Tiff ou AsciiGrid.
+
+A partir du paramétrage de la figure \ref{metric_param_dlg}, PixScape produit 3 couches raster (figure \ref{metric_result_rast}) pour les 3 intervalles de distances donnés.
+
+Si l'échantillonnage sur la grille est supérieur à 1, la taille des pixels sera augmentée proportionnellement au facteur d'échantillonnage.
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/metric_result_rast-fr.png} 
+	\caption{Résultat d'un calcul de métriques par un échantillonnage sur la grille.}
+	\label{metric_result_rast}
+\end{figure}
 
 \subsubsection{Vectoriel}
 
+En vectoriel, le résultat est une couche de point contenant les valeurs des métriques dans la table attributaire (figure \ref{metric_result_attr}). Par défaut la première métrique est affichée par cercle proportionnel (figure \ref{metric_result_vect}). Pour afficher une autre métrique, il suffit de modifier l'attribut sélectionné dans l'onglet "Cercle" de la fenêtre de paramétrage du style de la couche.
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/metric_result_vect-fr.png} 
+	\caption{Résultat d'un calcul de métriques à partir d'un shapefile de point. La première métrique est affichée par des cercles proportionnels à la valeur de la métrique.}
+	\label{metric_result_vect}
+\end{figure}
+
+La couche "Métriques" peut être exportée au format shapefile ou bien texte par un clic droit sur le nom de la couche et le menu "Exporter...".
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/metric_result_attr-fr.png} 
+	\caption{Table attributaire de la couche résultat}
+	\label{metric_result_attr}
+\end{figure}
+
+La table attributaire de la couche résultat est accessible par un clic droit sur le nom de la couche et le menu "Table attributaire". Elle contient toujours, en plus des métriques, les 6 paramètres de limitation du champs de vision, permettant de conserver l'information de paramétrage avec les résultats.
 
 \section{Outils et options}
 \label{tools}
@@ -450,6 +491,7 @@ Le paramètre Hauteur oeil ($h1$) spécifie la hauteur de l'observateur à parti
 Le paramètre Précision angulaire ($\alpha$) définit la résolution en degré de la vue tangentielle. Il est fixé par défaut à 0,1° ce qui correspond à 3600 rayons calculés si l'amplitude de la vue est à 360°. Pour plus de détails, voir \nameref{principles_tan} et la figure \ref{grid_tan}. 
 
 \subsubsection{Courbure terrestre}
+\label{curvature}
 Les calculs de visibilité dans PixScape peuvent tenir compte de la courbure de la Terre. En tenir compte est important pour des champs de vision dépassant plusieurs dizaines de kilomètres. Le principe du calcul est simple, plus la distance à l'observateur augmente plus la hauteur des objets visibles diminuent. 
 La hauteur tenant compte de la courbure de la Terre $z'_i$ d'un point $i$ est calculée comme suit : 
 
@@ -534,9 +576,9 @@ java -jar pixscape.jar [-mpi | -proc n | -cuda n]
 commands
 
 Commands list :
---viewshed [indirect] x y [resfile=raster.tif]
+--viewshed [inverse] x y [resfile=raster.tif]
 --viewtan [prec=deg] x y [resname=name]
---planmetric [indirect] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
+--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 \end{Verbatim}
 
@@ -575,27 +617,309 @@ Toutes les commandes qui suivent dans ce manuel ont besoin d'un projet chargé.
 
 \subsection{--landmod : changements d'occupation du sol}
 
+\begin{Verbatim}[commandchars=\\\{\}]
+--landmod zone=\textit{filezones.shp} id=\textit{fieldname} code=\textit{fieldname} dsm=\textit{file.tif} [selid=\textit{id1,...,idn}]
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|zone=filezones.shp| : shapefile de polygones contenant les changements d'occupation du sol
+	\item \verb|id=fieldname| : nom d'un attribut du shapefile servant à identifier les polygones. Si les valeurs ne sont pas uniques, les polygones ayant le même identifiant seront appliqués en un seul changement.
+	\item \verb|code=fieldname| : nom d'un attribut du shapefile stockant la nouvelle catégorie d'occupation du sol du polygone
+	\item \verb|dsm=file.tif| : raster stockant les nouvelles valeurs de MNE utilisées à chaque changement d'occupation du sol. La géométrie du raster doit être exactement la même que le MNT du projet.
+\end{itemize}
+
+\subsubsection{Paramètre optionnel}
+\begin{itemize}
+	\item \verb|selid=id1,...,idn| : liste des identifiants de polygones à traiter. Si ce paramètre n'est pas renseigné tous les polygones du shapefile sont utilisés.
+\end{itemize}
+
+\subsubsection{Description}
+Cette commande doit être placée avant les commandes de calcul de visibilité. Elle va dupliquer le projet pour chaque polygone du shapefile et modifier l'occupation du sol couvert par le polygone ainsi que le MNE. Les commandes suivantes seront exécutées sur chaque projet modifié.
+
+Les projets créés seront nommés par l'identifiant du (ou des) polygones et stockés dans le répertoire du projet.
+
 \subsection{--viewshed : vue planimétrique}
+\begin{Verbatim}[commandchars=\\\{\}]
+--viewshed [inverse] \textit{x} \textit{y} [resfile=\textit{raster.tif}]
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|x| : abscisse du point d'observation dans le système de coordonnées du MNT
+	\item \verb|y| : ordonnée du point d'observation dans le système de coordonnées du MNT
+\end{itemize}
+
+\subsubsection{Paramètres optionnels}
+\begin{itemize}
+	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
+	\item \verb|resfile=raster.tif| : permet de spécifier un autre nom pour le fichier stockant le résultat
+\end{itemize}
+
+\subsubsection{Description}
+La commande \verb|--viewshed| permet de calculer le bassin de visibilité à partir d'un point d'observation. Le résultat est stocké dans un fichier raster de la même taille que le MNT, au format Tiff. Dans ce raster, le bassin de visibilité est formé des pixels dont la valeur est à 1, les autres sont à 0.
+
+\subsubsection{Exemples}
+L'exemple ci-dessous calcule le bassin de visibilité pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans un fichier nommé : \verb|viewshed-925560,6702495.tif|.
+\begin{Verbatim}
+	--viewshed 925560 6702495
+\end{Verbatim}
+
+Le second exemple calcule le bassin de visibilité en mode inverse et enregistre le résultat dans le fichier \verb|bassin1.tif|.
+\begin{Verbatim}
+	--viewshed inverse 925560 6702495 resfile=bassin1.tif
+\end{Verbatim}
 
 \subsection{--viewtan : vue tangentielle}
+\begin{Verbatim}[commandchars=\\\{\}]
+--viewtan [prec=\textit{deg}] \textit{x} \textit{y} [resname=\textit{name}]
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|x| : abscisse du point d'observation dans le système de coordonnées du MNT
+	\item \verb|y| : ordonnée du point d'observation dans le système de coordonnées du MNT
+\end{itemize}
+
+\subsubsection{Paramètres optionnels}
+\begin{itemize}
+	\item \verb|prec=deg| : défini la précision angulaire en degré. Si ce paramètre n'est pas défini, la précision angulaire enregistrée dans le projet sera utilisée.
+	\item \verb|resname=name| : permet de spécifier un autre nom pour les fichiers stockant le résultat
+\end{itemize}
+
+\subsubsection{Description}
+La commande \verb|--viewtan| permet de calculer la vue tangentielle à partir d'un point d'observation. Les résultats sont stockés dans 2 ou 3 fichiers rasters au format Tiff selon si le projet contient une couche d'occupation du sol. 
+\begin{itemize}
+	\item \verb|elev| : altitude du MNT
+	\item \verb|dist| : distance 2D au point d'observation
+	\item \verb|land| : occupation du sol, si présent dans le projet
+\end{itemize}
+
+La taille des raster dépend de la précision angulaire. Pour une précision de 0,1° et une vue à 360°, les images auront une taille de 3600x1800 pixels. Leur système de coordonnées est défini en degré. 
+
+\subsubsection{Exemples}
+L'exemple ci-dessous calcule la vue tangentielle pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans les fichiers nommés : \verb|viewshed-925560,6702495-elev.tif|, \verb|viewshed-925560,6702495-dist.tif| et \verb|viewshed-925560,6702495-land.tif| si le projet contient une couche d'occupation du sol.
+\begin{Verbatim}
+	--viewtan 925560 6702495
+\end{Verbatim}
+
+Le second exemple calcule la vue tangentielle avec une précision angulaire de 0,05° et enregistre le résultat dans les fichiers \verb|vue1-elev.tif|, \verb|vue1-dist.tif| et \verb|vue1-land.tif| si le projet contient une couche d'occupation du sol.
+\begin{Verbatim}
+	--viewshed prec=0.05 925560 6702495 resname=vue1
+\end{Verbatim}
+
 
 \subsection{--planmetric : métriques en vue planimétrique}
 
+\begin{Verbatim}[commandchars=\\\{\}]
+--planmetric [inverse] \textit{metric1}[[\textit{code1,...,coden}]][_\textit{d1,...,dm}] ...
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : métrique planimétrique à calculer avec ses paramètres (cf. \nameref{param_metrics_cli}).
+	\item ...
+\end{itemize}
+
+\subsubsection{Paramètre optionnel}
+\begin{itemize}
+	\item \verb|inverse| : passe en mode inverse, les points d'observation deviennent les points observés
+\end{itemize}
+
+\subsubsection{Description}
+La commande \verb|--planmetric| permet de calculer un ensemble de métriques en vue planimétrique. Les points d'observation sont définis en amont par l'option globale \verb|-sampling|. Si l'option n'est pas renseignée, l'échantillonnage par défaut se fait sur la grille pour tous les pixels du MNT ($n=1$).
+
+Les résultats sont stockés dans plusieurs fichiers Tiff pour un échantillonnage sur la grille et dans un shapefile pour un échantillonnage vectoriel.
+
+
+\subsubsection{Exemples}
+
+L'exemple ci-dessous calcule la métrique A sans paramètre. Si l'échantillonnage est sur la grille, le résultat sera stocké dans le fichier \verb|A-.tif|.
+\begin{Verbatim}
+	--planmetric A
+\end{Verbatim}
+
+L'exemple ci-dessous calcule en vue inversée la métrique A pour le code d'occupation du sol 1 et la métrique A pour le code 2. Si l'échantillonnage est sur la grille, le résultat sera stocké dans les fichiers \verb|A1-.tif| et \verb|A2-.tif|.
+\begin{Verbatim}
+	--planmetric inverse A[1] A[2]
+\end{Verbatim}
+
+
 \subsection{--tanmetric : métriques en vue tangentielle}
+\begin{Verbatim}[commandchars=\\\{\}]
+--tanmetric [prec=\textit{deg}] \textit{metric1}[[\textit{code1,...,coden}]][_\textit{d1,...,dm}] ...
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : métrique tangentielle à calculer avec ses paramètres (cf. \nameref{param_metrics_cli}).
+	\item ...
+\end{itemize}
+
+\subsubsection{Paramètre optionnel}
+\begin{itemize}
+	\item \verb|prec=deg| : précision angulaire en degrés
+\end{itemize}
+
+\subsubsection{Description}
+La commande \verb|--tanmetric| permet de calculer un ensemble de métriques en vue tangentielle. Les points d'observation sont définis en amont par l'option globale \verb|-sampling|. Si l'option n'est pas renseignée, l'échantillonnage par défaut se fait sur la grille pour tous les pixels du MNT ($n=1$).
+
+Les résultats sont stockés dans plusieurs fichiers Tiff pour un échantillonnage sur la grille et dans un shapefile pour un échantillonnage vectoriel.
+
+
+\subsubsection{Exemples}
+
+L'exemple ci-dessous calcule la métrique A sans paramètre. Si l'échantillonnage est sur la grille, le résultat sera stocké dans le fichier \verb|A-.tif|.
+\begin{Verbatim}
+	--tanmetric A
+\end{Verbatim}
+
+L'exemple ci-dessous calcule les vues tangentielles avec une précision angulaire de 0,05°. La métrique A est calculée 2 fois : pour le code d'occupation du sol 1 et pour le code 2. Si l'échantillonnage est sur la grille, le résultat sera stocké dans les fichiers \verb|A1-.tif| et \verb|A2-.tif|.
+\begin{Verbatim}
+	--tanmetric prec=0.05 A[1] A[2]
+\end{Verbatim}
+
+
+\section{Paramétrage des métriques}
+\label{param_metrics_cli}
+Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol ou à certains intervalles de distance. Toutes les métriques ne supportent pas ces paramétrages. Pour connaitre quelle métrique supporte quel paramétrage, voir \nameref{metrics}.
+
+\subsection{Occupation du sol}
+Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol en listant les catégories voulues entre crochet :
+\begin{Verbatim}
+	A[1,3,4,5]
+\end{Verbatim}
+
+Pour les métriques différenciant les catégories d'occupation du sol en classe (métriques S, IJI et CONTAG), les catégories peuvent être regroupées en une classe par le caractère \verb|-|. L'exemple ci-dessous regroupe les 6 catégories d'occupation du sol en 3 classes : 1-2-3, 4 et 5-6.
+\begin{Verbatim}
+	S[1-2-3,4,5-6]
+\end{Verbatim}
+
+\subsection{Distances}
+Le calcul des métriques peut aussi être restreint à certains intervalles de distance avec le caractère \verb|_|. L'exemple ci-dessous calculera la métrique A pour 3 intervalles de distance : 0 à 100m, de 100 à 1000m et plus de 1000m. Il faut donc renseigner 4 distances pour obtenir 3 intervalles.
+\begin{Verbatim}
+	A_0,100,1000,+Infinity
+\end{Verbatim}
+
+Pour les métriques A et S, il est possible de restreindre par occupation du sol et par intervalle de distance. Dans ce cas de figure, les catégories d'occupation du sol doivent être données avant les distances :
+\begin{Verbatim}
+	A[1,2,3]_0,100,1000,+Infinity
+\end{Verbatim}
+
+\textbf{Dans tous les cas, il ne faut aucun espace dans la définition d'une métrique et de ses paramètres !}
 
 \section{Options}
 
 \subsection{Parallélisation : -mpi, -proc, -cuda}
+\begin{Verbatim}[commandchars=\\\{\}]
+-mpi | -proc \textit{n} | -cuda \textit{n}
+\end{Verbatim}
+
+PixScape supporte 3 modes de parallélisation en ligne de commande : par thread pour un ordinateur contenant plusieurs coeurs (\verb|-proc|), sur carte graphique (\verb|-cuda|) ou bien sur cluster (\verb|-mpi|).
+
+Pour plus de détails voir la section \nameref{parallelism}.
+
+Si aucune des 3 options n'est renseignée, la parallélisation par thread sera utilisée avec le nombre de coeurs défini dans l'interface graphique.
 
 \subsection{Paramétrage de la vue : -zeye, -zdest, -bounds, -earth}
 
+\subsubsection{-zeye}
+\begin{Verbatim}[commandchars=\\\{\}]
+-zeye \textit{val}
+\end{Verbatim}
+L'option \verb|-zeye| permet de définir la hauteur de l'oeil de l'observateur ($h1$). Si elle n'est pas renseignée, la hauteur de l'oeil enregistrée dans le projet sera utilisée à la place.
+
+\subsubsection{-zdest}
+\begin{Verbatim}[commandchars=\\\{\}]
+-zdest \textit{val}
+\end{Verbatim}
+L'option \verb|-zdest| permet de définir la hauteur des pixels observés ($h2$). Si elle n'est pas définie, la hauteur du MNE est utilisée.
+
+\subsubsection{-bounds}
+\begin{Verbatim}[commandchars=\\\{\}]
+-bounds [dmin=\textit{val}] [dmax=\textit{val}] [orien=\textit{val}] [amp=\textit{val}] [zmin=\textit{val}] [zmax=\textit{val}]
+\end{Verbatim}
+L'option \verb|-bounds| permet de restreindre le champs de vision dans les 3 dimensions par 6 paramètres : \verb|dmin|, \verb|dmax|, \verb|zmin|, \verb|zmax|, \verb|orien|, \verb|amp|. Pour plus de détails sur les paramètres, voir \nameref{bounds}.
+
+\subsubsection{-earth}
+\begin{Verbatim}[commandchars=\\\{\}]
+-earth flat|curved [refrac=\textit{val}]
+\end{Verbatim}
+
+L'option \verb|-earth| permet de définir si la courbure de la Terre doit être pris en compte ou pas. Le paramètre \verb|flat| désactive le calcul de courbure et le paramètre \verb|curved| l'active. Dans ce dernier cas, le coefficient de réfraction de l'atmosphère peut être renseigné par le paramètre \verb|refrac|.
+
+Pour plus de détails sur le calcul de la courbure, voir \nameref{curvature}.
+
+Si cette option n'est pas renseignée, le paramétrage enregistré dans le projet sera utilisé à la place.
+
 \subsection{Echantillonnage : -sampling}
+\begin{Verbatim}[commandchars=\\\{\}]
+-sampling n=\textit{val} | land=\textit{code1,..,coden} | points=\textit{pointfile.shp} id=\textit{fieldname}
+\end{Verbatim}
+
+L'échantillonnage définissant les points d'observation peuvent être donnés en raster ou en vectoriel. Pour plus de détails sur le fonctionnement de l'échantillonnage voir \nameref{sampling}.
+
+L'option \verb|-sampling| est utilisée uniquement par les commandes \verb|--planmetric| et  \verb|--tanmetric|.
+
+Si cette option n'est pas renseignée, l'échantillonnage exhaustif sur la grille sera utilisé : \verb|-sampling n=1|.
+
+\subsubsection{Echantillonnage raster}
+\begin{Verbatim}[commandchars=\\\{\}]
+-sampling n=\textit{val} | land=\textit{code1,..,coden}
+\end{Verbatim}
+En raster, 2 échantillonnages sont possibles : régulier (\verb|n|) ou par catégorie d'occupation du sol (\verb|land|).
+
+
+\subsubsection{Echantillonnage vectoriel}
+\begin{Verbatim}[commandchars=\\\{\}]
+-sampling points=\textit{pointfile.shp} id=\textit{fieldname}
+\end{Verbatim}
+Avec un échantillonnage issu d'un shapefile, le résultat des commandes \verb|--planmetric| et  \verb|--tanmetric| est stocké dans un shapefile nommé \verb|metrics-pointfile.shp|.
+
 
 \subsection{Multi-résolution : -multi, -mono}
+\begin{Verbatim}[commandchars=\\\{\}]
+-multi dmin=\textit{val} | -mono
+\end{Verbatim}
+
+Le calcul en multi-résolution peut être activé ou désactivé avec respectivement l'option \verb|-multi| et \verb|-mono|. 
+L'option \verb|-multi| a besoin du paramètre \verb|distmin| pour définir la distance minimale avant de changer de résolution. Pour utiliser cette option, le projet doit contenir des données multi-résolution. 
+
+Si aucune des 2 options n'est renseignée, le paramétrage enregistré dans le projet sera utilisé à la place.
 
 \subsection{Emplacement des résultats : -resdir}
+\begin{Verbatim}[commandchars=\\\{\}]
+-resdir \textit{path}
+\end{Verbatim}
+Par défaut les résultats sont enregistrés dans le répertoire du projet. L'option \verb|-resdir| permet de modifier le répertoire par défaut. 
+Si le répertoire donné n'existe pas, il sera créé automatiquement.
 
+Si c'est un chemin relatif qui est donné, le chemin absolu sera déterminé à partir du répertoire courant au lancement de PixScape.
 
+\section{Exemples}
+
+Dans cette section, quelques exemples de lignes de commande complètes sont illustrés.
+
+L'exemple ci-dessous, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques tangentielles (\verb|--tanmetric A SL DL|) à partir d'un ensemble de points d'observation défini dans le shapefile \verb|Points_IDF.shp|. Le résultat sera enregistré dans un shapefile nommé \verb|metrics-Points_IDF.shp|, contenant les points d'observations, et les valeurs des 3 métriques.
+\begin{Verbatim}
+java -jar pixscape-1.0.jar --project Project1/Project1.xml 
+	-sampling points=Points_IDF.shp id=Id 
+	--tanmetric A SL DL
+\end{Verbatim}
+
+L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-dossier \verb|res_tan| (\verb|-resdir res_tan|). Le champs de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01°. Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
+\begin{Verbatim}
+java -Xmx4g -jar  pixscape-1.0.jar -proc 8 --project Project1/Project1.xml -zeye 1.75
+	-resdir res_tan -bounds zmin=-20 zmax=30 -sampling points=Points_IDF.shp 
+	id=Id --tanmetric prec=0.01 A_0,100,1000,+Infinity A[5] A[6] SL DL
+\end{Verbatim}
+
+L'exemple ci-dessous, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le un sous-dossier du projet nommé \verb|res_plan|. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques.
+\begin{Verbatim}
+java -jar  pixscape-1.0.jar -cuda 2 --project Project1/Project1.xml
+	-resdir res_plan -sampling land=4 
+	--planmetric A A[2,3] A[10] S
+\end{Verbatim}
 
 \chapter{Description des calculs de visibilité}
 \label{principles}
@@ -615,7 +939,7 @@ Pour couvrir la totalité de l'image, un rayon est lancé du point O vers chaque
 
 Pour chaque rayon, les pixels sont parcourus du plus proche du point O aux plus éloignés. A chaque pixel, l'angle de visé vertical entre le point O et le centre du pixel est calculé. Si l'angle est supérieur aux précédents, le pixel est visible, sinon il ne l'est pas. 
 
-La hauteur des pixels correspondent à l'altitude du MNT plus la hauteur du MNE si il est présent. La hauteur du point d'observation O correspond à l'altitude du MNT plus le paramètre h1 (Hauteur de l'oeil de l'observateur). La hauteur du MNE n'est jamais prise en compte pour la hauteur de l'observateur (l'observateur ne grimpe pas aux arbres).
+La hauteur des pixels correspond à l'altitude du MNT plus la hauteur du MNE si il est présent. La hauteur du point d'observation O correspond à l'altitude du MNT plus le paramètre h1 (Hauteur de l'oeil de l'observateur). La hauteur du MNE n'est jamais prise en compte pour la hauteur de l'observateur (l'observateur ne grimpe pas aux arbres).
 
 La figure \ref{ray_side} représente le calcul d'un rayon sur 5 pixels. Le pixel situé sur le point de l'observateur (pixel 0) est toujours visible. Le pixel suivant (1) est aussi visible, par contre le pixel 2 ne l'est pas car l'angle de visé est plus faible que pour le pixel 1, et ainsi de suite.
 
@@ -826,9 +1150,108 @@ Cette métrique donne une valeur minimale de 1 dans le cas d’un bassin de visi
 \label{perf}
 
 \section{Parallélisation}
+\label{parallelism}
+Pour diminuer les temps d'exécution de calcul de visibilité, PixScape implémente 3 méthodes de parallélisation : par thread pour un ordinateur seul, par CUDA pour utiliser l'accélération GPU (Graphics Processor Unit) et par MPI pour les clusters d'ordinateurs.
+
+Le tableau \ref{perf_table} montre les temps d'exécution pour calculer 10000 vues selon le type de vue (planimétrique ou tangentiel), la taille du MNT en million de pixels et la parallélisation : 1 coeur (sans parallélisation), 4 coeurs, 16 coeurs et GPU (carte graphique NVidia Tesla K40).
+
+\begin{table}[htbp]
+	
+	\begin{tabular}{|l|r|r|r|r|r|}
+		\hline
+		Type & \multicolumn{1}{l|}{Taille} & \multicolumn{1}{l|}{1 coeur} & \multicolumn{1}{l|}{4 coeurs} & \multicolumn{1}{l|}{16 coeurs} & \multicolumn{1}{l|}{GPU} \\ \hline
+		\multicolumn{ 1}{|c|}{Planimétrique} & 1 M & 9,8 & 2,5 & 0,7 & 0,6 \\ \cline{ 2- 6}
+		\multicolumn{ 1}{|l|}{} & 9 M & 103,0 & 26,0 & 6,7 & 1,8 \\ \cline{ 2- 6}
+		\multicolumn{ 1}{|l|}{} & 100 M & 1168,0 & 376,0 & 83,0 & 13,2 \\ \hline
+		\multicolumn{ 1}{|c|}{Tangentiel} & 1 M & 36,0 & 9,8 & 2,7 & 0,8 \\ \cline{ 2- 6}
+		\multicolumn{ 1}{|l|}{} & 9 M & 113,0 & 28,8 & 8,0 & 2,2 \\ \cline{ 2- 6}
+		\multicolumn{ 1}{|l|}{} & 100 M & 357,0 & 91,0 & 24,7 & 6,3 \\ \hline
+	\end{tabular}
+	\caption{Temps moyen en minute pour calculer 10000 vues.}
+	\label{perf_table}
+\end{table}
+
+
+
+\subsection{Un ordinateur : threads}
+\label{thread}
+La parallélisation par thread accélère le calcul sur une seule machine contenant plusieurs cœurs ou processeurs.
+Si votre ordinateur a plus qu'un coeur (la plupart), vous pouvez tirer partie de la parallélisation par thread pour accélérer vos calculs avec PixScape. Le temps d'exécution est approximativement inversement proportionnel au nombre de coeurs utilisés. Ce mode de parallélisation est utilisable en interface graphique et en ligne de commande.
+
+\subsubsection{Interface graphique}
+La fenêtre "Préferences" accessible par le menu Fichier permet de régler le nombre de coeurs utilisés par PixScape. Il est défini par défaut au nombre coeurs de la machine moins 1. Après avoir modifié le nombre de coeurs utilisé par PixScape, il vaut mieux relancer PixScape pour être sûr que le changement soit bien pris en compte.
+
+\subsubsection{Ligne de commande}
+En ligne de commande, il faut définir le nombre de coeurs (ou processeurs) que PixScape peut utiliser avec l'option \verb|-proc| :
+\begin{Verbatim}
+	java -jar pixscape-1.0.jar -proc 8 --project path2myproject/myproject.xml ...
+\end{Verbatim}
+Par défaut, en ligne de commande, le nombre de coeurs utilisés correspond au nombre défini dans la fenêtre Préférences de l'interface graphique.
+
+En augmentant le nombre de coeurs utilisés par PixScape, vous augmentez, par la même occasion, la taille de la mémoire utilisée par PixScape.
+
+\subsection{Carte graphique : CUDA}
+\label{cuda}
+Ce mode de parallélisation permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être important pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). Par contre toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistant.
+
+Pour pouvoir utiliser l'accélération GPU il faut une carte graphique Nvidia supportant CUDA et que la version 6.5 de CUDA soit installée. 
+
+Si PixScape n'arrive pas à utiliser le GPU, les calculs seront basculés automatiquement sur le processeur.
+
+Ce mode de parallélisation est utilisable en interface graphique et en ligne de commande.
+
+\subsubsection{Interface graphique}
+
+L'activation de l'accélération GPU est accessible à partir de la fenêtre Options (voir \nameref{options}).
+
+En interface graphique, PixScape ne peut utiliser qu'une seule carte graphique, si votre ordinateur contient plusieurs cartes graphiques, PixScape peut les utiliser en parallèle mais uniquement en ligne de commande.
+
+\subsubsection{Ligne de commande}
+En ligne de commande, l'option \verb|-cuda| permet d'activer l'utilisation du GPU. Il faut aussi donner le nombre de cartes graphiques à utiliser.
+
+\begin{Verbatim}
+	java -jar pixscape-1.0.jar -cuda 1 --project path2myproject/myproject.xml ...
+\end{Verbatim}
+Dans l'exemple ci-dessus, PixScape utilisera une carte graphique pour les calculs de visibilité. Si votre ordinateur contient plusieurs cartes graphiques il est possible d'augmenter le paramètre pour les utiliser en parallèle et diminuer d'autant le temps d'exécution.
+
+
+\subsection{Cluster : MPI}
+PixScape peut aussi être utilisé sur des clusters de calcul supportant Java avec OpenMPI. Ce mode de parallélisation n'est accessible qu'en ligne de commande.
+
+Exemple :
+\begin{Verbatim}
+	mpirun java -jar pixscape-1.0.jar -mpi --project path2myproject/myproject.xml ...
+\end{Verbatim}
+Seulement certaines commandes peuvent être utilisées dans l'environnement MPI : \verb|--planmetric|, \verb|--tanmetric|, \verb|--landmod|
+
 
 \section{Gestion mémoire}
+\label{memory}
+Par défaut, la taille de la mémoire utilisable par PixScape est dépendante du système et peut varier de 128 MB à plusieurs GB.
+Si vous avez un gros projets, certaines commandes stopperont le programme à cause d'un manque de mémoire. De plus, si vous utilisez la parallélisation par thread (\nameref{thread}), PixScape aura besoin de plus de mémoire pour chaque coeur utilisé.
+Dans tous les cas, si l'exécution se termine par une erreur OutOfMemoryError ou GC overhead, vous devez augmenter la mémoire disponible pour PixScape.
 
-\section{Multi-résolution}
+\subsection{Interface graphique}
+La mémoire allouée pour PixScape peut être modifiée dans la fenêtre "Préférences" dans le menu Fichier / Préférences. Après avoir changé ce paramètre, PixScape doit être relancé pour qu'il tienne compte de la nouvelle taille mémoire.
+
+En interface graphique, PixScape a besoin de plus de mémoire qu'en ligne de commande du fait de l'affichage des couches. Si vous êtes trop limité en mémoire vive, vous pouvez lancer les calculs en ligne de commande pour diminuer les besoins en mémoire de PixScape (voir \nameref{cli}).
+
+\subsection{Interface en ligne de commande}
+Pour définir la mémoire maximale utilisable par PixScape en ligne de commande, il faut utiliser l'option Java \verb|-Xmx| :
+\begin{Verbatim}
+	java -Xmx4g -jar pixscape-1.0.jar ... # 4Gb allocated
+	java -Xmx1500m -jar pixscape-1.0.jar ... # 1500 Mb -> 1.5Gb allocated
+\end{Verbatim}
+
+
+Si vous ne pouvez pas allouer plus de 1 GB ou 1.5 GB alors que votre ordinateur a plus de mémoire vive, vous utilisez sûrement une version 32-bit de Java qui est limitée à moins de 2 GB.
+Pour tester votre version de Java :
+\begin{Verbatim}
+	java -version
+\end{Verbatim}
+Si vous avez une version 32-bit, installez une version 64-bit de Java pour allouer plus de mémoire à PixScape.
+
+
+%\section{Multi-résolution}
 
 \end{document}

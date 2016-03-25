@@ -33,6 +33,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.Locale;
@@ -61,6 +62,7 @@ import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
+import org.thema.drawshape.PointShape;
 import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
@@ -68,10 +70,13 @@ import org.thema.drawshape.layer.FeatureLayer;
 import org.thema.drawshape.layer.Layer;
 import org.thema.drawshape.layer.LayerListener;
 import org.thema.drawshape.layer.RasterLayer;
+import org.thema.drawshape.style.CircleStyle;
 import org.thema.drawshape.style.FeatureStyle;
 import org.thema.drawshape.style.PointStyle;
 import org.thema.drawshape.style.RasterStyle;
 import org.thema.drawshape.style.table.ColorRamp;
+import org.thema.drawshape.style.table.FeatureAttributeCollection;
+import org.thema.drawshape.style.table.StrokeRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
 import org.thema.pixscape.view.ViewShedResult;
@@ -561,7 +566,11 @@ public class MainFrame extends javax.swing.JFrame {
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
                     
-                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features);
+                    String attr = dlg.metrics.get(0).getResultNames()[0];
+                    FeatureAttributeCollection<Double> attrColl = new FeatureAttributeCollection(features, attr);
+                    CircleStyle style = new CircleStyle(attr, Collections.min(attrColl), Collections.max(attrColl), new Color(0, 0, 0, 0), Color.black);
+                    style.setRampStroke(new StrokeRamp(2, 2));
+                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features, style);
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                 }
@@ -610,7 +619,12 @@ public class MainFrame extends javax.swing.JFrame {
                             dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
-                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features);
+                    
+                    String attr = dlg.metrics.get(0).getResultNames()[0];
+                    FeatureAttributeCollection<Double> attrColl = new FeatureAttributeCollection(features, attr);
+                    CircleStyle style = new CircleStyle(attr, Collections.min(attrColl), Collections.max(attrColl), new Color(0, 0, 0, 0), Color.black);
+                    style.setRampStroke(new StrokeRamp(2, 2));
+                    FeatureLayer l = new FeatureLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("METRIC POINT RESULT"), features, style);
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
                 }
