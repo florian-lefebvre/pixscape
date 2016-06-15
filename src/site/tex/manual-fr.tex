@@ -57,7 +57,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		21/03/2016\\
+		20/04/2016\\
 	}
 	
 \end{titlepage}
@@ -72,25 +72,25 @@
 
 \section{A propos de PixScape}
 
-Le logiciel Pixscape est dédié à l'analyse du paysage visible à partir de données raster en 2D et demi. Il offre l’avantage d’être un outil intégré regroupant l’ensemble des fonctionnalités disponibles dans les outils SIG standards existants dans ce domaine et proposant d’autres fonctions originales comme la vue tangentielle et la gestion des données multi-résolution.
+Le logiciel PixScape est dédié à l'analyse du paysage visible à partir de données raster en 2D et demi. Il offre l’avantage d’être un outil intégré regroupant l’ensemble des fonctionnalités disponibles dans les outils SIG standards existants dans ce domaine et proposant d’autres fonctions originales comme la vue tangentielle et la gestion des données multi-résolution.
 
 
 \subsection{Auteurs}
-Le programme Pixscape a été développé au laboratoire \href{http://thema.univ-fcomte.fr}{ThéMA} (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) par Gilles Vuidel en collaboration avec Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. Le logo a été réalisé par Xavier Girardet.
+Le programme PixScape a été développé au laboratoire \href{http://thema.univ-fcomte.fr}{ThéMA} (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) par Gilles Vuidel en collaboration avec Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. Le logo a été réalisé par Xavier Girardet.
 
 \subsection{Conditions d’utilisation}
-Le programme Pixscape est disponible librement sous licence GPL. Le code source est téléchargeable à partir du dépôt Git : \url{git://git.renater.fr/pixscape.git}.
+Le programme PixScape est disponible librement sous licence GPL. Le code source est téléchargeable à partir du dépôt Git : \url{git://git.renater.fr/pixscape.git}.
 
 
 \section{Configuration requise}
 
-Pixscape fonctionne sur n'importe quel ordinateur supportant Java 7 ou supérieur (PC sous Linux, Windows, Mac...). Toutefois, lorsqu'il s'agit de données très volumineuses, la quantité de mémoire vive (RAM) de l’ordinateur peut limiter la taille des zones d'étude. De plus, la puissance du processeur va déterminer la vitesse de leur calcul. Vous trouverez plus de détails à ce sujet dans le chapitre \nameref{perf}. 
+PixScape fonctionne sur n'importe quel ordinateur supportant Java 7 ou supérieur (PC sous Linux, Windows, Mac...). Toutefois, lorsqu'il s'agit de données très volumineuses, la quantité de mémoire vive (RAM) de l’ordinateur peut limiter la taille des zones d'étude. De plus, la puissance du processeur va déterminer la vitesse de leur calcul. Vous trouverez plus de détails à ce sujet dans le chapitre \nameref{perf}. 
 
-Pour l'utilisation de l'accélération GPU, l'ordinateur doit être équipé d'une carte graphique Nvidia supportant CUDA. Par défaut, Pixscape est compilé avec la version 6.5 de CUDA. Si vous ne pouvez pas installer la version 6.5 de CUDA, il faudra installer la bibliothèque JCuda correspondant à votre version de CUDA et lancer le programme en ligne de commande (voir \nameref{cuda}). Les binaires sont téléchargeables à l'adresse \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
+Pour l'utilisation de l'accélération GPU, l'ordinateur doit être équipé d'une carte graphique Nvidia supportant CUDA. Par défaut, PixScape est compilé avec la version 6.5 de CUDA. Si vous ne pouvez pas installer la version 6.5 de CUDA, il faudra installer la bibliothèque JCuda correspondant à votre version de CUDA et lancer le programme en ligne de commande (voir \nameref{cuda}). Les binaires sont téléchargeables à l'adresse \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
 
 \section{Installation et lancement du programme}
 
-Pixscape est téléchargeable à cette adresse : \url{http://sourcesup.renater.fr/pixscape}.
+PixScape est téléchargeable à cette adresse : \url{http://sourcesup.renater.fr/pixscape}.
 
 \begin{itemize}
 	\item Télécharger et installer Java 7 ou + (\href{http://www.java.com}{java.com}). Installer de préférence la version 64 bits de Java.
@@ -98,10 +98,10 @@ Pixscape est téléchargeable à cette adresse : \url{http://sourcesup.renater.f
 	\item Lancer pixscape-1.0.jar
 \end{itemize}
 
-Pixscape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
+PixScape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
 L'interface graphique permet de créer un projet, visualiser les données, calculer de manière interactive les vues et les métriques, et de calculer des métriques de visibilité sur son ordinateur local. L'interface en ligne de commande permet quant à elle, de lancer ces même calculs sur des ordinateurs distants ainsi que sur des clusters.
 
-Le chapitre suivant décrit l'ensemble des fonctionnalités du logiciel disponibles à partir de l'interface graphique. Le chapitre \ref{cli} détaille comment utiliser Pixscape en ligne de commande. Le chapitre \ref{principles} explique comment sont implémentés les calculs de visibilité dans PixScape. L'ensemble des métriques disponibles sont détaillées dans le chapitre \ref{metrics}. Et le chapitre \ref{perf} revient sur les modes de parallélisation, les performances et la gestion mémoire.
+Le chapitre suivant décrit l'ensemble des fonctionnalités du logiciel disponibles à partir de l'interface graphique. Le chapitre \ref{cli} détaille comment utiliser PixScape en ligne de commande. Le chapitre \ref{principles} explique comment sont implémentés les calculs de visibilité dans PixScape. L'ensemble des métriques disponibles sont détaillées dans le chapitre \ref{metrics}. Et le chapitre \ref{perf} revient sur les modes de parallélisation, les performances et la gestion mémoire.
 
 
 
@@ -109,11 +109,11 @@ Le chapitre suivant décrit l'ensemble des fonctionnalités du logiciel disponib
 \chapter{Interface graphique}
 \label{gui}
 
-Une fois Pixscape lancé, la première étape consiste à créer un projet basé sur un MNT (Modèle Numérique de Terrain) couvrant la zone à étudier.
+Une fois PixScape lancé, la première étape consiste à créer un projet basé sur un MNT (Modèle Numérique de Terrain) couvrant la zone à étudier.
 
 \section{Création d'un projet}
 
-La mise en place d’un nouveau projet Pixscape s’effectue à partir du menu : Fichier / Nouveau projet. L’utilisateur doit renseigner un nom et un chemin pour le projet ainsi qu'un MNT au format Tiff ou AsciiGrid. \textbf{Le système de coordonnées du MNT doit obligatoirement être en mètre, sinon les calculs de visibilité seront erronés.} La résolution des altitudes (Z) peut être précisée si elle n'est pas métrique. Par exemple, si les altitudes sont données en centimètre, il faudra saisir 0.01 dans "Résolution Z".
+La mise en place d’un nouveau projet PixScape s’effectue à partir du menu : Fichier / Nouveau projet. L’utilisateur doit renseigner un nom et un chemin pour le projet ainsi qu'un MNT au format Tiff ou AsciiGrid. \textbf{Le système de coordonnées du MNT doit obligatoirement être en mètre. Si ce n'est pas le cas, les calculs de visibilité seront erronés.} La résolution des altitudes (Z) peut être précisée si elle n'est pas métrique. Par exemple, si les altitudes sont données en centimètre, il faudra saisir 0.01 dans "Résolution Z".
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/new_project-fr.png} 
@@ -123,7 +123,7 @@ La mise en place d’un nouveau projet Pixscape s’effectue à partir du menu :
 Le projet créé stocke dans son dossier, le MNT transformé en Tiff avec les altitudes en résolution métrique ainsi qu'un fichier XML conservant les paramètres du projet.
 Pour ouvrir un projet, il suffit de sélectionner le fichier XML correspondant à partir du menu Fichier / Charger un projet.
 
-Dans Pixscape, le MNT est suffisant pour réaliser des calculs de visibilité, mais il est souvent plus intéressant d'ajouter des informations complémentaires pour réaliser des analyses plus précises.
+Dans PixScape, le MNT est suffisant pour réaliser des calculs de visibilité, mais il est souvent plus intéressant d'ajouter des informations complémentaires pour réaliser des analyses plus précises.
 
 \section{Gestion des données}
 
@@ -137,7 +137,7 @@ Deux couches raster complémentaires peuvent être ajoutées à un projet exista
 Le MNE correspond à la hauteur des objets (bâtiments, arbres, etc) au sol. L'addition du MNT et du MNE permet d'obtenir l'élévation totale des éléments du paysage. L'unité des hauteurs doit être obligatoirement exprimée en mètre. Pour charger un MNE, il suffit de sélectionner un fichier raster au format Tiff ou Asciigrid à partir du menu Données / Charger MNE. Après son chargement, le MNE est stocké dans le répertoire du projet.
 
 \subsubsection{Occupation du sol}
-La couche d'occupation du sol est utilisée par plusieurs métriques de configuration paysagère (S, IJI, CONTAG, ...). Les codes des catégories d'occupation du sol doivent être compris entre 0 et 255. Pour charger une occupation du sol, il suffit de sélectionner un fichier raster au format Tiff ou Asciigrid à partir du menu Données / Charger l'occupation du sol. Après son chargement, la couche est stockée dans le répertoire du projet.
+La couche d'occupation du sol est utilisée par plusieurs métriques de configuration paysagère (S, IJI, CONTAG, etc). Les codes des catégories d'occupation du sol doivent être compris entre 0 et 255. Pour charger une occupation du sol, il suffit de sélectionner un fichier raster au format Tiff ou Asciigrid à partir du menu Données / Charger l'occupation du sol. Après son chargement, la couche est stockée dans le répertoire du projet.
 
 Les couleurs associées aux catégories d'occupation du sol sont définies aléatoirement, mais peuvent être modifiées dans le style de la couche. Les changements de couleurs sont automatiquement enregistrés dans le fichier XML du projet pour être conservés d'une ouverture à l'autre.
 
@@ -155,9 +155,9 @@ La génération d'une base de données multi-résolution peut être réalisée d
 \end{figure}
 
 Il est conseillé d'utiliser des résolutions qui suivent une suite géométrique d'un facteur 2, 3 ou 4.
-PixScape va créer un nouveau MNT pour chaque résolution, ainsi que le MNE et l'occupation du sol si ces couches sont présentent dans le projet.
+PixScape va créer un nouveau MNT pour chaque résolution, ainsi que le MNE et l'occupation du sol si ces couches sont présentes dans le projet.
 Pour le MNT et le MNE les pixels sont agrégés par la moyenne arithmétique, pour l'occupation du sol, les pixels sont agrégés par le mode \textit{ie.} la catégorie d'occupation du sol dominante.
-A la fin du traitement, l'ensemble des nouvelles couches sont enregistrées au format TIFF dans le répertoire du projet et sont ajoutés dans l'arborescence des couches de la fenêtre principale.
+A la fin du traitement, l'ensemble des nouvelles couches sont enregistrées au format Tiff dans le répertoire du projet et sont ajoutés dans l'arborescence des couches de la fenêtre principale.
 
 
 \subsubsection{Importer les données}
@@ -203,10 +203,10 @@ Le calcul d'une vue planimétrique est accessible à partir du menu Visibilité 
 \begin{itemize}
 	\item Point : coordonnées du point d'observation ou observé O. Il peut être saisi manuellement ou bien donné directement en cliquant sur la carte.
 	\item Hauteur oeil (h1) : hauteur en mètre de l'oeil de l'observateur
-	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
+	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. S'il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE, la hauteur est nulle.
 	\item Inverse : par défaut la case est décochée, le point O est le point d'observation \textit{ie.} l'oeil de l'observateur (figure \ref{height_view}). Le bassin de visibilité correspond à l'ensemble des points visible depuis O. A l'inverse, si la case est cochée, le point O devient le point observé (figure \ref{height_view_inverse}). Le bassin de visibilité correspond alors à l'ensemble des points d'où l'observateur voit le point O.
-	\item Limites : cette fenêtre permet de restreindre le champs de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
-	\item Multi-résolution : active ou désactive le calcul en multi-résolution. Si il est activé, la distance minimale en mètre avant le changement de résolution doit être indiquée.
+	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
+	\item Multi-résolution : active ou désactive le calcul en multi-résolution. S'il est activé, la distance minimale en mètre avant le changement de résolution doit être indiquée.
 \end{itemize}
 
 
@@ -216,7 +216,7 @@ Le calcul d'une vue planimétrique est accessible à partir du menu Visibilité 
 	\label{height_view}
 \end{figure}
 
-Le paramètre Hauteur dest. (h2) est souvent utilisé en conjonction du mode inverse pour analyser l'impact d'une construction (pylone, éolienne, ...). Le bassin de visibilité résultant correspond alors aux points à partir desquels la nouvelle construction d'une hauteur h2 sera visible (figure \ref{height_view_inverse}).
+Le paramètre Hauteur dest. (h2) est souvent utilisé en conjonction du mode inverse pour analyser l'impact d'une construction (pylone, éolienne, etc). Le bassin de visibilité résultant correspond alors aux points à partir desquels la nouvelle construction d'une hauteur h2 sera visible (figure \ref{height_view_inverse}).
 
 \begin{figure}[H]
 	\includegraphics{img/height_view_inverse.pdf} 
@@ -240,7 +240,7 @@ Après avoir modifié un paramètre, il suffit de cliquer sur le bouton Rafraich
 
 \subsection{Vue tangentielle}
 
-Le calcul d'une vue tangentielle est accessible à partir du menu Visibilité / Vue tangentielle. Une fenêtre apparaît montrant les paramètres pour le calcul la vue ainsi que pour l'affichage du résultat (figure \ref{viewtan_param}). 
+Le calcul d'une vue tangentielle est accessible à partir du menu Visibilité / Vue tangentielle. Une fenêtre apparaît montrant les paramètres pour le calcul de la vue ainsi que pour l'affichage du résultat (figure \ref{viewtan_param}). 
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/viewtan_dlg-fr.png} 
@@ -253,7 +253,7 @@ Le calcul d'une vue tangentielle est accessible à partir du menu Visibilité / 
 \begin{itemize}
 	\item Point : coordonnées du point d'observation O. Il peut être saisi manuellement ou bien donné directement en cliquant sur la carte.
 	\item Hauteur oeil (h1) : hauteur en mètre de l'oeil de l'observateur
-	\item Limites : cette fenêtre permet de restreindre le champs de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
+	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
 	\item Bassin de visibilité : si ce paramètre est coché, le bassin de visibilité est affiché sur la carte.
 	\item Résultat : choix de l'affichage du résultat (voir \nameref{viewtan_result}).
 \end{itemize}
@@ -299,7 +299,7 @@ Le menu Visibilité / Bassins multiples permet de calculer plusieurs bassins de 
 	\item id : attribut du shapefile identifiant chaque point. Ce paramètre est utile uniquement pour un résultat en vectoriel.
 	\item Inverse : par défaut la case est décochée, les points représentent les points d'observation \textit{ie.} l'oeil de l'observateur. A l'inverse, si la case est cochée, les points correspondent aux points observés. Pour plus de détails voir \nameref{viewshed_param} de la vue planimétrique.
 	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
-	\item Limites : cette fenêtre permet de restreindre le champs de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si le shapefile contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
+	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si le shapefile contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
 	\item Sortie : choix du format de la couche résultat : vecteur ou raster.
 \end{itemize}
 
@@ -324,21 +324,21 @@ En raster, la valeur du pixel correspond au nombre de fois où le pixel est cont
 	\label{multi_viewshed_raster}
 \end{figure}
 
-\subsection{Limitation du champs de vision}
+\subsection{Limitation du champ de vision}
 \label{bounds_ui}
-Pour tous les calculs de visibilité intégrés dans PixScape, le champs de vision peut être restreint dans les 3 dimensions. Le détail est décrit dans la section \nameref{bounds}.
+Pour tous les calculs de visibilité intégrés dans PixScape, le champ de vision peut être restreint dans les 3 dimensions. Le détail est décrit dans la section \nameref{bounds}.
 
-Ces limites peuvent être données à partir de la fenêtre Limites (figure \ref{bounds_dlg}). Dans le cas où les points d'observation sont donnés à partir d'un shapefile, le paramétrage du champs de vision peut être différencié pour chaque point en ajoutant les 6 paramètres (dmin, dmax, zmin, zmax, orien, amp) dans la table des attributs du shapefile. Le menu "Ajouter les attributs" permet de les ajouter automatiquement dans un shapefile existant (voir \nameref{add_attributes}).
+Ces limites peuvent être données à partir de la fenêtre Limites (figure \ref{bounds_dlg}). Dans le cas où les points d'observation sont donnés à partir d'un shapefile, le paramétrage du champ de vision peut être différencié pour chaque point en ajoutant les 6 paramètres (dmin, dmax, zmin, zmax, orien, amp) dans la table des attributs du shapefile. Le menu "Ajouter les attributs" permet de les ajouter automatiquement dans un shapefile existant (voir \nameref{add_attributes}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/bounds-fr.png} 
-	\caption{Paramétrage des limites du champs de vision. Par défaut le champs de vision est complet.}
+	\caption{Paramétrage des limites du champ de vision. Par défaut le champ de vision est complet.}
 	\label{bounds_dlg}
 \end{figure}
 
 \section{Calcul de métriques de visibilité}
 \label{calc_metrics}
-Dans PixScape , il est possible de synthétiser le résultat d'une vue planimétrique ou tangentielle par un certain nombre d'indicateurs ou métriques. L'ensemble des métriques disponibles sont détaillées dans le chapitre \nameref{metrics}. 
+Dans PixScape, il est possible de synthétiser le résultat d'une vue planimétrique ou tangentielle par un certain nombre d'indicateurs ou métriques. Les métriques disponibles sont détaillées dans le chapitre \nameref{metrics}. 
 
 Le menu Visibilité permet déjà de calculer plusieurs métriques sur la vue courante. Mais ce fonctionnement "manuel" est envisageable pour seulement quelques points d'observation. 
 
@@ -355,10 +355,10 @@ Les paramètres spécifiques à la vue sont affichés en haut de la fenêtre (fi
 
 \begin{itemize}
 	\item Inverse (planimétrique uniquement) : par défaut la case est décochée, les points représentent les points d'observation \textit{ie.} l'oeil de l'observateur. A l'inverse, si la case est cochée, les points correspondent aux points observés. Pour plus de détails voir \nameref{viewshed_param} de la vue planimétrique.
-	\item Hauteur dest. (h2) (planimétrique uniquement) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
-	\item Limites : cette fenêtre permet de restreindre le champs de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si les points sont définis par un shapefile et qu'il contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
+	\item Hauteur dest. (h2) (planimétrique uniquement) : hauteur en mètre du ou des points observés. S'il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
+	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si les points sont définis par un shapefile et qu'il contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
 \end{itemize}
-Les autres paramètres pour la vue (Hauteur de l'oeil, ...) doivent être définis en amont dans la fenêtre Options (cf. \nameref{options}).
+Les autres paramètres pour la vue (\textit{eg.} hauteur de l'oeil) doivent être définis en amont dans la fenêtre Options (cf. \nameref{options}).
 
 \subsection{Echantillonnage}
 \label{sampling}
@@ -444,29 +444,29 @@ La couche "Métriques" peut être exportée au format shapefile ou bien texte pa
 	\label{metric_result_attr}
 \end{figure}
 
-La table attributaire de la couche résultat est accessible par un clic droit sur le nom de la couche et le menu "Table attributaire". Elle contient toujours, en plus des métriques, les 6 paramètres de limitation du champs de vision, permettant de conserver l'information de paramétrage avec les résultats.
+La table attributaire de la couche résultat est accessible par un clic droit sur le nom de la couche et le menu "Table attributaire". Elle contient toujours, en plus des métriques, les 6 paramètres de limitation du champ de vision, permettant de conserver l'information de paramétrage avec les résultats.
 
 \section{Outils et options}
 \label{tools}
 
-\subsection{Ajout des attributs du champs de vision}
+\subsection{Ajout des attributs du champ de vision}
 \label{add_attributes}
-Pour l'ensemble des calculs de visibilité, le champs de vision peut être restreint par la fenêtre Limites (figure \ref{bounds_dlg}). Cette solution est pratique quand pour chaque point d'observation les même restrictions du champs de vision s'appliquent. 
+Pour l'ensemble des calculs de visibilité, le champ de vision peut être restreint par la fenêtre Limites (figure \ref{bounds_dlg}). Cette solution est pratique quand pour chaque point d'observation les même restrictions du champ de vision s'appliquent. 
 Le menu Outils / Ajouter les attributs est utile quant à lui pour spécifier des restrictions différentes pour chaque point d'observation. Cette fonction ajoute les 6 attributs à un shapefile avec les valeurs par défaut définies par la fenêtre Limites. Vous pouvez ensuite avec votre SIG préféré modifier les valeurs de restriction pour chaque point d'observation. 
-Le shapefile en sortie pourra être utilisé pour le calcul de métriques (\ref{calc_metrics}) et le calcul de bassin multiple (\ref{multi_viewshed}) qui tiendront compte des restrictions du champs de vision différenciées pour chaque point.
+Le shapefile en sortie pourra être utilisé pour le calcul de métriques (\ref{calc_metrics}) et le calcul de bassins multiples (\ref{multi_viewshed}) qui tiendront compte des restrictions du champ de vision différenciées pour chaque point.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/add_attributes-fr.png} 
-	\caption{Ajout des attributs à un shapefile pour limiter le champs de vision}
+	\caption{Ajout des attributs à un shapefile pour limiter le champ de vision}
 	\label{add_attributes_dlg}
 \end{figure}
 
-\subsubsection{Champs de vision le long d'un parcours}
-La case à cocher "Définir l'orientation selon le parcours" calcule l'orientation de chaque point par rapport au suivant. Avec cette option, le paramètre orientation de la fenêtre Limites sera ignoré et chaque point aura potentiellement une valeur différente d'orientation. 
+\subsubsection{Champ de vision le long d'un parcours}
+La case à cocher "Définir l'orientation selon le parcours" calcule l'orientation de chaque point par rapport au suivant. Avec cette option, le paramètre orientation de la fenêtre Limites sera ignoré et chaque point aura potentiellement une valeur d'orientation différente. 
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/path_orien.pdf} 
-	\caption{Champs de vision le long d'un parcours. L'orientation est calculée en direction du point suivant et l'amplitude est constante.}
+	\caption{Champ de vision le long d'un parcours. L'orientation est calculée en direction du point suivant et l'amplitude est constante.}
 	\label{path_orien}
 \end{figure}
 
@@ -477,7 +477,7 @@ Cette option est utile uniquement avec une amplitude inférieure à 360°.
 \subsection{Options}
 \label{options}
 Les options générales du projet sont accessibles à partir du menu Outils / Options.
-Ces options sont enregistrées automatiquement dans le fichier xml du projet. Elles sont utilisées pour l'ensemble des calculs de visibilité sauf quand l'option est aussi présente dans la fenêtre de paramétrage d'un traitement. Par exemple, la hauteur de l'oeil est modifiable directement dans la fenêtre de paramétrage d'une vue planimétrique ou tangentielle, mais elle ne l'est pas pour le calcul des métriques. Dans ce dernier cas, la hauteur de l'oeil de l'observateur sera celui défini dans la fenêtre d'options.
+Ces options sont enregistrées automatiquement dans le fichier xml du projet. Elles sont utilisées pour l'ensemble des calculs de visibilité sauf quand l'option est aussi présente dans la fenêtre de paramétrage d'un traitement. Par exemple, la hauteur de l'oeil est modifiable directement dans la fenêtre de paramétrage d'une vue planimétrique ou tangentielle, mais elle ne l'est pas pour le calcul des métriques. Dans ce dernier cas, la hauteur de l'oeil de l'observateur sera celle définie dans la fenêtre d'options.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/options-fr.png} 
@@ -488,18 +488,18 @@ Ces options sont enregistrées automatiquement dans le fichier xml du projet. El
 Le paramètre Hauteur oeil ($h1$) spécifie la hauteur de l'observateur à partir du MNT. L'unité est le mètre. Pour plus de détails, voir \nameref{principles} et la figure \ref{ray_side}.
 
 \subsubsection{Précision angulaire}
-Le paramètre Précision angulaire ($\alpha$) définit la résolution en degré de la vue tangentielle. Il est fixé par défaut à 0,1° ce qui correspond à 3600 rayons calculés si l'amplitude de la vue est à 360°. Pour plus de détails, voir \nameref{principles_tan} et la figure \ref{grid_tan}. 
+Le paramètre Précision angulaire ($\alpha$) définit la résolution en degré de la vue tangentielle. Il est fixé par défaut à 0.1°, ce qui correspond à 3600 rayons calculés si l'amplitude de la vue est à 360°. Pour plus de détails, voir \nameref{principles_tan} et la figure \ref{grid_tan}. 
 
 \subsubsection{Courbure terrestre}
 \label{curvature}
-Les calculs de visibilité dans PixScape peuvent tenir compte de la courbure de la Terre. En tenir compte est important pour des champs de vision dépassant plusieurs dizaines de kilomètres. Le principe du calcul est simple, plus la distance à l'observateur augmente plus la hauteur des objets visibles diminuent. 
+Les calculs de visibilité dans PixScape peuvent tenir compte de la courbure de la Terre, susceptible de jouer un rôle dans le cas d'une vue à plusieurs dizaines de kilomètres. Le principe du calcul est simple : plus la distance à l'observateur augmente, plus la hauteur des objets visibles diminuent. 
 La hauteur tenant compte de la courbure de la Terre $z'_i$ d'un point $i$ est calculée comme suit : 
 
 $$z'_i = z_i - \frac{d_i^2}{D}$$
 
 avec $z_i$ l'altitude du MNT au point $i$, $d_i$ la distance entre le point $i$ et l'observateur et $D$ le diamètre de la Terre (12 740 000 mètres).
 
-La courbure de la Terre peut être compensée en partie par la réfraction de la lumière dans l'atmosphère. Dans PixSCape, à partir du moment où la courbure terrestre est prise en compte, le paramètre de réfraction peut être spécifié. Il est défini par défaut à 0,13. Le calcul de la hauteur devient : 
+La courbure de la Terre peut être compensée en partie par la réfraction de la lumière dans l'atmosphère. Dans PixScape, à partir du moment où la courbure terrestre est prise en compte, le paramètre de réfraction peut être spécifié. Il est défini par défaut à 0,13. Le calcul de la hauteur devient : 
 
 $$z'_i = z_i - (1-\rho)\frac{d_i^2}{D}$$
 
@@ -509,13 +509,13 @@ avec $\rho$ le coefficient de réfraction compris entre 0 et 1. Si $\rho=0$ on r
 \subsubsection{Multi-résolution}
 A partir du moment où le projet contient les données à plusieurs résolutions, les calculs de visibilité peuvent se faire en multi-résolution en activant cette option. Le paramètre de distance minimale est à définir obligatoirement. Il permet d'assurer une distance minimale en mètre avant de changer de résolution. 
 
-Pour plus de détails sur le calcul de visibilité en multi résolution, voir \nameref{multires}.
+Pour plus de détails sur le calcul de visibilité en multi-résolution, voir \nameref{multires}.
 
 
 \subsubsection{Accélération GPU}
-Ce paramètre permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être important pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). Par contre toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistant.
+Ce paramètre permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être importants pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). En revanche, toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistants.
 
-Le paramètre est grisé si Pixscape ne peux pas utiliser l'accélération GPU. Les causes peuvent être multiples : pas de carte graphique NVidia, pas de support de CUDA, pas la bonne version de CUDA (6.5).
+Le paramètre est grisé si PixScape ne peux pas utiliser l'accélération GPU. Les causes peuvent être multiples : pas de carte graphique NVidia, pas de support de CUDA, pas la bonne version de CUDA (6.5).
 
 Si l'option multi-résolution est active, l'accélération GPU ne sera pas utilisée même si elle est activée.
 
@@ -523,7 +523,7 @@ Si l'option multi-résolution est active, l'accélération GPU ne sera pas utili
 \chapter{Interface en ligne de commande}
 \label{cli}
 
-A partir du moment qu'un projet a été créé depuis l'interface graphique, il est possible d'utiliser PixScape en ligne de commande. Ce mode est utile pour exécuter le logiciel sur un ordinateur distant sans interface graphique, lancer automatiquement plusieurs traitements à la suite, ou bien soumettre des exécutions sur un cluster.
+Dès lors qu'un projet a été créé depuis l'interface graphique, il est possible d'utiliser PixScape en ligne de commande. Ce mode est utile pour exécuter le logiciel sur un ordinateur distant sans interface graphique, lancer automatiquement plusieurs traitements à la suite, ou encore soumettre des exécutions sur un cluster.
 
 \section{Démarrage}
 
@@ -709,6 +709,37 @@ Le second exemple calcule la vue tangentielle avec une précision angulaire de 0
 \end{Verbatim}
 
 
+\subsection{--multiviewshed : bassin de visibilité multiple}
+\begin{Verbatim}[commandchars=\\\{\}]
+--multiviewshed format=vector|raster [inverse] [resname=\textit{name}]
+\end{Verbatim}
+
+\subsubsection{Paramètre obligatoire}
+\begin{itemize}
+	\item \verb/format=vector|raster/ : format du résultat (shapefile ou tiff)
+\end{itemize}
+
+\subsubsection{Paramètres optionnels}
+\begin{itemize}
+	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
+	\item \verb|resname=name| : permet de spécifier un autre nom pour le fichier stockant le résultat
+\end{itemize}
+
+\subsubsection{Description}
+La commande \verb|--multiviewshed| permet de calculer les bassins de visibilité à partir d'un ensemble de points d'observation. Les points d'observation doivent être donnés par l'option \verb|-sampling|. Le résultat est stocké dans un fichier raster ou vecteur selon le format choisi. 
+
+En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel.
+
+En vectoriel, le résultat est un shapefile contenant le bassin de visibilité de chaque point d'observation.
+
+\subsubsection{Exemples}
+L'exemple ci-dessous calcule les bassins de visibilité des points d'observation donnés dans le shapefile points.shp et stocke le résultat dans un shapefile dans le répertoire du projet nommé : \verb|multiviewshed.shp|.
+\begin{Verbatim}
+-sampling points=points.shp id=fid --multiviewshed format=vector
+\end{Verbatim}
+
+
+
 \subsection{--planmetric : métriques en vue planimétrique}
 
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -839,7 +870,7 @@ L'option \verb|-zdest| permet de définir la hauteur des pixels observés ($h2$)
 \begin{Verbatim}[commandchars=\\\{\}]
 -bounds [dmin=\textit{val}] [dmax=\textit{val}] [orien=\textit{val}] [amp=\textit{val}] [zmin=\textit{val}] [zmax=\textit{val}]
 \end{Verbatim}
-L'option \verb|-bounds| permet de restreindre le champs de vision dans les 3 dimensions par 6 paramètres : \verb|dmin|, \verb|dmax|, \verb|zmin|, \verb|zmax|, \verb|orien|, \verb|amp|. Pour plus de détails sur les paramètres, voir \nameref{bounds}.
+L'option \verb|-bounds| permet de restreindre le champ de vision dans les 3 dimensions par 6 paramètres : \verb|dmin|, \verb|dmax|, \verb|zmin|, \verb|zmax|, \verb|orien|, \verb|amp|. Pour plus de détails sur les paramètres, voir \nameref{bounds}.
 
 \subsubsection{-earth}
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -874,7 +905,9 @@ En raster, 2 échantillonnages sont possibles : régulier (\verb|n|) ou par cat�
 \begin{Verbatim}[commandchars=\\\{\}]
 -sampling points=\textit{pointfile.shp} id=\textit{fieldname}
 \end{Verbatim}
-Avec un échantillonnage issu d'un shapefile, le résultat des commandes \verb|--planmetric| et  \verb|--tanmetric| est stocké dans un shapefile nommé \verb|metrics-pointfile.shp|.
+Avec un échantillonnage issu d'un shapefile, le résultat des commandes \verb|--planmetric| et \verb|--tanmetric| est stocké dans un shapefile nommé \verb|metrics-pointfile.shp|.
+
+Cette option est aussi utilisée par la commande \verb|--multiviewshed|.
 
 
 \subsection{Multi-résolution : -multi, -mono}
@@ -900,31 +933,38 @@ Si c'est un chemin relatif qui est donné, le chemin absolu sera déterminé à 
 
 Dans cette section, quelques exemples de lignes de commande complètes sont illustrés.
 
-L'exemple ci-dessous, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques tangentielles (\verb|--tanmetric A SL DL|) à partir d'un ensemble de points d'observation défini dans le shapefile \verb|Points_IDF.shp|. Le résultat sera enregistré dans un shapefile nommé \verb|metrics-Points_IDF.shp|, contenant les points d'observations, et les valeurs des 3 métriques.
+\subsection{Métriques tangentielles à partir d'un shapefile de points}
+\subsubsection{Exemple simple}
 \begin{Verbatim}
 java -jar pixscape-1.0.jar --project Project1/Project1.xml 
 	-sampling points=Points_IDF.shp id=Id 
 	--tanmetric A SL DL
 \end{Verbatim}
 
-L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-dossier \verb|res_tan| (\verb|-resdir res_tan|). Le champs de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01°. Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
+L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques tangentielles (\verb|--tanmetric A SL DL|) à partir d'un ensemble de points d'observation défini dans le shapefile \verb|Points_IDF.shp|. Le résultat sera enregistré dans un shapefile nommé \verb|metrics-Points_IDF.shp|, contenant les points d'observations, et les valeurs des 3 métriques.
+
+\subsubsection{Exemple complet}
 \begin{Verbatim}
 java -Xmx4g -jar  pixscape-1.0.jar -proc 8 --project Project1/Project1.xml -zeye 1.75
 	-resdir res_tan -bounds zmin=-20 zmax=30 -sampling points=Points_IDF.shp 
 	id=Id --tanmetric prec=0.01 A_0,100,1000,+Infinity A[5] A[6] SL DL
 \end{Verbatim}
 
-L'exemple ci-dessous, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le un sous-dossier du projet nommé \verb|res_plan|. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques.
+L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-dossier \verb|res_tan| (\verb|-resdir res_tan|). Le champ de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01° (\verb| prec=0.01|). Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
+
+\subsection{Métriques planimétriques à partir de la grille}
 \begin{Verbatim}
 java -jar  pixscape-1.0.jar -cuda 2 --project Project1/Project1.xml
 	-resdir res_plan -sampling land=4 
 	--planmetric A A[2,3] A[10] S
 \end{Verbatim}
+L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le un sous-dossier du projet nommé \verb|res_plan|. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques (\verb|-cuda 2|).
+
 
 \chapter{Description des calculs de visibilité}
 \label{principles}
 Un calcul de visibilité se fait à partir d'un point d'observation noté O. A partir de ce point, un ensemble de rayons sont calculés pour déterminer les pixels visibles ou non. 
-Pixscape implémente deux méthodes de calcul de visibilité : la vue planimétrique représentant le bassin de visibilité sur le plan (x,y) et la vue tangentielle représentant la vue "réelle" immergée d'un observateur.
+PixScape implémente deux méthodes de calcul de visibilité : la vue planimétrique représentant le bassin de visibilité sur le plan (x,y) et la vue tangentielle représentant la vue "réelle" immergée d'un observateur.
 
 \section{Vue planimétrique}
 La vue planimétrique correspond à la surface sur le plan (x,y) contenant l'ensemble des points visibles à partir du point d'observation O. Le résultat est appelé bassin de visibilité ou viewshed en anglais.
@@ -939,7 +979,7 @@ Pour couvrir la totalité de l'image, un rayon est lancé du point O vers chaque
 
 Pour chaque rayon, les pixels sont parcourus du plus proche du point O aux plus éloignés. A chaque pixel, l'angle de visé vertical entre le point O et le centre du pixel est calculé. Si l'angle est supérieur aux précédents, le pixel est visible, sinon il ne l'est pas. 
 
-La hauteur des pixels correspond à l'altitude du MNT plus la hauteur du MNE si il est présent. La hauteur du point d'observation O correspond à l'altitude du MNT plus le paramètre h1 (Hauteur de l'oeil de l'observateur). La hauteur du MNE n'est jamais prise en compte pour la hauteur de l'observateur (l'observateur ne grimpe pas aux arbres).
+La hauteur des pixels correspond à la somme de l'altitude du MNT et de la hauteur du MNE s'il est présent. La hauteur du point d'observation O correspond à la somme de l'altitude du MNT et du paramètre h1 (Hauteur de l'oeil de l'observateur). La hauteur du MNE n'est jamais prise en compte pour la hauteur de l'observateur (l'observateur ne grimpe pas aux arbres).
 
 La figure \ref{ray_side} représente le calcul d'un rayon sur 5 pixels. Le pixel situé sur le point de l'observateur (pixel 0) est toujours visible. Le pixel suivant (1) est aussi visible, par contre le pixel 2 ne l'est pas car l'angle de visé est plus faible que pour le pixel 1, et ainsi de suite.
 
@@ -970,11 +1010,11 @@ Le mode inverse permet d'inverser l'observateur et l'observé. Le bassin de visi
 	\label{ray_side_inverse}
 \end{figure}
 
-Dans cet exemple le résultat est identique, mais selon la configuration, il peut être différent en vue inverse.
+Le résultat est identique ans cet exemple, mais selon la configuration, il peut être différent en vue inverse.
 
 \section{Vue tangentielle}
 \label{principles_tan}
-Pour la vue tangentielle, le principe de calcul est proche mais comporte quelques différences. Premièrement le parcours de l'image n'est pas forcément exhaustif. Le nombre de rayons calculé n'est plus dépendant de la taille de l'image mais du paramètre de résolution angulaire $\alpha$. Par défaut ce paramètre est défini à 0,1° donc le nombre de rayons calculés est de 3600. La figure \ref{grid_tan} montre un exemple avec une précision angulaire de 30°.
+Pour la vue tangentielle, le principe de calcul est proche mais comporte quelques différences. Premièrement, le parcours de l'image n'est pas forcément exhaustif. Le nombre de rayons calculés n'est plus dépendant de la taille de l'image mais du paramètre de résolution angulaire $\alpha$. Par défaut, ce paramètre est défini à 0,1°. Le nombre de rayons calculés est de 3600. La figure \ref{grid_tan} montre un exemple avec une précision angulaire de 30°.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/grid_tan.pdf} 
@@ -991,7 +1031,7 @@ Au niveau du calcul de chaque rayon, un traitement supplémentaire doit être r�
 	\label{ray_side_tan}
 \end{figure}
 
-La juxtaposition des colonnes résultant de chaque rayon forment le résultat de la vue tangentielle. La figure \ref{grid_tan_result} montre le positionnement de chaque rayon calculé dans la vue tangentielle pour une précision angulaire de 30°.
+La juxtaposition des colonnes résultant de chaque rayon forme le résultat de la vue tangentielle. La figure \ref{grid_tan_result} montre le positionnement de chaque rayon calculé dans la vue tangentielle pour une précision angulaire de 30°.
 
 \begin{figure}[H]
 	\includegraphics{img/grid_tan_result.pdf} 
@@ -1012,19 +1052,19 @@ Le calcul en multi-résolution permet d'accélérer fortement les traitements de
 Dans l'exemple de la figure \ref{grid_multi}, le nombre de rayons calculés est de 32 au lieu de 306 et la longueur des rayons en pixel est de 11 au lieu de 41. Le gain en temps de calcul est approximativement de 35 tout en conservant la contrainte de couverture complète de l'espace.
 
 
-\section{Limitation du champs de vision}
+\section{Limitation du champ de vision}
 \label{bounds}
-Pour tous les calculs de visibilité intégrés dans PixScape, le champs de vision peut être restreint dans les 3 dimensions (figures \ref{bounds_side} et \ref{bounds_2d}) par 6 paramètres : la distance minimale ($d_{min}$) et maximale ($d_{max}$), l'angle vertical minimal ($z_{min}$) et maximal ($z_{max}$) et l'angle horizontal par l'orientation ($orien$) et l'amplitude ($amp$). Les angles sont exprimés en degré dans l'intervalle [0-360] pour les angles horizontaux et [-90;+90] pour les angles verticaux. Les distances sont exprimées en mètre et sont calculées en 2D sur le plan (x,y). 
+Pour tous les calculs de visibilité intégrés dans PixScape, le champ de vision peut être restreint dans les 3 dimensions (figures \ref{bounds_side} et \ref{bounds_2d}) par 6 paramètres : la distance minimale ($d_{min}$) et maximale ($d_{max}$), l'angle vertical minimal ($z_{min}$) et maximal ($z_{max}$) et l'angle horizontal par l'orientation ($orien$) et l'amplitude ($amp$). Les angles sont exprimés en degré dans l'intervalle [0-360] pour les angles horizontaux et [-90;+90] pour les angles verticaux. Les distances sont exprimées en mètre et sont calculées en 2D sur le plan (x,y). 
 
 \begin{figure}[H]
 	\includegraphics{img/bounds_side.pdf} 
-	\caption{Vue de profil des limites du champs de vision}
+	\caption{Vue de profil des limites du champ de vision}
 	\label{bounds_side}
 \end{figure}
 
 \begin{figure}[H]
 	\includegraphics{img/bounds_2d.pdf} 
-	\caption{Vue du dessus des limites du champs de vision}
+	\caption{Vue du dessus des limites du champ de vision}
 	\label{bounds_2d}
 \end{figure}
 
@@ -1042,7 +1082,7 @@ Dans ce chapitre, l'ensemble des métriques disponibles dans PixScape sont décr
 		\hline
 		S & Shannon OS & X & X &  & X & X\\
 		\hline
-		IJI & Interspertion et juxtaposition & X & X &  & X & \\
+		IJI & Interspersion et juxtaposition & X & X &  & X & \\
 		\hline
 		CONTAG & Contagion & X & X &  & X & \\
 		\hline
@@ -1080,21 +1120,21 @@ Avec $n$ le nombre de catégories d'occupation du sol, $A_i$ la surface visible 
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 
-\subsection{Interspertion et juxtaposition : IJI}
-Indice d'interspertion défini dans Fragstat. Dans PixScape le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
+\subsection{Interspersion et juxtaposition : IJI}
+Indice d'interspersion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 
 \subsection{Contagion : CONTAG}
-Indice de contagion défini dans Fragstat. Dans PixScape le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
+Indice de contagion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 
 \subsection{Distribution des distances : DIST}
 
-La métrique $DIST$ donne un aperçu de la distribution des distances des pixels visibles par quatre opérateurs d'agrégation : la somme, la moyenne, le minimum et le maximum.
+La métrique $DIST$ donne un aperçu de la distribution des distances des pixels visibles depuis le point d'observation par quatre opérateurs d'agrégation : la somme, la moyenne, le minimum et le maximum.
 
-Le résultat de la métrique est différent entre la vue tangentielle et planimétrique car les pixels visibles ne sont pas répartis de la même manière entre les deux vues. En effet, en planimétrique chaque pixel représente une surface au sol en mètre carré, alors qu'en vue tangentielle, chaque pixel représente un cône du champs de vision en degré carré.
+Le résultat de la métrique est différent entre la vue tangentielle et planimétrique, les pixels visibles n'étant pas répartis de la même manière entre les deux vues. En effet, en planimétrique, chaque pixel représente une surface au sol en mètre carré, alors qu'en vue tangentielle, chaque pixel représente un cône du champ de vision en degré carré.
 
 
 \section{Métriques planimétriques}

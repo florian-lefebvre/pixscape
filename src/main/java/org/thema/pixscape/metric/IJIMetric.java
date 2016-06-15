@@ -141,7 +141,7 @@ public class IJIMetric extends AbstractMetric implements ViewShedMetric, ViewTan
         }
         int m = codes.size();
         if(tot == 0 || m < 3) {
-            return Double.NaN;
+            return 0;
         }
         
         double sum = 0;

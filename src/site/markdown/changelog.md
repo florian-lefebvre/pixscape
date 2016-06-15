@@ -1,6 +1,11 @@
 ## Changelog
 
-##### version 0.4.4 
+##### version 0.4.5
+- Metric : IJI and CONTAG return respectively 0 and 100 when visible classes are less than 3 and 2 in place of NaN value
+- Multi viewshed is parallelized
+- CLI : add --multiviewshed command
+
+##### version 0.4.4 (25/03/2016)
 - Multi-resolution viewshed : exception thrown in some cases at the border
 - UI : show vectorial metric result with proportionnal circle
 

@@ -52,7 +52,7 @@ public class IJIMetricTest {
         ComputeViewJava comp = new ComputeViewJava(TestTools.createFlatDataWithLand(10, 2), 0.1, false, 0);
         ViewShedResult view = comp.calcViewShed(new DirectPosition2D(2, 2), 2, 0, true, new Bounds());
         Double[] result = new IJIMetric().calcMetric(view);
-        assertEquals("IJI NaN", Double.NaN, result[0], 0.0);
+        assertEquals("IJI 0", 0, result[0], 0.0);
     }
     
     /**

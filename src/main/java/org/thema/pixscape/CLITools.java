@@ -35,7 +35,10 @@ import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.thema.common.swing.TaskMonitor;
+import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
+import org.thema.data.feature.DefaultFeature;
+import org.thema.data.feature.Feature;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
@@ -81,6 +84,7 @@ public class CLITools {
                     "Commands list :\n" +
                     "--viewshed [inverse] x y [resfile=raster.tif]\n" +
                     "--viewtan [prec=deg] x y [resname=name]\n" +
+                    "--multiviewshed format=vector|raster [inverse] [resname=name]\n" +
                     "--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
                     "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n");
             return;
@@ -222,6 +226,9 @@ public class CLITools {
                     case "--viewtan":
                         viewTan(args);
                         break;
+                    case "--multiviewshed":
+                        multiViewShed(args);
+                        break;
                     case "--planmetric":
                         viewMetric(args);
                         break;
@@ -294,6 +301,40 @@ public class CLITools {
 
     }
 
+    private void multiViewShed(List<String> args) throws IOException, SchemaException {   
+        if(args.size() < 1) {
+            throw new IllegalArgumentException("multiviewshed command needs at least 1 parameter");
+        }
+        if(pointFile == null) {
+            throw new IllegalArgumentException("-sampling points option is mandatory for --multiviewshed");
+        }
+        
+        boolean vectorOutput = args.remove(0).equals("format=vector");
+        
+        boolean inverse = false;
+        if(!args.isEmpty() && args.get(0).equals("inverse")) {
+            inverse = true;
+            args.remove(0);
+        }
+
+        String name = "multiviewshed" + (inverse ? "-inverse" : "");
+        if(!args.isEmpty() && args.get(0).startsWith("resname=")) {
+            name = args.remove(0).split("=")[1];
+        }
+        
+        List<Feature> points = (List)GlobalDataStore.getFeatures(pointFile, idField, null);
+        MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, null);
+        ExecutorService.execute(task);
+        
+        if(vectorOutput) {
+            DefaultFeature.saveFeatures((List)task.getResult(), new File(resDir, name + ".shp"), GlobalDataStore.getCRS(pointFile));
+        } else {
+            IOImage.saveTiffCoverage(new File(resDir, name + ".tif"),
+                new GridCoverageFactory().create("view", (WritableRaster)task.getResult(), project.getDtmCov().getEnvelope2D()));
+        }
+
+    }
+    
     private void viewMetric(List<String> args) throws IOException {
         boolean inverse = false;
         if(!args.isEmpty() && args.get(0).equals("inverse")) {

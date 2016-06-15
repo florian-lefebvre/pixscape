@@ -25,8 +25,6 @@ import java.awt.GraphicsEnvironment;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
-import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
@@ -36,7 +34,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.TreeMap;
@@ -50,7 +47,6 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.feature.SchemaException;
-import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.thema.common.Config;
 import org.thema.common.JavaLoader;
@@ -62,7 +58,6 @@ import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
-import org.thema.drawshape.PointShape;
 import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
@@ -79,7 +74,6 @@ import org.thema.drawshape.style.table.FeatureAttributeCollection;
 import org.thema.drawshape.style.table.StrokeRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
-import org.thema.pixscape.view.ViewShedResult;
 
 /**
  * The main frame and main entry point of PixScape.
@@ -413,36 +407,14 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
-                    List<DefaultFeature> viewSheds = dlg.vectorOutput ? new ArrayList<DefaultFeature>() : null;
-                    Raster viewshedRast = !dlg.vectorOutput ? Raster.createBandedRaster(DataBuffer.TYPE_INT, project.getDtm().getWidth(), project.getDtm().getHeight(), 1, null) : null;
-                    List<DefaultFeature> points = GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
-                    progressBar.setMaximum(points.size());
-                    progressBar.setProgress(0);
-                    for(Feature point : points) {
-                        Point p = point.getGeometry().getCentroid();
-                        Bounds b = dlg.bounds.updateBounds(point);
-                        ViewShedResult viewshed = project.getDefaultComputeView().calcViewShed(
-                                new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), 
-                                dlg.zDest, dlg.inverse, b);
-                        if(dlg.vectorOutput) {
-                            viewSheds.add(b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon()));
-                        } else {
-                            int[] viewTot = ((DataBufferInt)viewshedRast.getDataBuffer()).getData();
-                            DataBuffer viewBuf = viewshed.getView().getDataBuffer();
-                            for(int i = 0; i < viewBuf.getSize(); i++) {
-                                if(viewBuf.getElem(i) > 0) {
-                                    viewTot[i]++;
-                                }
-                            }
-                        }
-                        
-                        progressBar.incProgress(1);
-                    }
+                    List<Feature> points = (List)GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
+                    MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, progressBar);
+                    ExecutorService.execute(task);
                     Layer l;
                     if(dlg.vectorOutput) {
-                        l = new FeatureLayer("Multi viewshed", viewSheds, new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
+                        l = new FeatureLayer("Multi viewshed", (List)task.getResult(), new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
                     } else {
-                        l = new RasterLayer("Multi viewshed", new RasterShape(viewshedRast, 
+                        l = new RasterLayer("Multi viewshed", new RasterShape((Raster)task.getResult(), 
                                 project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(), true), project.getCRS());
                     }
                     l.setRemovable(true);

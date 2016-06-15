@@ -139,7 +139,7 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
         
         final int m = codes.size();
         if(m < 2) {
-            return Double.NaN;
+            return 100;
         }
         
         double tot = 0;

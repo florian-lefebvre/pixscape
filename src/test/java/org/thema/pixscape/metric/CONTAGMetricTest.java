@@ -51,7 +51,7 @@ public class CONTAGMetricTest {
         ComputeViewJava comp = new ComputeViewJava(TestTools.createFlatDataWithLand(10, 1), 0.1, false, 0);
         ViewShedResult view = comp.calcViewShed(new DirectPosition2D(2, 2), 2, 0, true, new Bounds());
         Double[] result = new CONTAGMetric().calcMetric(view);
-        assertEquals("CONTAG NaN", Double.NaN, result[0], 0.0);
+        assertEquals("CONTAG 100", 100, result[0], 0.0);
     }
     
     /**
