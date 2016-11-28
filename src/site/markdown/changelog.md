@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 0.4.6 (28/11/2016)
+- Small optimizations of ray calculation
+
 ##### version 0.4.5
 - Metric : IJI and CONTAG return respectively 0 and 100 when visible classes are less than 3 and 2 in place of NaN value
 - Multi viewshed is parallelized

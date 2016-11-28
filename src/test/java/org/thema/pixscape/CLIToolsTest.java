@@ -21,9 +21,7 @@ package org.thema.pixscape;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
-import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferFloat;
-import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.BufferedReader;
@@ -40,7 +38,6 @@ import org.geotools.geometry.Envelope2D;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thema.data.IOImage;
-import static org.thema.pixscape.TestTools.printArray;
 import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**

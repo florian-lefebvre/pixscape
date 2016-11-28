@@ -155,7 +155,7 @@ public abstract class ComputeView {
     /**
      * @return true if taking into account earth curvature
      */
-    final public boolean isEarthCurv() {
+    public final boolean isEarthCurv() {
         return earthCurv;
     }
 
@@ -170,7 +170,7 @@ public abstract class ComputeView {
     /**
      * @return the current refraction correction coefficient (default 0.13), 0 for no correction
      */
-    final public double getCoefRefraction() {
+    public final double getCoefRefraction() {
         return coefRefraction;
     }
 

@@ -36,7 +36,7 @@ import org.thema.pixscape.ScaleData;
  * 
  * @author Gilles Vuidel
  */
-public class ComputeViewJava extends SimpleComputeView {
+public final class ComputeViewJava extends SimpleComputeView {
     
     private final float[] dtmBuf;
     private DataBuffer dsmBuf;
@@ -217,11 +217,15 @@ public class ComputeViewJava extends SimpleComputeView {
      */
     private void calcRay(final boolean inverse, final GridCoordinates2D c0, final GridCoordinates2D c1, 
             final double startZ, final double destZ, Bounds bounds, final byte[] view) {
-        if(bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
-            if(inverse) {
-                calcRayIndirect(c0, c1, startZ, destZ, bounds, view);
-            } else {
-                calcRayDirect(c0, c1, startZ, destZ, bounds, view);
+        if(bounds.isUnbounded() && !isEarthCurv() && !inverse && destZ == -1) {
+            calcRayDirectUnbound(c0, c1, startZ, view);
+        } else {
+            if(!bounds.isOrienBounded() || bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
+                if(inverse) {
+                    calcRayIndirect(c0, c1, startZ, destZ, bounds, view);
+                } else {
+                    calcRayDirect(c0, c1, startZ, destZ, bounds, view);
+                }
             }
         }
     }
@@ -239,7 +243,6 @@ public class ComputeViewJava extends SimpleComputeView {
     private void calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, 
             final double destZ, Bounds bounds, final byte[] view) {
         final double res2D2 = getData().getResolution()*getData().getResolution();
-        final double z0 = dtm.getSampleDouble(c0.x, c0.y, 0) + startZ;
         final int w = dtm.getWidth();
         final int dx = Math.abs(c1.x-c0.x);
         final int dy = Math.abs(c1.y-c0.y);
@@ -250,6 +253,7 @@ public class ComputeViewJava extends SimpleComputeView {
         int yy = 0;
         int ind = c0.x + c0.y*w;
         final int ind1 = c1.x + c1.y*w;
+        final double z0 = dtmBuf[ind] + startZ;
         
         if(bounds.getSlopemin() == Double.NEGATIVE_INFINITY && bounds.getDmin() == 0) {
             view[ind] = 1;
@@ -257,7 +261,7 @@ public class ComputeViewJava extends SimpleComputeView {
         double maxSlope = bounds.getSlopemin2();
         double maxZ = -Double.MAX_VALUE;
         while(ind != ind1) {           
-            final int e2 = err * 2;
+            final int e2 = (err << 1);
             if(e2 > -dy) {
                 err -= dy;
                 xx += sx;
@@ -312,6 +316,69 @@ public class ComputeViewJava extends SimpleComputeView {
             if(slopeSurf > maxSlope) {
                 maxSlope = slopeSurf;
             }
+            if(zSurf > maxZ) {
+                maxZ = zSurf;
+            }
+        }
+   
+    }
+    
+    /**
+     * Calculates the ray from c0 to c1.
+     * Optimized version without bounds checking and without earth curvature 
+     * Set view to 1 when the pixel is seen from the point of view c0.
+     * @param c0 the point of view, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the eye
+     * @param view the result view (buffer of the size of dtm data)
+     */
+    private void calcRayDirectUnbound(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, 
+            final byte[] view) {
+        final double res2D2 = getData().getResolution()*getData().getResolution();
+        final int w = dtm.getWidth();
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
+        int err = dx-dy;
+        int xx = 0;
+        int yy = 0;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
+        final double z0 = dtmBuf[ind] + startZ;
+        
+        view[ind] = 1;
+        
+        double maxSlope = -Double.MAX_VALUE;
+        double maxZ = -Double.MAX_VALUE;
+        while(ind != ind1) {           
+            final int e2 = (err << 1);
+            if(e2 > -dy) {
+                err -= dy;
+                xx += sx;
+                ind += sx;
+            }
+            if(e2 < dx) {
+                err += dx;
+                yy += sy;
+                ind += sy*w;
+            }
+            
+            final double zSurf = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            if(Double.isNaN(zSurf)) {
+                return;
+            }
+            
+            if(maxSlope >= 0 && zSurf <= maxZ) {
+                continue;
+            }
+            final double zzSurf = (zSurf - z0);
+            final double slopeSurf = zzSurf*Math.abs(zzSurf) / (res2D2 * (xx*xx + yy*yy));
+            if(slopeSurf > maxSlope) {
+                view[ind] = 1;
+                maxSlope = slopeSurf;
+            }
+
             if(zSurf > maxZ) {
                 maxZ = zSurf;
             }
@@ -381,7 +448,7 @@ public class ComputeViewJava extends SimpleComputeView {
                 continue;
             }
                         
-            double zz = z + startZ - z0;
+            final double zz = z + startZ - z0;
             final double slopeEye = zz*Math.abs(zz) / d2;
             if(slopeEye > maxSlope) {
                 if(d2 >= bounds.getDmin2() && slopeEye <= bounds.getSlopemax2()) {
@@ -389,8 +456,8 @@ public class ComputeViewJava extends SimpleComputeView {
                 }
             } 
             final double ztot = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
-            zz = ztot - z0;
-            final double slope = zz*Math.abs(zz) / d2;
+            final double dz = ztot - z0;
+            final double slope = dz*Math.abs(dz) / d2;
             if(slope > maxSlope) {
                 maxSlope = slope;
             }
