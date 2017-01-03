@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.0 (22/12/2016)
+- Passage en version finale 1.0 !!!
+
 ##### version 0.4.6 (28/11/2016)
 - Small optimizations of ray calculation
 
