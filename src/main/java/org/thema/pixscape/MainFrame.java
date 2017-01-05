@@ -824,6 +824,7 @@ public class MainFrame extends javax.swing.JFrame {
      * Main program entry point.
      * Starts MPI, CLI or UI mode
      * @param args the command line arguments
+     * @throws Exception
      */
     public static void main(String args[]) throws Exception {
         

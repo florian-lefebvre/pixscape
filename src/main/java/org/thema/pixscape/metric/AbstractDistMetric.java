@@ -89,7 +89,7 @@ public abstract class AbstractDistMetric extends AbstractMetric {
      * The ranges are contiguous : the set {0, 10, 100}  corresponds to 2 ranges [0-10[ and [10-100[
      * Distances must be in range [0 - Double.POSITIVE_INFINITY]
      * @param distances the set of distances, can be null for reseting to default range [0 - Double.POSITIVE_INFINITY]
-     * @throws IllegalArgumentException if the distance set size < 2
+     * @throws IllegalArgumentException if the distance set size &lt; 2
      */
     public void setDistances(SortedSet<Double> distances) {
         if(distances == null) {

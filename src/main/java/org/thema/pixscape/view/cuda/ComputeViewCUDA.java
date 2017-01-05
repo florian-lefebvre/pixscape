@@ -66,7 +66,7 @@ public class ComputeViewCUDA extends SimpleComputeView {
      * @param aPrec the precision in degree for tangential view
      * @param earthCurv take into account earth curvature ?
      * @param coefRefraction refraction correction, 0 for no correction
-     * @param nbGPU the number of GPU devices to use, must be > 0
+     * @param nbGPU the number of GPU devices to use, must be $gt 0
      */
     public ComputeViewCUDA(ScaleData data, double aPrec, boolean earthCurv, double coefRefraction, int nbGPU) {
         super(data, aPrec, earthCurv, coefRefraction);

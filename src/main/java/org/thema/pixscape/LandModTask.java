@@ -68,6 +68,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
      * @param fileZone the shapefile containing polygons of land modifications
      * @param idField the shapefile field containing identifier
      * @param codeField the shapefile field containing the new land code
+     * @param fileDsm the raster file containing the new DSM
      * @param selIds a list of zone ids or null for calculating for all zones
      * @param args the CLI commands to execute after creating each project
      */

@@ -46,6 +46,8 @@ public final class ComputeViewJava extends SimpleComputeView {
      * Creates a new ComputeViewJava.
      * @param data the data for this resolution
      * @param aPrec the precision in degree for tangential view
+     * @param earthCurv true for taking into account earth curvature
+     * @param coefRefraction refraction correction coefficient, 0 for no correction
      */
     public ComputeViewJava(ScaleData data, double aPrec, boolean earthCurv, double coefRefraction) {
         super(data, aPrec, earthCurv, coefRefraction);

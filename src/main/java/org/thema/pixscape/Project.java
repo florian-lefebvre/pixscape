@@ -220,7 +220,7 @@ public final class Project {
     /**
      * Add data at coarser resolution for speeding up execution with multiscale algorithms.
      * Saves the project.
-     * @param data the data at coarser resolution ie. resolution > defaultscale resolution
+     * @param data the data at coarser resolution ie. resolution &gt; defaultscale resolution
      * @throws IOException 
      * @throws IllegalArgumentException if the data resolution is less than the defaultscale
      * @throws IllegalArgumentException if the data does not cover the the defaultscale data
@@ -498,7 +498,7 @@ public final class Project {
     
     /**
      * Creates and return a new multi scale computation class
-     * @param distMin the minimum distance in meter to change to a coarser scale, must be > 0
+     * @param distMin the minimum distance in meter to change to a coarser scale, must be &gt; 0
      * @return a new multi scale computation class
      * @throws IllegalStateException if the project does not contain muti scale data
      */

@@ -65,7 +65,7 @@ public class CLITools {
     
     /**
      * Executes the commands from the command line
-     * @param argArray the command line arguments
+     * @param arg the command line arguments
      * @throws IOException
      * @throws SchemaException
      */

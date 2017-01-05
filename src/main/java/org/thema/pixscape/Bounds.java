@@ -126,7 +126,7 @@ public final class Bounds implements Serializable {
     }
     
     /**
-     * @return true if theta1 is limited ie. amplitude < 360°
+     * @return true if theta1 is limited ie. amplitude &lt; 360°
      */
     public boolean isOrienBounded() {
         return amplitude < 2*Math.PI;
