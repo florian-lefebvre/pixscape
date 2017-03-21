@@ -210,7 +210,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         if(isSaved()) {
             try {
                 DefaultFeature.saveFeatures(getResult(), getResultFile());
-            } catch (IOException | SchemaException ex) {
+            } catch (IOException ex) {
                 Logger.getLogger(PointMetricTask.class.getName()).log(Level.SEVERE, null, ex);
             } 
         }

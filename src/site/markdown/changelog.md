@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.0.1 (21/03/2017)
+- Exception at project creation when tif DEM hasn't CRS
+
 ##### version 1.0 (22/12/2016)
 - Passage en version finale 1.0 !!!
 

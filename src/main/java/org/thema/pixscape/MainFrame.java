@@ -649,7 +649,7 @@ public class MainFrame extends javax.swing.JFrame {
             FeatureLayer l = new FeatureLayer(dlg.outputName, result);
             l.setRemovable(true);
             rootLayer.addLayerFirst(l);
-        } catch (IOException | SchemaException ex) {
+        } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
         

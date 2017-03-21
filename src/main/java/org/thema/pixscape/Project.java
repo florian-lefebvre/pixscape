@@ -47,6 +47,7 @@ import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.thema.data.IOImage;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.pixscape.metric.AbstractDistMetric;
 import org.thema.pixscape.metric.AreaMetric;
@@ -114,7 +115,7 @@ public final class Project {
         ScaleData scaleData = new ScaleData(dtmCov, null, null, resZ);
         scaleDatas.put(scaleData.getResolution(), scaleData);
         prjPath.mkdirs();
-        new GeoTiffWriter(new File(prjPath, "dtm-" + scaleData.getResolution() + ".tif")).write(scaleData.getDtmCov(), null);
+        IOImage.saveTiffCoverage(new File(prjPath, "dtm-" + scaleData.getResolution() + ".tif"), scaleData.getDtmCov());
         
         CoordinateReferenceSystem crs = dtmCov.getCoordinateReferenceSystem2D();
         if(crs != null) {

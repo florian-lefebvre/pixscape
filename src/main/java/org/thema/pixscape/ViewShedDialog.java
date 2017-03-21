@@ -384,13 +384,13 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
                     }
                 } 
             } else {
-                addViewShedLayer(multiResult, inverseCheckBox.isSelected()?"direct":"inverse");
+                addViewShedLayer(multiResult, inverseCheckBox.isSelected()?"inverse":"direct");
             }
             result = multiResult;
         } else {
             result = project.getSimpleComputeView().calcViewShed(new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()),
                 Double.parseDouble(zDestTextField.getText()), inverseCheckBox.isSelected(), bounds == null ? new Bounds() : bounds);
-            addViewShedLayer(result, inverseCheckBox.isSelected()?"direct":"inverse");
+            addViewShedLayer(result, inverseCheckBox.isSelected()?"inverse":"direct");
         }
 
         metricDlg.setResult(result);

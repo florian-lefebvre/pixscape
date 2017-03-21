@@ -1,7 +1,6 @@
 \documentclass{report}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage[french]{babel}
 \usepackage{amsmath}
 \usepackage{amssymb,amsfonts,textcomp}
 \usepackage{array}
@@ -46,7 +45,7 @@
 		\bfseries
 		PixScape 1.0\\
 		\bigskip
-		Manuel d’utilisation\\
+		User manual\\
 	}
 	\bigskip
 	\bigskip
@@ -57,7 +56,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		21/03/2017\\
+		2017-03-21\\
 	}
 	
 \end{titlepage}
@@ -70,400 +69,410 @@
 
 \chapter{Introduction}
 
-\section{A propos de PixScape}
+\section{About PixScape}
 
-Le logiciel PixScape est dédié à l'analyse du paysage visible à partir de données raster en 2D et demi. Il offre l’avantage d’être un outil intégré regroupant l’ensemble des fonctionnalités disponibles dans les outils SIG standards existants dans ce domaine et proposant d’autres fonctions originales comme la vue tangentielle et la gestion des données multi-résolution.
-
-
-\subsection{Auteurs}
-Le programme PixScape a été développé au laboratoire \href{http://thema.univ-fcomte.fr}{ThéMA} (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) par Gilles Vuidel en collaboration avec Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. Le logo a été réalisé par Xavier Girardet.
-
-\subsection{Conditions d’utilisation}
-Le programme PixScape est disponible librement sous licence \href{https://www.gnu.org/licenses/gpl-3.0.fr.html}{GPL}. Le code source est téléchargeable à partir du dépôt Git : \url{git://git.renater.fr/pixscape.git}.
-
-Les utilisateurs de PixScape sont invités à citer la référence  suivantes  dans leurs travaux :
-
-Sahraoui Y., Vuidel G., Foltête J-C. et Joly D. (2016), \href{http://cybergeo.revues.org/27862}{PixScape – un outil logiciel intégré pour l’analyse du paysage visible}, Cybergeo : European Journal of Geography, GeOpenMod - Modèles et logiciels, document 799. 
+PixScape software is dedicated to the analysis of the landscape visibility from raster data.
+This software integrates the main functionalities available in standard GIS  in this domain and offers other original features such as tangential view and multi-resolution analysis.
 
 
-\section{Configuration requise}
+\subsection{Authors}
+PixScape has been developed at \href{http://thema.univ-fcomte.fr}{ThéMA} laboratory (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) by Gilles Vuidel in collaboration with Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. The PixScape logo has been designed by Xavier Girardet.
 
-PixScape fonctionne sur n'importe quel ordinateur supportant Java 7 ou supérieur (PC sous Linux, Windows, Mac...). Toutefois, lorsqu'il s'agit de données très volumineuses, la quantité de mémoire vive (RAM) de l’ordinateur peut limiter la taille des zones d'étude. De plus, la puissance du processeur va déterminer la vitesse de leur calcul. Vous trouverez plus de détails à ce sujet dans le chapitre \nameref{perf}. 
+\subsection{Terms of use}
+Graphab is distributed in open source, under the \href{https://www.gnu.org/licenses/gpl-3.0.html}{GPL} license.\\
+Source code can be downloaded from the sourcesup git repository : \url{git://git.renater.fr/pixscape.git}.\\
+Users must cite the following reference in their publications :\\
+??
 
-Pour l'utilisation de l'accélération GPU, l'ordinateur doit être équipé d'une carte graphique Nvidia supportant CUDA. Par défaut, PixScape est compilé avec la version 6.5 de CUDA. Si vous ne pouvez pas installer la version 6.5 de CUDA, il faudra installer la bibliothèque JCuda correspondant à votre version de CUDA et lancer le programme en ligne de commande (voir \nameref{cuda}). Les binaires sont téléchargeables à l'adresse \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
 
-\section{Installation et lancement du programme}
+\section{System requirements}
 
-PixScape est téléchargeable à cette adresse : \url{http://sourcesup.renater.fr/pixscape}.
+PixScape runs on any computer supporting Java 7 or later (PC under Linux, Windows, Mac, ...). 
+However, when dealing with large datasets, the amount of memory (RAM) will limit the maximum area that can be processed. In addition, processing power (CPU) will determine the speed of computing. For details, see section \nameref{perf}.
+
+For GPU computing, PixScape supports only Nvidia graphics card with CUDA. By default, PixScape is compiled with CUDA 6.5. If you cannot install CUDA 6.5, you will need to install the JCuda library corresponding to your CUDA version and launch PixScape in command line (see \nameref{cuda}). JCuda binaries are available here: \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
+
+\section{Installation and launching PixScape}
+
+PixScape is available for downloading at : \url{http://sourcesup.renater.fr/pixscape}.
 
 \begin{itemize}
-	\item Télécharger et installer Java 7 ou + (\href{http://www.java.com}{java.com}). Installer de préférence la version 64 bits de Java.
-	\item Télécharger pixscape-1.0.jar
-	\item Lancer pixscape-1.0.jar
+	\item Download and install Java 7 or later (\href{http://www.java.com}{java.com}). It is best to install 64 bits version of Java.
+	\item Download pixscape-1.0.jar
+	\item Launch pixscape-1.0.jar
 \end{itemize}
 
-PixScape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
-L'interface graphique permet de créer un projet, visualiser les données, calculer de manière interactive les vues et les métriques, et de calculer de manière exhaustive les métriques de visibilité sur son ordinateur local. L'interface en ligne de commande permet quant à elle, de lancer ces même calculs sur des ordinateurs distants ainsi que sur des clusters.
+PixScape can be used through 2 user interface : the graphical user interface (GUI) and the command line interface (CLI).
 
-Le chapitre suivant (\ref{gui}) décrit l'ensemble des fonctionnalités du logiciel disponibles à partir de l'interface graphique. Le chapitre \ref{cli} détaille comment utiliser PixScape en ligne de commande. Le chapitre \ref{principles} explique comment sont implémentés les calculs de visibilité dans PixScape. L'ensemble des métriques disponibles sont détaillées dans le chapitre \ref{metrics}. Et le chapitre \ref{perf} revient sur les modes de parallélisation, les performances et la gestion mémoire.
+The graphical user interface allows to create project, visualize the data, calculate interactively viewsheds and visibility metrics, and perform exhaustive visibility metric calculation on local computer. The command line interface allows to run the same calculations on remote computers as well as on computer clusters.
+
+The following chapter (\ref{gui}) describes all of the software features available from the GUI. Chapter \ref{cli} details how to use PixScape on the command line. Chapter \ref{principles} explains how visibility calculations are implemented in PixScape. The set of available metrics is detailed in Chapter \ref{metrics}. And Chapter \ref{perf} reviews the parallelization modes, performance and memory management.
 
 
-
-
-\chapter{Interface graphique}
+\chapter{Graphical user interface (GUI)}
 \label{gui}
 
-Une fois PixScape lancé, la première étape consiste à créer un projet basé sur un MNT (Modèle Numérique de Terrain) couvrant la zone à étudier.
+Once PixScape is launched, the first step is to create a project based on a DTM (Digital Terrain Model) covering the studied area.
 
-\section{Création d'un projet}
+\section{Project creation}
 
-La mise en place d’un nouveau projet PixScape s’effectue à partir du menu : Fichier / Nouveau projet. L’utilisateur doit renseigner un nom et un chemin pour le projet ainsi qu'un MNT au format Tiff ou AsciiGrid. \textbf{Le système de coordonnées du MNT doit obligatoirement être projeté et en unité métrique. Si ce n'est pas le cas, les calculs de visibilité seront erronés.} La résolution des altitudes (Z) peut être précisée si elle n'est pas métrique. Par exemple, si les altitudes sont données en centimètre, il faudra saisir 0.01 dans "Résolution Z".
+To create a new project, use the menu File / New project. User must 
+La mise en place d’un nouveau projet PixScape s’effectue à partir du menu : File / New project. User must enter a name and a path for the project as well as a DTM in Tiff or AsciiGrid format. \textbf{The coordinate system of the DTM must be projected and in meter unit. If this is not the case, the visibility calculations will be erroneous.} The resolution of the altitudes (Z) can be specified if it is not in meter. For example, if the altitudes are given in centimeter, enter 0.01 in "Z resolution".
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/new_project-fr.png} 
-	\caption{Création d'un projet}
+	\includegraphics[scale=0.5]{img/new_project-en.png} 
+	\caption{Creating a project}
 \end{figure}
 
-Le projet créé stocke dans son dossier, le MNT transformé en Tiff avec les altitudes en résolution métrique ainsi qu'un fichier XML conservant les paramètres du projet.
-Pour ouvrir un projet, il suffit de sélectionner le fichier XML correspondant à partir du menu Fichier / Charger un projet.
+The created project stores in its folder, the DTM converted in Tiff format with altitudes in meter, and the XML file containing the project settings.
+For opening a project, simply select the corresponding XML file from the File / Load Project menu.
 
-Dans PixScape, le MNT est suffisant pour réaliser des calculs de visibilité, mais il est souvent plus intéressant d'ajouter des informations complémentaires pour réaliser des analyses plus précises.
+The DTM is sufficient to perform visibility calculations, but it can be more interesting to add additional information to perform more accurate analyses.
 
-\section{Gestion des données}
+\section{Data management}
 
-Pour les données raster à importer, PixScape supporte deux formats de fichier : Tiff et AsciiGrid. Pour le format Tiff, le système de coordonnées peut être donné de deux manières : directement dans le fichier Tiff par l'extension GeoTiff ou bien par un fichier texte additionnel ayant le même nom et l'extension .tfw. 
+For importing raster data, PixScape supports 2 file formats : Tiff and AsciiGrid.
+For Tiff format, the coordinate system can be given by 2 ways : directly in the Tiff file with the GeoTiff extension, or an additional text file with the same name and extension .tfw.
 
 
-\subsection{Couches complémentaires}
-Deux couches raster complémentaires peuvent être ajoutées à un projet existant : le MNE (Modèle Numérique d'Élévation) et l'occupation du sol.
+\subsection{Additional layers}
+Two additional raster layers can be added to an existing project: the DSM (Digital Surface Model) and the land use.
 
-\subsubsection{MNE}
-Le MNE correspond à la hauteur des objets (bâtiments, arbres, etc) au sol. L'addition du MNT et du MNE permet d'obtenir l'élévation totale des éléments du paysage. L'unité des hauteurs doit être obligatoirement exprimée en mètre. Pour charger un MNE, il suffit de sélectionner un fichier raster au format Tiff ou Asciigrid à partir du menu Données / Charger MNE. Après son chargement, le MNE est stocké dans le répertoire du projet.
+\subsubsection{DSM}
+In PixScape, the DSM corresponds to the height of the object (building, trees, ...) on the ground. The addition of the DTM and the DSM makes it possible to obtain the total elevation of the elements of the landscape. 
+The unit of heights must be expressed in meters. To load a DSM, simply select a raster file in Tiff or Asciigrid format from the Data / Load DSM menu. After loading, the DSM is stored in the project directory
 
-\subsubsection{Occupation du sol}
-La couche d'occupation du sol est utilisée par plusieurs métriques de configuration paysagère (S, IJI, CONTAG, etc). Les codes des catégories d'occupation du sol doivent être compris entre 0 et 255. Pour charger une occupation du sol, il suffit de sélectionner un fichier raster au format Tiff ou Asciigrid à partir du menu Données / Charger l'occupation du sol. Après son chargement, la couche est stockée dans le répertoire du projet.
+\subsubsection{Land use}
+The land use layer is used by several landscape configuration metrics (S, IJI, CONTAG, etc.). The codes for land use categories must be between 0 and 255. To load a land use layer, simply select a raster file in Tiff or Asciigrid format from the Data / Load Land Use menu. After loading, the layer is stored in the project directory.
 
-Les couleurs associées aux catégories d'occupation du sol sont définies aléatoirement, mais peuvent être modifiées dans le style de la couche. Les changements de couleurs sont automatiquement enregistrés dans le fichier XML du projet pour être conservés d'une ouverture à l'autre.
+The colors associated with the land use categories are set randomly, but can be changed in the style of the layer. Color changes are automatically saved in the project's XML file to be kept from one opening to the next.
 
-\textbf{Ces deux couches doivent avoir exactement la même géométrie que le MNT : la même emprise spatiale et la même résolution.} 
+\textbf{These two layers must have exactly the same geometry as the DTM: the same spatial extent and the same resolution.} 
 
-\subsection{Multi-résolution}
-Il est possible d'ajouter des données à des résolutions plus grossières pour accélérer les calculs de visibilité. Ces données peuvent être générées directement dans PixScape à partir du menu Données / Multi-résolution / Générer ou bien importées à partir du menu Données / Multi-résolution / Ajouter une résolution.
+\subsection{Multiscale}
+It is possible to add data at coarser resolutions to speed up visibility calculations. This data can be generated directly in PixScape from the Data / Multi scale / Generate menu or imported from the Data / Multi scale / Add scale menu.
 
-\subsubsection{Générer les données}
-La génération d'une base de données multi-résolution peut être réalisée directement dans PixScape. L'utilisateur doit donner les résolutions voulues séparées par des virgules. Par défaut le logiciel propose 4 résolutions séparées par un facteur 3. Si la résolution des données initiales est de 1 mètres, le logiciel proposera les résolutions 3m, 9m, 27m et 81m.
+\subsubsection{Generate multiscale data}
+Generation of a multiscale database can be done directly in PixScape. User must give the required resolutions separated by commas. By default the software proposes 4 resolutions separated by a factor of 3. If the resolution of the initial data is 1 meters, the software will propose the resolutions 3m, 9m, 27m and 81m.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/gen_ms-fr.png} 
-	\caption{Génération d'une base multi-résolution}
+	\includegraphics[scale=0.5]{img/gen_ms-en.png} 
+	\caption{Multiscale database generation}
 \end{figure}
 
-Il est conseillé d'utiliser des résolutions qui suivent une suite géométrique d'un facteur 2, 3 ou 4.
-PixScape va créer un nouveau MNT pour chaque résolution, ainsi que le MNE et l'occupation du sol si ces couches sont présentes dans le projet.
-Pour le MNT et le MNE les pixels sont agrégés par la moyenne arithmétique, pour l'occupation du sol, les pixels sont agrégés par le mode \textit{ie.} la catégorie d'occupation du sol dominante.
-A la fin du traitement, l'ensemble des nouvelles couches sont enregistrées au format Tiff dans le répertoire du projet et sont ajoutés dans l'arborescence des couches de la fenêtre principale.
+It is recommended to use resolutions that follow a geometric sequence of a factor 2, 3 or 4.
+PixScape will create a new DTM for each resolution, as well as the DSM and land use if these layers are present in the project.
+For the DTM and the DSM the pixels are aggregated by the arithmetic mean, for the land use, the pixels are aggregated by the mode \ textit {ie.} the dominant land use category.
+At the end of the processing, all the new layers are saved in Tiff format in the project directory and are added in the layer tree of the main window.
 
 
-\subsubsection{Importer les données}
-La base multi-résolution peut être importée pour chaque résolution. Il faudra fournir au minimum le MNT plus le MNE et l'occupation du sol si ces couches sont déjà présentes pour la résolution initiale. Comme à la création du projet, la résolution des altitudes du MNT peut être renseignée. 
+\subsubsection{Import data}
+The multiscale database can be imported for each scale. At least DTM must be provided, and DSM plus landuse should be provided if these layers are already presents for the initial scale. As with the creation of the project, the resolution of the altitudes of the DTM can be indicated.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/add_scale-fr.png} 
-	\caption{Import des couches pour une résolution}
+	\includegraphics[scale=0.5]{img/add_scale-en.png} 
+	\caption{Import layers for one scale}
 \end{figure}
 
-La résolution des hauteurs du MNE doit être obligatoirement en mètre et les codes d'occupation du sol doivent être compris entre 0 et 255. Pour l'occupation du sol, les codes peuvent varier d'une résolution à une autre pour différencier des objets qui n'ont pas la même signification selon la résolution, par exemple un arbre et une forêt, un bâtiment et un village.  
-Les 3 couches doivent avoir exactement la même géométrie : la même emprise spatiale et la même résolution.
-Enfin, l'emprise spatiale doit couvrir au minimum l'emprise spatiale des données initiales. 
+The resolution of the DSM heights must be in meters and the land use codes must be between 0 and 255. For land use, codes may vary from one scale to another to differentiate objects that do not have the same meaning according to the resolution, for example a tree and a forest, a building and a village.
+The three layers must have exactly the same geometry: the same spatial extent and the same resolution.
+Finally, the spatial extent must cover at least the spatial extent of the initial data.
 
-A partir du moment où le projet contient des données multi-résolution, elles pourront être utilisées dans les calculs de visibilité en activant le paramètre Multi-résolution dans la fenêtre Options (voir \nameref{options}). 
+When the project contains multiscale data, it can be used in visibility calculations by activating the multiscale setting in the Options window (see \nameref{options}).
 
-\section{Calcul de visibilité}
 
-Deux méthodes de calcul de visibilité sont accessibles à partir du menu Visibilité : la vue planimétrique et la vue tangentielle.
-Pour chacune des deux méthodes, l'utilisateur peut visualiser le résultat de manière interactive pour un point d'observation donné en cliquant sur la carte.
+\section{Visibility calculation}
 
-\subsection{Vue planimétrique}
-La vue planimétrique correspond à la surface sur le plan (x,y) contenant l'ensemble des points visibles à partir du point d'observation O. Le résultat est appelé bassin de visibilité ou viewshed en anglais (cf. figure \ref{viewshed}).
+Two visibility calculation methods are available from the Visibility menu: the viewshed and the tangential view.
+For each method, the user can view the result for a given observation point by clicking on the map.
+
+\subsection{Viewshed}
+The viewshed corresponds to the surface on the plane (x, y) containing the set of points visible from the observation point O.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewshed-fr.png} 
-	\caption{Résultat d'une vue planimétrique à partir du point rouge. Le bassin de visibilité est affiché par transparence.}
+	\includegraphics[scale=0.5]{img/viewshed-en.png} 
+	\caption{Resulting viewshed from the red point. The viewshed is displayed by transparency.}
 	\label{viewshed}
 \end{figure}
 
-Le calcul d'une vue planimétrique est accessible à partir du menu Visibilité / Vue planimétrique. Une fenêtre apparaît montrant l'ensemble des paramètres rentrant en ligne de compte pour le calcul d'un bassin de visibilité (figure \ref{viewshed_param_fig}). 
+The calculation of a viewshed can be accessed from the Visibility / Viewshed menu. A window appears showing all the parameters that are relevant for the calculation of a viewshed (figure \ref{viewshed_param_fig}).
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewshed_dlg-fr.png} 
-	\caption{Paramétrage de la vue planimétrique}
+	\includegraphics[scale=0.5]{img/viewshed_dlg-en.png} 
+	\caption{Viewshed settings window}
 	\label{viewshed_param_fig}
 \end{figure}
 
-\subsubsection{Paramètres}
+\subsubsection{Parameters}
 \label{viewshed_param}
 \begin{itemize}
-	\item Point : coordonnées du point d'observation ou observé O. Il peut être saisi manuellement ou bien donné directement en cliquant sur la carte.
-	\item Hauteur oeil (h1) : hauteur en mètre de l'oeil de l'observateur
-	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. S'il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE, la hauteur est nulle.
-	\item Inverse : par défaut la case est décochée, le point O est le point d'observation \textit{ie.} l'oeil de l'observateur (figure \ref{height_view}). Le bassin de visibilité correspond à l'ensemble des points visible depuis O. A l'inverse, si la case est cochée, le point O devient le point observé (figure \ref{height_view_inverse}). Le bassin de visibilité correspond alors à l'ensemble des points d'où l'observateur voit le point O.
-	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
-	\item Multi-résolution : active ou désactive le calcul en multi-résolution. S'il est activé, la distance minimale en mètre avant le changement de résolution doit être indiquée.
+	\item Point: coordinates of the observation or observed point O. It can be entered manually or given by clicking on the map.
+	\item Eye height (h1): height in meter of the observer eye
+	\item Dest. height (h2): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
+	\item Inverse: unchecked by default, point O is the observation point \textit{ie.} the eye of the observer (figure \ref{height_view}). The viewshed corresponds to all the points visible from O. Conversely, if the box is checked, the point O becomes the observed point (figure \ref{height_view_inverse}). The viewshed then corresponds to the set of points from which the observer sees the point O.
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions (see \nameref{bounds})
+	\item Multiscale: enables or disables multiscale calculation. If enabled, the minimal distance in meter before the change of scale must be entered.
 \end{itemize}
 
 
 \begin{figure}[H]
-	\includegraphics{img/height_view.pdf} 
-	\caption{Mode par défaut : O est le point d'observation, h1 est la hauteur de l'oeil et h2 la hauteur à la destination ou la hauteur du MNE si Hauteur dest. = -1}
+	\includegraphics{img/height_view-en.pdf} 
+	\caption{Default mode: O is the observation point, h1 is the height of the eye and h2 is the destination height or the DSM height if Dest. height = -1}
 	\label{height_view}
 \end{figure}
 
-Le paramètre Hauteur dest. (h2) est souvent utilisé en conjonction du mode inverse pour analyser l'impact d'une construction (pylone, éolienne, etc). Le bassin de visibilité résultant correspond alors aux points à partir desquels la nouvelle construction d'une hauteur h2 sera visible (figure \ref{height_view_inverse}).
+Dest. height (h2) parameter is often used with inverse mode to analyze the impact of a construction (pylon, wind turbine, etc). The resulting viewshed then corresponds to the set of points from which the new construction of a height h2 will be visible (figure \ref{height_view_inverse}).
 
 \begin{figure}[H]
-	\includegraphics{img/height_view_inverse.pdf} 
-	\caption{Mode inverse : O est le point observé, h1 est la hauteur de l'oeil et h2 la hauteur à la destination (défini par Hauteur dest. ou la hauteur du MNE si Hauteur dest. = -1)}
+	\includegraphics{img/height_view_inverse-en.pdf} 
+	\caption{Inverse mode: O is the observed point, h1 is the height of the eye and h2 is the destination height (defined by  Dest. height or the DSM height if Dest. height = -1)}
 	\label{height_view_inverse}	
 \end{figure}
 
-\subsubsection{Résultats}
+\subsubsection{Results}
 
-Le bassin de visibilité peut être affiché sur la carte en raster ou en vectoriel selon le choix effectué dans le panneau Résultat. En raster, les zones de couleurs vives correspondent au zones visibles. A l'inverse, en vectoriel, les zones sombres correspondent aux zones visibles. Dans les deux cas, la couche de résultat peut être exportée par un clic droit sur la couche.
+The viewshed can be displayed on the map in raster or vector form according to the choice made in the Result panel. In raster, the bright areas correspond to the visible areas. Conversely, in vectorial, the dark areas correspond to the visible areas. In both cases, the result layer can be exported by right clicking on the layer.
 
-Des métriques peuvent être sélectionnées à partir du bouton Métriques pour être calculées sur le bassin de visibilité actuel. Pour plus de détails sur les métriques, voir la section \nameref{metrics}
+Metrics can be selected from the Metrics button to be calculated on the current viewshed. For more information on metrics, see the section \nameref{metrics}.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewshed_metric-fr.png} 
-	\caption{Métriques calculées à partir du bassin de visibilité}
+	\includegraphics[scale=0.5]{img/viewshed_metric-en.png} 
+	\caption{Metrics calculated from the current viewshed}
 	\label{viewshed_metric}
 \end{figure}
 
-Après avoir modifié un paramètre, il suffit de cliquer sur le bouton Rafraichir pour que le bassin de visibilité soit mis à jour sur la carte ainsi que les métriques si elles sont affichées.
+After modifying a parameter, simply click on the Update button to update the viewshed on the map as well as the metrics if they are displayed.
 
-\subsection{Vue tangentielle}
 
-Le calcul d'une vue tangentielle est accessible à partir du menu Visibilité / Vue tangentielle. Une fenêtre apparaît montrant les paramètres pour le calcul de la vue ainsi que pour l'affichage du résultat (figure \ref{viewtan_param}). 
+\subsection{Tangential view}
+
+The calculation of a tangential view can be accessed from the Visibility / Tangential View menu. A window appears showing the settings for the calculation of the view as well as for displaying the result (figure \ref{viewtan_param}). 
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewtan_dlg-fr.png} 
-	\caption{Paramétrage de la vue tangentielle}
+	\includegraphics[scale=0.5]{img/viewtan_dlg-en.png} 
+	\caption{Tangential view settings}
 	\label{viewtan_param}
 \end{figure}
 
-\subsubsection{Paramètres}
+\subsubsection{Parameters}
 
 \begin{itemize}
-	\item Point : coordonnées du point d'observation O. Il peut être saisi manuellement ou bien donné directement en cliquant sur la carte.
-	\item Hauteur oeil (h1) : hauteur en mètre de l'oeil de l'observateur
-	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions (voir \nameref{bounds})
-	\item Bassin de visibilité : si ce paramètre est coché, le bassin de visibilité est affiché sur la carte.
-	\item Résultat : choix de l'affichage du résultat (voir \nameref{viewtan_result}).
+	\item Point: coordinates of the observation or observed point O. It can be entered manually or given by clicking on the map.
+	\item Eye height (h1): height in meter of the observer eye
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions (see \nameref{bounds})
+	\item Viewshed: if checked, the viewshed is displayed on the map.
+	\item Result: choice of the result displayed (see \nameref{viewtan_result}).
 \end{itemize}
 
-Le paramétrage de la résolution angulaire ainsi que l'utilisation d'une base multi-résolution n'est pas accessible dans cette fenêtre mais uniquement dans la fenêtre des Options (voir \nameref{options}).
+The angular resolution parameter and the use of the multiscale database cannot be set in this window but only on the Options window (see \nameref{options}).
 
-\subsubsection{Résultats}
+\subsubsection{Results}
 \label{viewtan_result}
-Le résultat est affiché dans une nouvelle fenêtre représentant la vue tangentielle (figure \ref{viewtan_land}). Les coordonnées de cette image sont en degré de -180° à +180° à l'horizontal et de -90° à +90° à la verticale, le nord étant à 0° au milieu de l'image. 
+The result is displayed in a new window representing the tangential view (figure \ref{viewtan_land}). The coordinates of this image are in degrees from -180° to + 180° horizontally and -90° to + 90° vertically, the north being at 0° in the middle of the image.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewtan_land-fr.png} 
-	\caption{Résultat d'une vue tangentielle. Les couleurs représentent l'occupation du sol.}
+	\includegraphics[scale=0.5]{img/viewtan_land-en.png} 
+	\caption{Tangential view. The colors represent the land use.}
 	\label{viewtan_land}
 \end{figure}
 
-Par défaut, les couleurs représentent les catégories d'occupation du sol (figure \ref{viewtan_land}). En sélectionnant Distance dans le panneau résultat, la vue tangentielle affiche les distances au point d'observation (figure \ref{viewtan_dist}).
+By default, colors represent the land use categories (figure \ref{viewtan_land}). By selecting Distance in the result panel, the tangential view displays the distances to the observation point (figure \ref{viewtan_dist}).
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/viewtan_dist-fr.png} 
-	\caption{Résultat d'une vue tangentielle. Les couleurs représentent la distance au point d'observation.}
+	\includegraphics[scale=0.5]{img/viewtan_dist-en.png} 
+	\caption{Tangential view. The colors represent the distance to the observation point.}
 	\label{viewtan_dist}
 \end{figure}
 
-Des métriques peuvent être sélectionnées à partir du bouton Métriques pour être calculées sur la vue tangentielle actuelle. Pour plus de détails sur les métriques, voir la section \nameref{metrics}
+Metrics can be selected from the Metrics button to be calculated on the current view. For more information on metrics, see the section \nameref{metrics}.
 
-Après avoir modifié un paramètre, il suffit de cliquer sur le bouton Rafraichir pour que la vue soit mis à jour sur la carte ainsi que les métriques si elles sont affichées.
+After modifying a parameter, simply click on the Update button to update the view as well as the metrics if they are displayed.
 
-\subsection{Bassins multiples}
+
+\subsection{Multi-viewshed}
 \label{multi_viewshed}
-Le menu Visibilité / Bassins multiples permet de calculer plusieurs bassins de visibilité en une fois à partir d'un shapefile contenant les points d'observation.
+The Visibility / Multi Viewshed menu allows you to calculate several viewsheds from a shapefile containing observation points.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/multi_viewshed-fr.png} 
-	\caption{Fenêtre de paramétrage des bassins multiples}
+	\includegraphics[scale=0.5]{img/multi_viewshed-en.png} 
+	\caption{Multi-viewshed settings}
 	\label{multi_viewshed_dlg}
 \end{figure}
 
-\subsubsection{Paramètres}
+\subsubsection{Parameters}
 
 \begin{itemize}
-	\item Shapefile : shapefile contenant les points d'observation.
-	\item id : attribut du shapefile identifiant chaque point. Ce paramètre est utile uniquement pour un résultat en vectoriel.
-	\item Inverse : par défaut la case est décochée, les points représentent les points d'observation \textit{ie.} l'oeil de l'observateur. A l'inverse, si la case est cochée, les points correspondent aux points observés. Pour plus de détails voir \nameref{viewshed_param} de la vue planimétrique.
-	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
-	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si le shapefile contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
-	\item Sortie : choix du format de la couche résultat : vecteur ou raster.
+	\item Shapefile : shapefile containing observation points.
+	\item Id : shapefile attribute used as identifier. This parameter is useful only for vectorial result.
+	\item Inverse: unchecked by default, the shapefile points represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the shapefile points becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
+	\item Dest. height (h2): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.
+	\item Output : format of the result layer : vector or raster.
 \end{itemize}
 
-Le paramétrage de la hauteur de l'observateur ainsi que l'utilisation d'une base multi-résolution n'est pas accessible dans cette fenêtre mais uniquement dans la fenêtre des Options (voir \nameref{options}).
+The eye height (h1) parameter and the use of the multiscale database cannot be set in this window but only on the Options window (see \nameref{options}).
 
-\subsubsection{Résultat}
-Les bassins de visibilité peuvent être affichés sur la carte en raster ou en vectoriel selon le choix effectué dans le panneau Sortie. Dans les deux cas, la couche de résultat peut être exportée par un clic droit sur la couche.
+\subsubsection{Result}
+The resulting viewsheds can be displayed on the map in raster or vector format according to the selected option on Output panel. In both cases, the result layer can be exported by right clicking on it.
 
-En vectoriel, la couche contient un polygone multiple pour chaque bassin de visibilité (figure \ref{multi_viewshed_vector}). Chaque multi-polygone a un attribut Id permettant de faire le lien avec l'identifiant du point d'observation correspondant.
+In vector, the layer contains a multi-polygon for each viewshed (figure \ref{multi_viewshed_vector}). Each multi-polygon has an Id attribute allowing to link the shape with the corresponding observation point.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/multi_viewshed_vector-fr.png} 
-	\caption{Résultat vectoriel du calcul de bassins multiples}
+	\includegraphics[scale=0.5]{img/multi_viewshed_vector-en.png} 
+	\caption{Multi-viewshed in vector format}
 	\label{multi_viewshed_vector}
 \end{figure}
 
-En raster, la valeur du pixel correspond au nombre de fois où le pixel est contenu dans un bassin de visibilité \textit{ie.} le nombre de points d'observation voyant le pixel ou bien, en mode inverse, le nombre de points d'observation vus par le pixel (figure \ref{multi_viewshed_raster}).
+In raster, the value of the pixel corresponds to the number of times the pixel is contained in a viewshed \textit{ie.} the number of observation points seeing the pixel or, in inverse mode, the number of observation points seen from the pixel (figure \ref{multi_viewshed_raster}).
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/multi_viewshed_raster-fr.png} 
-	\caption{Résultat raster du calcul de bassins multiples}
+	\includegraphics[scale=0.5]{img/multi_viewshed_raster-en.png} 
+	\caption{Multi-viewshed in raster format}
 	\label{multi_viewshed_raster}
 \end{figure}
 
-\subsection{Limitation du champ de vision}
+\subsection{Eyesight bounds}
 \label{bounds_ui}
-Pour tous les calculs de visibilité intégrés dans PixScape, le champ de vision peut être restreint dans les 3 dimensions. Le détail est décrit dans la section \nameref{bounds}.
+For all visibility calculations into PixScape, the eyesight can be restricted in all 3 dimensions. Details are described in the section \nameref{bounds}.
 
-Ces limites peuvent être données à partir de la fenêtre Limites (figure \ref{bounds_dlg}). Dans le cas où les points d'observation sont donnés à partir d'un shapefile, le paramétrage du champ de vision peut être différencié pour chaque point en ajoutant les 6 paramètres (dmin, dmax, zmin, zmax, orien, amp) dans la table des attributs du shapefile. Le menu "Ajouter les attributs" permet de les ajouter automatiquement dans un shapefile existant (voir \nameref{add_attributes}).
+These bounds can be set from the Bounds window (figure \ref{bounds_dlg}). When the observation points come from a shapefile, the setting of the eyesight can be differentiated for each point by adding the 6 parameters (dmin, dmax, zmin, zmax, orien, amp) in the shapefile attributes table. The "Set point attributes" menu allows you to automatically add them to an existing shapefile (see \nameref{add_attributes}).
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/bounds-fr.png} 
-	\caption{Paramétrage des limites du champ de vision. Par défaut le champ de vision est complet.}
+	\includegraphics[scale=0.5]{img/bounds-en.png} 
+	\caption{Settings of the eyesight. By default the eyesight bounds are unlimited.}
 	\label{bounds_dlg}
 \end{figure}
 
-\section{Calcul de métriques de visibilité}
+\section{Visibility metric calculation}
 \label{calc_metrics}
-Dans PixScape, il est possible de synthétiser le résultat d'une vue planimétrique ou tangentielle par un certain nombre d'indicateurs ou métriques. Les métriques disponibles sont détaillées dans le chapitre \nameref{metrics}. 
+PixScape can agregate the result of a viewshed or tangential view by several indicators, or metrics. The available metrics are detailed in the chapter \nameref{metrics}.
 
-Le menu Visibilité permet déjà de calculer plusieurs métriques sur la vue courante. Mais ce fonctionnement "manuel" est envisageable pour seulement quelques points d'observation. 
+The Visibility menu already allows you to calculate several metrics on the current view. But this "manual" operation is only possible for a few observation points.
 
-Le menu Métriques, quant à lui, permet de lancer un calcul de visibilité (planimétrique ou tangentielle) ainsi que le calcul des métriques, pour un ensemble de points d'observation en une seule exécution. 
+The Metric menu allows you to launch a visibility calculation (planimetric or tangential) and the calculation of the metrics for a set of observation points in a single execution.
+
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metrics-fr.png} 
-	\caption{Paramétrage du calcul de métriques}
+	\includegraphics[scale=0.5]{img/metrics-en.png} 
+	\caption{Settings for metrics calculation}
 	\label{metrics_dlg}
 \end{figure}
 
-\subsection{Paramétrage de la vue}
-Les paramètres spécifiques à la vue sont affichés en haut de la fenêtre (figure \ref{metrics_dlg}) et dépendent du type de vue sélectionné dans le menu Métriques : planimétrique ou tangentiel.
+\subsection{View parameters}
+View-specific parameters are displayed at the top of the window (figure \ref{metrics_dlg}) and depend on the type of view selected in the Metric menu: planimetric (for viewshed) or tangential.
 
 \begin{itemize}
-	\item Inverse (planimétrique uniquement) : par défaut la case est décochée, les points représentent les points d'observation \textit{ie.} l'oeil de l'observateur. A l'inverse, si la case est cochée, les points correspondent aux points observés. Pour plus de détails voir \nameref{viewshed_param} de la vue planimétrique.
-	\item Hauteur dest. (h2) (planimétrique uniquement) : hauteur en mètre du ou des points observés. S'il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
-	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si les points sont définis par un shapefile et qu'il contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
+	\item Inverse (planimetric only): unchecked by default, the shapefile points represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the shapefile points becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
+	\item Dest. height (h2) (planimetric only): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the selected sampling is Points and the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.	
 \end{itemize}
-Les autres paramètres pour la vue (\textit{eg.} hauteur de l'oeil) doivent être définis en amont dans la fenêtre Options (cf. \nameref{options}).
 
-\subsection{Echantillonnage}
+The other parameters for the view (\textit {eg.} eye height, angular resolution, ...) must be set before in the Options window (see \nameref{options}).
+
+
+\subsection{Sampling}
 \label{sampling}
-Les points d'observation peuvent être donnés en raster (option Grille) ou en vectoriel (option Points). Le format du résultat (raster ou vectoriel) est lié au type choisi.
+Observation points can be given in raster (Grid option) or vector (Points option). The format of the result (raster or vector) is related to the type chosen.
 
-\subsubsection{Échantillonnage raster}
-En raster, l'échantillonnage des points d'observation se fait à partir de la grille du MNT à la résolution la plus fine. Deux options sont possibles : un échantillonnage régulier sur la grille ou bien par catégorie d'occupation du sol.
+\subsubsection{Grid sampling (raster)}
+With grid option, the sampling of the observation points is done from the grid of the DTM at the finest resolution. Two options are possible: regular sampling on the grid or land use category.
 
-Par défaut, l'échantillonnage est régulier et fixé à 1 pixel, ce qui correspond à un parcours exhaustif de l'ensemble des pixels de l'image \textit{ie.} un calcul de visibilité sera exécuté à partir de chaque pixel comme point d'observation. Si on augmente l'échantillonnage à 3, un pixel sur 3 seulement sera utilisé dans chaque dimension, donc on calculera une vue uniquement pour 1 pixel sur 9 de la grille (figure \ref{grid_sampling}).
+By default, the sampling is regular and set at 1 pixel, which corresponds to an exhaustive run of the set of pixels of the image \textit{ie.} a visibility calculation will be executed from each pixel. If we increase the sampling to 3, only one pixel out of 3 will be used in each dimension, so we will compute a view only for 1 pixel out of 9 of the grid (figure \ref{grid_sampling}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/grid_sampling.pdf} 
-	\caption{Echantillonnage tous les 3 pixels. 9 vues seront calculées à partir des 9 pixels grisés.}
+	\caption{Grid sampling every 3 pixels on each dimension. 9 views will be calculated from the 9 shaded pixels.}
 	\label{grid_sampling}
 \end{figure}
 
-Si l'échantillonnage se fait par catégorie d'occupation du sol, les vues seront calculées uniquement à partir des pixels appartenant aux catégories listées. Les codes d'occupation du sol doivent être séparés par des virgules.
+If the sampling is done by land use category, the views will be calculated only from the pixels belonging to one of the listed categories. Land use codes must be separated by commas.
 
-Le résultat sera sous forme de plusieurs couches raster. Il contiendra une couche pour chaque métrique et pour chaque intervalle de distance défini dans le paramétrage des métriques.
-
-\subsubsection{Échantillonnage vectoriel}
-Au lieu d'utiliser la grille raster, on peut fournir un ensemble de points à partir d'un shapefile.
-
-Le résultat sera sous la forme d'une couche de points correspondant au shapefile donné en entrée. Le résultat des métriques sera stocké dans la table attributaire de la couche.
+The result will be one or more raster layers. It will contain one layer for each metric and for each distance range defined in the metric setting.
 
 
-\subsection{Paramétrage des métriques}
+\subsubsection{Points sampling (vector)}
+Instead of using the raster grid sampling, you can provide a set of points from a shapefile.
+
+The result will be in the form of a point layer corresponding to the input shapefile. The result of the metrics will be stored in the attribute table of the shapefile.
+
+
+\subsection{Metric parameters}
 \label{param_metrics}
-Pour chaque point d'observation, un ensemble de métriques pourra être calculé. Le panneau Métriques permet de les sélectionner et de paramétrer les distances et les catégories d'occupation du sol selon le cas. Une même métrique peut être ajoutée plusieurs fois avec un paramétrage différent.
+For each observation point, a set of metrics can be computed. The Metrics panel allows you to select them and to set distances and landuse categories if needed. The same metric can be added several times with different settings.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metric_param-fr.png} 
-	\caption{Paramétrage de la métrique A}
+	\includegraphics[scale=0.5]{img/metric_param-en.png} 
+	\caption{Parameters of metric A}
 	\label{metric_param_dlg}
 \end{figure}
 
-La figure \ref{metric_param_dlg} montre le paramétrage de la métrique A. Dans cet exemple, la métrique A sera calculée uniquement sur les classes d'occupation du sol 1, 3, 4 et 5 pour 3 intervalles de distance [0-100[, [100-1000[ et [1000-10000[. Le résultat contiendra pour chaque point d'observation 3 valeurs, une pour chaque intervalle de distance.
+Figure \ref{metric_param_dlg} shows the settings of the metric A. In this example, metric A will only be calculated on the landuse classes 1, 3, 4 and 5 for 3 distance intervals [0-100[ , [100-1000[ and [1000-10000[. The result will contain 3 values for each observation point, one for each distance interval.
 
-Le bouton "Ajout chaque" permet d'ajouter une métrique plusieurs fois : pour chaque catégorie d'occupation du sol sélectionnée.
+"Add each" button adds the selected metric several times: one for each land-use category.
 
-Les catégories d'occupation du sol peuvent aussi être regroupées pour ne former qu'une seule classe dans le calcul d'une métrique avec le caractère "-" (figure \ref{metric_param_group_dlg}). Cela permet de garder une occupation du sol détaillée et dans le même temps réaliser certaines analyses sur des classes plus générales.
+Several landuse categories can be grouped in one class with the dash character "-" (figure \ref{metric_param_group_dlg}). This makes it possible to keep a detailed land-use and at the same time carry out some analysis on more general classes.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metric_param_group-fr.png} 
-	\caption{Paramétrage de la métrique S. Les catégories d'occupation du sol sont regroupées en 4 classes.}
+	\includegraphics[scale=0.5]{img/metric_param_group-en.png} 
+	\caption{Parameters of metric S. Land-use category are grouped in 4 classes.}
 	\label{metric_param_group_dlg}
 \end{figure}
 
-Le regroupement des catégories d'occupation du sol n'est pas utile pour la métrique A. En effet cette métrique ne différencie pas les catégories sélectionnées en classe. Par exemple, \verb|1,3,4,5| et \verb|1-3,4-5| donnera le même résultat.
+The grouping of land-use categories is not useful for metric A. Indeed, this metric does not differentiate the categories in each class. For example, \verb|1,3,4,5| and \verb|1-3,4-5| will give the same result for the metric A.
 
-\subsection{Résultats}
+\subsection{Results}
 
-Le résultat du calcul de métriques est affiché sur la carte par une ou plusieurs couches au format raster ou vectoriel selon le format d'entrée utilisé pour l'échantillonnage. Chaque couche est exportable par un clic droit sur le nom de la couche et le menu "Exporter...".
+The result of the calculation of metrics is displayed on the map by one or more layers in raster or vector format depending on the input format used for sampling. Each layer can be exported by right clicking on the layer name and the "Export ..." menu.
 
 \subsubsection{Raster}
-En raster, le résultat correspond à un ensemble de couche raster, une pour chaque métrique et chaque intervalle de distance. Chaque couche peut être exportée au format Tiff ou AsciiGrid.
+For raster, the result is a set of raster layers, one for each metric and each distance interval. Each layer can be exported in Tiff or AsciiGrid format.
 
-A partir du paramétrage de la figure \ref{metric_param_dlg}, PixScape produit 3 couches raster (figure \ref{metric_result_rast}) pour les 3 intervalles de distances donnés.
+For the settings of the figure \ref{metric_param_dlg}, PixScape adds 3 raster layers (figure \ref{metric_result_rast}) for the 3 distance intervals.
 
-Si l'échantillonnage sur la grille est supérieur à 1, la taille des pixels sera augmentée proportionnellement au facteur d'échantillonnage.
+If the sampling is greater than 1, the pixel size is increased proportionately as the sampling factor. 
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metric_result_rast-fr.png} 
-	\caption{Résultat d'un calcul de métriques par un échantillonnage sur la grille.}
+	\includegraphics[scale=0.5]{img/metric_result_rast-en.png} 
+	\caption{Metric result with grid sampling.}
 	\label{metric_result_rast}
 \end{figure}
 
-\subsubsection{Vectoriel}
+\subsubsection{Vector}
 
-En vectoriel, le résultat est une couche de point contenant les valeurs des métriques dans la table attributaire (figure \ref{metric_result_attr}). Par défaut la première métrique est affichée par cercle proportionnel (figure \ref{metric_result_vect}). Pour afficher une autre métrique, il suffit de modifier l'attribut sélectionné dans l'onglet "Cercle" de la fenêtre de paramétrage du style de la couche.
+In vector, the result is a point layer containing the metrics values in the attribute table (figure \ref{metric_result_attr}). By default the first metric is displayed with proportional circle (figure \ref{metric_result_vect}). To display another metric, simply change the attribute selected in the "Circle" tab of the layer style window.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metric_result_vect-fr.png} 
-	\caption{Résultat d'un calcul de métriques à partir d'un shapefile de point. La première métrique est affichée par des cercles proportionnels à la valeur de la métrique.}
+	\includegraphics[scale=0.5]{img/metric_result_vect-en.png} 
+	\caption{Metric result from a point layer. The first metric is displayed by circles proportional to the value of the metric.}
 	\label{metric_result_vect}
 \end{figure}
 
-La couche "Métriques" peut être exportée au format shapefile ou bien texte par un clic droit sur le nom de la couche et le menu "Exporter...".
+The layer "Metric point result" can be exported in shapefile or text format by right clicking on the layers name and the menu "Export ...".
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/metric_result_attr-fr.png} 
-	\caption{Table attributaire de la couche résultat}
+	\includegraphics[scale=0.5]{img/metric_result_attr-en.png} 
+	\caption{Attribute layer of the result layer.}
 	\label{metric_result_attr}
 \end{figure}
 
-La table attributaire de la couche résultat est accessible par un clic droit sur le nom de la couche et le menu "Table attributaire". Elle contient toujours, en plus des métriques, les 6 paramètres de limitation du champ de vision, permettant de conserver l'information de paramétrage avec les résultats.
+The attribute table of the result layer is accessible by right clicking on the layer name and the "Attribute table" menu. It contains, in addition to the metrics, the 6 parameters used for limiting the eyesight, allowing to keep these parameters with the results.
 
-\section{Outils et options}
+\section{Tools and options}
 \label{tools}
 
-\subsection{Ajout des attributs du champ de vision}
+\subsection{Add eyesight attributes}
 \label{add_attributes}
-Pour l'ensemble des calculs de visibilité, le champ de vision peut être restreint par la fenêtre Limites (figure \ref{bounds_dlg}). Cette solution est pratique quand pour chaque point d'observation les même restrictions du champ de vision s'appliquent. 
-Le menu Outils / Ajouter les attributs est utile quant à lui pour spécifier des restrictions différentes pour chaque point d'observation. Cette fonction ajoute les 6 attributs à un shapefile avec les valeurs par défaut définies par la fenêtre Limites. Vous pouvez ensuite avec votre SIG préféré modifier les valeurs de restriction pour chaque point d'observation. 
-Le shapefile en sortie pourra être utilisé pour le calcul de métriques (\ref{calc_metrics}) et le calcul de bassins multiples (\ref{multi_viewshed}) qui tiendront compte des restrictions du champ de vision différenciées pour chaque point.
+For all visibility calculations, the eyesight can be restricted by the Bounds window (figure \ref{bounds_dlg}). This solution is useful if each observation point has the same limitations of the eyesight.
+The Tools / Set point attributes menu is useful for specifying different restrictions for each observation point. This function adds the 6 attributes to a shapefile with the default values defined by the Bounds window. You can then with your favorite GIS modify the restriction values for each observation point.
+The output shapefile can be used for calculation of metrics (\ref{calc_metrics}) or multi viewshed (\ref{multi_viewshed}).
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/add_attributes-fr.png} 
-	\caption{Ajout des attributs à un shapefile pour limiter le champ de vision}
+	\includegraphics[scale=0.5]{img/add_attributes-en.png} 
+	\caption{Add eyesight bound attributes to a shapefile}
 	\label{add_attributes_dlg}
 \end{figure}
 
-\subsubsection{Champ de vision le long d'un parcours}
+\subsubsection{Eyesight along a path}
 La case à cocher "Définir l'orientation selon le parcours" calcule l'orientation de chaque point par rapport au suivant. Avec cette option, le paramètre orientation de la fenêtre Limites sera ignoré et chaque point aura potentiellement une valeur d'orientation différente. 
 
 \begin{figure}[H]
@@ -482,7 +491,7 @@ Les options générales du projet sont accessibles à partir du menu Outils / Op
 Ces options sont enregistrées automatiquement dans le fichier xml du projet. Elles sont utilisées pour l'ensemble des calculs de visibilité sauf quand l'option est aussi présente dans la fenêtre de paramétrage d'un traitement. Par exemple, la hauteur de l'oeil est modifiable directement dans la fenêtre de paramétrage d'une vue planimétrique ou tangentielle, mais elle ne l'est pas pour le calcul des métriques. Dans ce dernier cas, la hauteur de l'oeil de l'observateur sera celle définie dans la fenêtre d'options.
 
 \begin{figure}[H]
-	\includegraphics[scale=0.5]{img/options-fr.png} 
+	\includegraphics[scale=0.5]{img/options-en.png} 
 	\caption{Options générales}
 \end{figure}
 
@@ -1230,7 +1239,7 @@ La fenêtre "Préferences" accessible par le menu Fichier permet de régler le n
 \subsubsection{Ligne de commande}
 En ligne de commande, il faut définir le nombre de coeurs (ou processeurs) que PixScape peut utiliser avec l'option \verb|-proc| :
 \begin{Verbatim}
-	java -jar pixscape-1.0.jar -proc 8 --project path2myproject/myproject.xml ...
+java -jar pixscape-1.0.jar -proc 8 --project path2myproject/myproject.xml ...
 \end{Verbatim}
 Par défaut, en ligne de commande, le nombre de coeurs utilisés correspond au nombre défini dans la fenêtre Préférences de l'interface graphique.
 
@@ -1256,7 +1265,7 @@ En interface graphique, PixScape ne peut utiliser qu'une seule carte graphique, 
 En ligne de commande, l'option \verb|-cuda| permet d'activer l'utilisation du GPU. Il faut aussi donner le nombre de cartes graphiques à utiliser.
 
 \begin{Verbatim}
-	java -jar pixscape-1.0.jar -cuda 1 --project path2myproject/myproject.xml ...
+java -jar pixscape-1.0.jar -cuda 1 --project path2myproject/myproject.xml ...
 \end{Verbatim}
 Dans l'exemple ci-dessus, PixScape utilisera une carte graphique pour les calculs de visibilité. Si votre ordinateur contient plusieurs cartes graphiques il est possible d'augmenter le paramètre pour les utiliser en parallèle et diminuer d'autant le temps d'exécution.
 
@@ -1266,7 +1275,7 @@ PixScape peut aussi être utilisé sur des clusters de calcul supportant Java av
 
 Exemple :
 \begin{Verbatim}
-	mpirun java -jar pixscape-1.0.jar -mpi --project path2myproject/myproject.xml ...
+mpirun java -jar pixscape-1.0.jar -mpi --project path2myproject/myproject.xml ...
 \end{Verbatim}
 Seulement certaines commandes peuvent être utilisées dans l'environnement MPI : \verb|--planmetric|, \verb|--tanmetric|, \verb|--landmod|
 
@@ -1285,15 +1294,15 @@ En interface graphique, PixScape a besoin de plus de mémoire qu'en ligne de com
 \subsection{Interface en ligne de commande}
 Pour définir la mémoire maximale utilisable par PixScape en ligne de commande, il faut utiliser l'option Java \verb|-Xmx| :
 \begin{Verbatim}
-	java -Xmx4g -jar pixscape-1.0.jar ... # 4Gb allocated
-	java -Xmx1500m -jar pixscape-1.0.jar ... # 1500 Mb -> 1.5Gb allocated
+java -Xmx4g -jar pixscape-1.0.jar ... # 4Gb allocated
+java -Xmx1500m -jar pixscape-1.0.jar ... # 1500 Mb -> 1.5Gb allocated
 \end{Verbatim}
 
 
 Si vous ne pouvez pas allouer plus de 1 GB ou 1.5 GB alors que votre ordinateur a plus de mémoire vive, vous utilisez sûrement une version 32-bit de Java qui est limitée à moins de 2 GB.
 Pour tester votre version de Java :
 \begin{Verbatim}
-	java -version
+java -version
 \end{Verbatim}
 Si vous avez une version 32-bit, installez une version 64-bit de Java pour allouer plus de mémoire à PixScape.
 
