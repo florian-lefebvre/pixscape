@@ -8,6 +8,4 @@ manual.*\.pdf$
 \.toc$
 \.aux$
 \.log$
-\.bbl$
-\.blg$
 \.synctex\.gz$

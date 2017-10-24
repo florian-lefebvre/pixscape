@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.0.2 (24/10/2017)
+- CLI : set the locale as defined in GUI
+
 ##### version 1.0.1 (21/03/2017)
 - Exception at project creation when tif DEM hasn't CRS
 

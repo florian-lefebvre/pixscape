@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.logging.Logger;
-import org.apache.commons.math3.exception.OutOfRangeException;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;

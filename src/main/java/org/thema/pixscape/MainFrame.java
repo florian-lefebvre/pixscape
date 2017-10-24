@@ -834,6 +834,9 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         
+        Config.setNodeClass(MainFrame.class);
+        PreferencesDialog.initLanguage();
+            
         // CLI execution
         if(args.length > 0 && !args[0].equals(JavaLoader.NOFORK)) {        
             if(!GraphicsEnvironment.isHeadless() && SplashScreen.getSplashScreen() != null) {
@@ -841,8 +844,6 @@ public class MainFrame extends javax.swing.JFrame {
             }
             new CLITools().execute(args);
         } else { // UI execution
-            Config.setNodeClass(MainFrame.class);
-            PreferencesDialog.initLanguage();
             JavaLoader.launchGUI(MainFrame.class, args.length == 0, 2048);
         }
     }

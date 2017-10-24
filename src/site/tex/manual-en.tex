@@ -54,9 +54,9 @@
 	\bigskip
 	
 	{\Large		
-		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
+		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2017-03-21\\
+		2017-07-26\\
 	}
 	
 \end{titlepage}
@@ -79,7 +79,7 @@ This software integrates the main functionalities available in standard GIS  in 
 PixScape has been developed at \href{http://thema.univ-fcomte.fr}{ThéMA} laboratory (\href{http://www.univ-fcomte.fr}{Université de Franche-Comté} – \href{http://www.cnrs.fr}{CNRS}) by Gilles Vuidel in collaboration with Jean-Christophe Foltête, Daniel Joly, Yohan Sahraoui et Samy Youssoufi. The PixScape logo has been designed by Xavier Girardet.
 
 \subsection{Terms of use}
-Graphab is distributed in open source, under the \href{https://www.gnu.org/licenses/gpl-3.0.html}{GPL} license.\\
+PixScape is distributed in open source, under the \href{https://www.gnu.org/licenses/gpl-3.0.html}{GPL} license.\\
 Source code can be downloaded from the sourcesup git repository : \url{git://git.renater.fr/pixscape.git}.\\
 Users must cite the following reference in their publications :\\
 ??
@@ -116,8 +116,7 @@ Once PixScape is launched, the first step is to create a project based on a DTM 
 
 \section{Project creation}
 
-To create a new project, use the menu File / New project. User must 
-La mise en place d’un nouveau projet PixScape s’effectue à partir du menu : File / New project. User must enter a name and a path for the project as well as a DTM in Tiff or AsciiGrid format. \textbf{The coordinate system of the DTM must be projected and in meter unit. If this is not the case, the visibility calculations will be erroneous.} The resolution of the altitudes (Z) can be specified if it is not in meter. For example, if the altitudes are given in centimeter, enter 0.01 in "Z resolution".
+To create a new project, use the menu File / New project. User must enter a name and a path for the project as well as a DTM in Tiff or AsciiGrid format. \textbf{The coordinate system of the DTM must be projected and in meter unit. If this is not the case, the visibility calculations will be erroneous.} The resolution of the altitudes (Z) can be specified if it is not in meter. For example, if the altitudes are given in centimeter, enter 0.01 in "Z resolution".
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/new_project-en.png} 
@@ -473,106 +472,105 @@ The output shapefile can be used for calculation of metrics (\ref{calc_metrics})
 \end{figure}
 
 \subsubsection{Eyesight along a path}
-La case à cocher "Définir l'orientation selon le parcours" calcule l'orientation de chaque point par rapport au suivant. Avec cette option, le paramètre orientation de la fenêtre Limites sera ignoré et chaque point aura potentiellement une valeur d'orientation différente. 
+The check box "Set path orientation" calculates  the orientation of each point depending on the next one. When this option is checked, the orientation parameter of the "Bounds" window is ignored and each point may have an different orientation.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/path_orien.pdf} 
-	\caption{Champ de vision le long d'un parcours. L'orientation est calculée en direction du point suivant et l'amplitude est constante.}
+	\caption{Eyesights along a path. The orientation is calculated by the next point. The amplitude is constant.}
 	\label{path_orien}
 \end{figure}
 
-L'ordre des points est défini par l'attribut id qui est trié par ordre croissant.
-Cette option est utile uniquement avec une amplitude inférieure à 360°.
+The points order is defined by "id" attribute which is sorted with natural ordering.
+This option is useful only with an amplitude less than 360°.
 
 
 \subsection{Options}
 \label{options}
-Les options générales du projet sont accessibles à partir du menu Outils / Options.
-Ces options sont enregistrées automatiquement dans le fichier xml du projet. Elles sont utilisées pour l'ensemble des calculs de visibilité sauf quand l'option est aussi présente dans la fenêtre de paramétrage d'un traitement. Par exemple, la hauteur de l'oeil est modifiable directement dans la fenêtre de paramétrage d'une vue planimétrique ou tangentielle, mais elle ne l'est pas pour le calcul des métriques. Dans ce dernier cas, la hauteur de l'oeil de l'observateur sera celle définie dans la fenêtre d'options.
+The general project options are available from the Tools / Options menu.
+These options are saved automatically in the xml file of the project. They are used for all the visibility calculations except when an option is also present in the settings window of a processing. For example, the height of the eye can be changed directly in the settings window of a planimetric or tangential view, but it is not available for calculating metrics. In the latter case, the height of the observer's eye will be set from the general options window.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/options-en.png} 
-	\caption{Options générales}
+	\caption{General options}
 \end{figure}
 
-\subsubsection{Hauteur de l'oeil de l'observateur}
-Le paramètre Hauteur oeil ($h1$) spécifie la hauteur de l'observateur à partir du MNT. L'unité est le mètre. Pour plus de détails, voir \nameref{principles} et la figure \ref{ray_side}.
+\subsubsection{Height of the observer's eye}
+Eye height parameter ($h1$) sets the hieght of the observer from the DEM. The height is in meters. For more details, see \nameref{principles} and the figure \ref{ray_side}.
 
-\subsubsection{Précision angulaire}
-Le paramètre Précision angulaire ($\alpha$) définit la résolution en degré de la vue tangentielle. Il est fixé par défaut à 0.1°, ce qui correspond à 3600 rayons calculés si l'amplitude de la vue est à 360°. Pour plus de détails, voir \nameref{principles_tan} et la figure \ref{grid_tan}. 
+\subsubsection{Angular precision}
+Angular precision parameter ($\alpha$) sets the resolution in degrees of the tangential view. It is set by default to 0.1°, which corresponds to 3600 rays if the amplitude of the view is 360 °. For more details, see \nameref{principles_tan} and the figure \ref{grid_tan}.
 
-\subsubsection{Courbure terrestre}
+\subsubsection{Earth curvature}
 \label{curvature}
-Les calculs de visibilité dans PixScape peuvent tenir compte de la courbure de la Terre, susceptible de jouer un rôle dans le cas d'une vue à plusieurs dizaines de kilomètres. Le principe du calcul est simple : plus la distance à l'observateur augmente, plus la hauteur des objets visibles diminuent. 
-La hauteur tenant compte de la courbure de la Terre $z'_i$ d'un point $i$ est calculée comme suit : 
+The visibility calculations in PixScape can take into account the curvature of the Earth, which can play a role in the case of a view greater than several tens of kilometers. The principle of computation is simple: the more the distance to the observer increases, the more the height of the visible objects diminish.
+The height taking into account the curvature of the Earth $z'_i$ of a point $i$ is calculated as follows:
 
 $$z'_i = z_i - \frac{d_i^2}{D}$$
 
-avec $z_i$ l'altitude du MNT au point $i$, $d_i$ la distance entre le point $i$ et l'observateur et $D$ le diamètre de la Terre (12 740 000 mètres).
+with $z_i$ the elevation of the DTM at point $i$, $d_i$ the distance between the point $i$ and the observer and $D$ the Earth diameter (12 740 000 meters).
 
-La courbure de la Terre peut être compensée en partie par la réfraction de la lumière dans l'atmosphère. Dans PixScape, à partir du moment où la courbure terrestre est prise en compte, le paramètre de réfraction peut être spécifié. Il est défini par défaut à 0,13. Le calcul de la hauteur devient : 
+The Earth curvature may be compensated by the light refraction in the atmosphere.
+In PixScape, when the Earth curvature is taken into account, the refraction parameter can be specified. It is set to 0.13 by default. The calculation of the height becomes
 
 $$z'_i = z_i - (1-\rho)\frac{d_i^2}{D}$$
 
-avec $\rho$ le coefficient de réfraction compris entre 0 et 1. Si $\rho=0$ on retombe sur la formule précédente sans réfraction.
+with $\rho$ the refraction coefficient between 0 and 1. If $\rho=0$, we return to the preceding formula without refraction.
 
 
-\subsubsection{Multi-résolution}
-A partir du moment où le projet contient les données à plusieurs résolutions, les calculs de visibilité peuvent se faire en multi-résolution en activant cette option. Le paramètre de distance minimale est à définir obligatoirement. Il permet d'assurer une distance minimale en mètre avant de changer de résolution. 
+\subsubsection{Multiscale}
+When the project contains data with several resolutions, the visibility calculations can be done in multiscale by activating this option. The minimum distance parameter must be defined. It ensures a minimum distance in meters before changing resolution.
 
-Pour plus de détails sur le calcul de visibilité en multi-résolution, voir \nameref{multires}.
-
-
-\subsubsection{Accélération GPU}
-Ce paramètre permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être importants pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). En revanche, toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistants.
-
-Le paramètre est grisé si PixScape ne peux pas utiliser l'accélération GPU. Les causes peuvent être multiples : pas de carte graphique NVidia, pas de support de CUDA, pas la bonne version de CUDA (6.5).
-
-Si l'option multi-résolution est active, l'accélération GPU ne sera pas utilisée même si elle est activée.
+For more details on the multiscale calculations, see \nameref{multires}.
 
 
-\chapter{Interface en ligne de commande}
+\subsubsection{GPU acceleration}
+This parameter is used to perform visibility calculations on the graphics card processor (GPU) instead of the central processor. Runtime gains can be significant for Nvidia Tesla graphics cards, designed for high-performance computing (see \nameref {perf}). On the other hand, not all metrics are optimized for the GPU. Metrics A and S are the only ones to be optimized. If you use other metrics, the time savings will be minimal or non-existent.
+
+The parameter is disabled if PixScape can not use GPU acceleration. The causes can be multiple: no NVidia graphics card, no CUDA support, not the right version of CUDA (6.5).
+
+GPU acceleration cannot be used for multiscale calculations. If multiscale option is enabled, GPU acceleration will not be used even if it is enabled.
+
+
+\chapter{Command line interface (CLI)}
 \label{cli}
+Once a project has been created from the GUI, it is possible to use PixScape on the command line. This mode is useful for running the software on a remote computer without a graphical interface, automatically launching several processes, or submitting executions on a cluster.
 
-Dès lors qu'un projet a été créé depuis l'interface graphique, il est possible d'utiliser PixScape en ligne de commande. Ce mode est utile pour exécuter le logiciel sur un ordinateur distant sans interface graphique, lancer automatiquement plusieurs traitements à la suite, ou encore soumettre des exécutions sur un cluster.
+\section{Starting}
 
-\section{Démarrage}
-
-\subsection{Lancer PixScape en ligne de commande}
-Il faut tout d'abord ouvrir une fenêtre de terminal, puis aller dans le répertoire contenant PixScape avec la commande \textit{cd}.
-Enfin, vous pouvez saisir la commande suivante pour afficher l'écran d'aide de PixScape :
+\subsection{Launch PixScape in CLI mode}
+First you have to open a terminal window. Then, go to the directory of the Graphab program with \textit{cd} command. Finally, type the following command to display the PixScape help screen :
 \begin{Verbatim}
 java -jar pixscape.jar --help
 \end{Verbatim}
-Résultat
+Result
 \begin{Verbatim}
 Usage :
 java -jar pixscape.jar --metrics
 ...
 ...
 \end{Verbatim}
-Vous êtes prêt à utiliser PixScape en ligne de commande.
+You’re ready to use PixScape in CLI mode.
 
-\subsection{Syntaxe}
-\subsubsection{Définition}
-Les commandes commencent par un double tiret : \verb|--project, --metrics, ...|\\
-Les options globales commencent par un tiret simple : \verb|-proc, -bounds, ...|\\
-Les paramètres n'ont pas de tiret : \verb|dmin, inverse, ...|
+\subsection{Syntax}
+\subsubsection{Definition}
+Commands always start with a double dash: \verb|--project, --metrics, ...|\\
+Global options start with only one dash: \verb|-proc, -bounds, ...|\\
+Parameters does not have dash: \verb|dmin, inverse, ...|
 
-\subsubsection{Séparateur}
-Les espaces sont utilisés pour séparer les différents éléments d'une ligne de commande, par conséquent, vous ne pouvez pas avoir un nom qui contient des espaces.\\
+\subsubsection{Character separator}
+Blank spaces are used to separate commands and parameters.  You cannot have a name containing blank spaces.
 
-\subsubsection{Syntaxe de l'écran d'aide}
-Dans l'écran d'aide, les éléments entourés de crochets sont optionnels, et donc les éléments qui ne sont pas entourés par des crochets sont obligatoires. Le caractère \verb+|+ sépare les options possibles.
+\subsubsection{Help screen syntax}
+In the help screen, elements enclosed in brackets are optional. Therefore, elements not in brackets are mandatory. The character \verb+|+ separates the possible options.
 
-\section{Commandes}
+\section{Commands}
 
-\subsection{--help : affichage de l'aide}
-Commande :
+\subsection{--help : show help screen}
+Command:
 \begin{Verbatim}
 java -jar pixscape-1.0.jar --help
 \end{Verbatim}
-Résultat :
+Result:
 \begin{Verbatim}
 Usage :
 java -jar pixscape.jar --metrics
@@ -593,8 +591,8 @@ Commands list :
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 \end{Verbatim}
 
-\subsection{--metrics : affichage des métriques}
-Cette commande affiche l'ensemble des métriques disponibles avec leur abréviation et leur nom. 
+\subsection{--metrics : show metrics}
+This command lists all available metrics with their short name and full name.
 
 Commande :
 \begin{Verbatim}
@@ -603,708 +601,725 @@ java -jar pixscape-1.0.jar --metrics
 Résultat :
 \begin{Verbatim}
 ===== Metrics =====
-A - Surface
-P - Périmètre
-C - Compacité
-S - Shannon OS
-FD - Dimension fractale
-IJI - Interspersion et juxtaposition
+A - Area
+P - Perimeter
+C - Compactness
+S - Shannon land use
+FD - Fractal Dimension
+IJI - Interspersion and juxtaposition
 CONTAG - Contagion
-DIST - Distribution des distances
-SL - Ligne d'horizon
-SD - Shannon distances max.
-DL - Profondeur de vue
+DIST - Distances distribution
+SL - Skyline ratio
+SD - Shannon max. distances
+DL - Depth line
 \end{Verbatim}
 
-\subsection{--project : chargement d'un projet}
-Cette commande définit le chemin vers le fichier xml du projet à charger.
+\subsection{--project : load project}
+This command sets the path to the project xml file.
 \begin{Verbatim}[commandchars=\\\{\}]
 java -jar pixscape-1.0.jar --project \textit{path2myproject/myproject.xml}
 \end{Verbatim}
-Charge le projet \textit{myproject} contenu dans le répertoire \textit{path2myproject}.
+This command loads the project \textit{myproject} contained in the \textit{path2myproject} folder.
 
-La commande \verb|--project| ne peut être utilisée qu'une seule fois et doit être la première commande de la ligne.
-Toutes les commandes qui suivent dans ce manuel ont besoin d'un projet chargé.
+The \verb|--project| command can be used only once and must be the first command.  All of the following commands below require a loaded project
 
-\subsection{--landmod : changements d'occupation du sol}
+\subsection{--landmod : land use changes}
 
 \begin{Verbatim}[commandchars=\\\{\}]
 --landmod zone=\textit{filezones.shp} id=\textit{fieldname} code=\textit{fieldname} dsm=\textit{file.tif} [selid=\textit{id1,...,idn}]
 \end{Verbatim}
 
-\subsubsection{Paramètres obligatoires}
+\subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|zone=filezones.shp| : shapefile de polygones contenant les changements d'occupation du sol
-	\item \verb|id=fieldname| : nom d'un attribut du shapefile servant à identifier les polygones. Si les valeurs ne sont pas uniques, les polygones ayant le même identifiant seront appliqués en un seul changement.
-	\item \verb|code=fieldname| : nom d'un attribut du shapefile stockant la nouvelle catégorie d'occupation du sol du polygone
-	\item \verb|dsm=file.tif| : raster stockant les nouvelles valeurs de MNE utilisées à chaque changement d'occupation du sol. La géométrie du raster doit être exactement la même que le MNT du projet.
+	\item \verb|zone=filezones.shp| : polygon shapefile containing land use changes.
+	\item \verb|id=fieldname| : field name of the shapefile used for identifying polygons. If values are not unique, polygons with the same identifier will be applied in a single change.
+	\item \verb|code=fieldname| : field name of the shapefile storing the new land use category of the polygon.
+	\item \verb|dsm=file.tif| : raster storing the new values of the DSM used for each land use change. The geometry of the raster must be exactly the same as the project DEM.
 \end{itemize}
 
-\subsubsection{Paramètre optionnel}
+\subsubsection{Optional parameter}
 \begin{itemize}
-	\item \verb|selid=id1,...,idn| : liste des identifiants de polygones à traiter. Si ce paramètre n'est pas renseigné tous les polygones du shapefile sont utilisés.
+	\item \verb|selid=id1,...,idn| : list of polygon identifiers to process. If this parameter is not set, all polygons of the shapefile are processed.
 \end{itemize}
 
 \subsubsection{Description}
-Cette commande doit être placée avant les commandes de calcul de visibilité. Elle va dupliquer le projet pour chaque polygone du shapefile et modifier l'occupation du sol couvert par le polygone ainsi que le MNE. Les commandes suivantes seront exécutées sur chaque projet modifié.
+This command must be placed before the visibility calculation commands. It will duplicate the project for each polygon of the shapefile and change the landuse covered by the polygon and the DSM. The commands following this one, will be executed on each modified project.
 
-Les projets créés seront nommés par l'identifiant du (ou des) polygones et stockés dans le répertoire du projet.
+The newly created projects will be named by the identifier of the polygon(s) and stored in the project directory.
 
-\subsection{--viewshed : vue planimétrique}
+\subsection{--viewshed : planimetric view or viewshed}
 \begin{Verbatim}[commandchars=\\\{\}]
 --viewshed [inverse] \textit{x} \textit{y} [resfile=\textit{raster.tif}]
 \end{Verbatim}
 
-\subsubsection{Paramètres obligatoires}
+\subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|x| : abscisse du point d'observation dans le système de coordonnées du MNT
-	\item \verb|y| : ordonnée du point d'observation dans le système de coordonnées du MNT
+	\item \verb|x| : abscissa of the observation point in the coordinate system of the DTM
+	\item \verb|y| : ordinate of the observation point in the coordinate system of the DTM
 \end{itemize}
 
-\subsubsection{Paramètres optionnels}
+\subsubsection{Optional parameters}
 \begin{itemize}
-	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
-	\item \verb|resfile=raster.tif| : permet de spécifier un autre nom pour le fichier stockant le résultat
+	\item \verb|inverse| : reverse mode, the point O becomes the observed point
+	\item \verb|resfile=raster.tif| : allow to specify another name for the file storing the result
 \end{itemize}
 
 \subsubsection{Description}
-La commande \verb|--viewshed| permet de calculer le bassin de visibilité à partir d'un point d'observation. Le résultat est stocké dans un fichier raster de la même taille que le MNT, au format Tiff. Dans ce raster, le bassin de visibilité est formé des pixels dont la valeur est à 1, les autres sont à 0.
+The \verb|--viewshed| command allows to calculate the viewshed from an observation point.
+The result is stored in a raster file of the same size as the DTM in Tiff format. 
+In this raster, all pixels set to 1 represents the viewshed, other pixels are set to 0.
 
-\subsubsection{Exemples}
-L'exemple ci-dessous calcule le bassin de visibilité pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans un fichier nommé : \verb|viewshed-925560,6702495.tif|.
+\subsubsection{Examples}
+The example below calculates the viewshed for an observer located at the point (925560, 6702495). The result is stored in the projet folder in a file named : \verb|viewshed-925560,6702495.tif|.
 \begin{Verbatim}
 	--viewshed 925560 6702495
 \end{Verbatim}
 
-Le second exemple calcule le bassin de visibilité en mode inverse et enregistre le résultat dans le fichier \verb|bassin1.tif|.
+This second example calculates the viewshed in reverse mode (ie. the given coordinates represent the observed point) and stored the result in the file \verb|bassin1.tif|.
 \begin{Verbatim}
 	--viewshed inverse 925560 6702495 resfile=bassin1.tif
 \end{Verbatim}
 
-\subsection{--viewtan : vue tangentielle}
+\subsection{--viewtan : tangential view}
 \begin{Verbatim}[commandchars=\\\{\}]
 --viewtan [prec=\textit{deg}] \textit{x} \textit{y} [resname=\textit{name}]
 \end{Verbatim}
 
-\subsubsection{Paramètres obligatoires}
+\subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|x| : abscisse du point d'observation dans le système de coordonnées du MNT
-	\item \verb|y| : ordonnée du point d'observation dans le système de coordonnées du MNT
+	\item \verb|x| : abscissa of the observation point in the coordinate system of the DTM
+	\item \verb|y| : ordinate of the observation point in the coordinate system of the DTM
 \end{itemize}
 
-\subsubsection{Paramètres optionnels}
+\subsubsection{Optional parameters}
 \begin{itemize}
-	\item \verb|prec=deg| : défini la précision angulaire en degré. Si ce paramètre n'est pas défini, la précision angulaire enregistrée dans le projet sera utilisée.
-	\item \verb|resname=name| : permet de spécifier un autre nom pour les fichiers stockant le résultat
+	\item \verb|prec=deg| : angular precision in degrees. If this parameter is not set, the angular precision stored in the project will be used.
+	\item \verb|resname=name| : allow to specify another name for the files storing the result
 \end{itemize}
 
 \subsubsection{Description}
-La commande \verb|--viewtan| permet de calculer la vue tangentielle à partir d'un point d'observation. Les résultats sont stockés dans 2 ou 3 fichiers rasters au format Tiff selon si le projet contient une couche d'occupation du sol. 
+The \verb|--viewtan| command allows to calculate the tangential view from an observation point. Results are stored in 2 or 3 raster files in Tiff format depending on whether the project contains a land use layer.
 \begin{itemize}
-	\item \verb|elev| : altitude du MNT
-	\item \verb|dist| : distance 2D au point d'observation
-	\item \verb|land| : occupation du sol, si présent dans le projet
+	\item \verb|elev| : elevation of the DTM
+	\item \verb|dist| : 2D distance from the observation point
+	\item \verb|land| : land use, if present in the project
 \end{itemize}
 
-La taille des raster dépend de la précision angulaire. Pour une précision de 0,1° et une vue à 360°, les images auront une taille de 3600x1800 pixels. Leur système de coordonnées est défini en degré. 
+The rasters size depends on the angular precision. For a precision of 0.1° and an amplitude of 360°, the rasters size will be 3600x1800 pixels. Their coordinate system unit is set in degrees.
 
-\subsubsection{Exemples}
-L'exemple ci-dessous calcule la vue tangentielle pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans les fichiers nommés : \verb|viewshed-925560,6702495-elev.tif|, \verb|viewshed-925560,6702495-dist.tif| et \verb|viewshed-925560,6702495-land.tif| si le projet contient une couche d'occupation du sol.
+\subsubsection{Examples}
+The example below calculates the tangential view for an observer located at the point (925560, 6702495). The result is stored in the projet folder in a files named: \verb|viewtan-925560,6702495-elev.tif|, \verb|viewtan-925560,6702495-dist.tif| and \verb|viewtan-925560,6702495-land.tif| if the project contains a land use layer.
 \begin{Verbatim}
 	--viewtan 925560 6702495
 \end{Verbatim}
 
-Le second exemple calcule la vue tangentielle avec une précision angulaire de 0,05° et enregistre le résultat dans les fichiers \verb|vue1-elev.tif|, \verb|vue1-dist.tif| et \verb|vue1-land.tif| si le projet contient une couche d'occupation du sol.
+The second example calculates the tangential view with an angular precision of 0.05° and stored the result in the files \verb|view1-elev.tif|, \verb|view1-dist.tif| and \verb|view1-land.tif| if the project contains a land use layer.
 \begin{Verbatim}
-	--viewshed prec=0.05 925560 6702495 resname=vue1
+	--viewtan prec=0.05 925560 6702495 resname=view1
 \end{Verbatim}
 
 
-\subsection{--multiviewshed : bassin de visibilité multiple}
+\subsection{--multiviewshed : multiple viewshed}
 \begin{Verbatim}[commandchars=\\\{\}]
 --multiviewshed format=vector|raster [inverse] [resname=\textit{name}]
 \end{Verbatim}
 
-\subsubsection{Paramètre obligatoire}
+\subsubsection{Required parameter}
 \begin{itemize}
-	\item \verb/format=vector|raster/ : format du résultat (shapefile ou tiff)
+	\item \verb/format=vector|raster/ : result format (shapefile or tiff)
 \end{itemize}
 
-\subsubsection{Paramètres optionnels}
+\subsubsection{Optional parameters}
 \begin{itemize}
-	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
-	\item \verb|resname=name| : permet de spécifier un autre nom pour le fichier stockant le résultat
+	\item \verb|inverse| : reverse mode, the point O becomes the observed point
+	\item \verb|resname=name| : allow to specify another name for the file storing the result
 \end{itemize}
 
 \subsubsection{Description}
-La commande \verb|--multiviewshed| permet de calculer les bassins de visibilité à partir d'un ensemble de points d'observation. Les points d'observation doivent être donnés par l'option \verb|-sampling|. Le résultat est stocké dans un fichier raster ou vecteur selon le format choisi. 
+The \verb|--multiviewshed| command allows to calculate several viewsheds from a set of observation points. The observation points must be given by the \verb|-sampling| option. 
+The result is stored in a raster file or a shapefile depending on the selected format.
 
-En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel.
+In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel.
 
-En vectoriel, le résultat est un shapefile contenant le bassin de visibilité de chaque point d'observation.
+In vector, the result is a shapefile storing the viewshed of each observation point.
 
-\subsubsection{Exemples}
-L'exemple ci-dessous calcule les bassins de visibilité des points d'observation donnés dans le shapefile points.shp et stocke le résultat dans un shapefile dans le répertoire du projet nommé : \verb|multiviewshed.shp|.
+\subsubsection{Example}
+The example below calculates the viewsheds of the observation points from the shapefile points.shp and stores the result in a shapefile in the project folder named: \verb|multiviewshed.shp|.
 \begin{Verbatim}
 -sampling points=points.shp id=fid --multiviewshed format=vector
 \end{Verbatim}
 
 
-
-\subsection{--planmetric : métriques en vue planimétrique}
+\subsection{--planmetric : metric in planimetric view}
 
 \begin{Verbatim}[commandchars=\\\{\}]
 --planmetric [inverse] \textit{metric1}[[\textit{code1,...,coden}]][_\textit{d1,...,dm}] ...
 \end{Verbatim}
 
-\subsubsection{Paramètres obligatoires}
+\subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : métrique planimétrique à calculer avec ses paramètres (cf. \nameref{param_metrics_cli}).
+	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : planimetric metric to calculate with its parameters (cf. \nameref{param_metrics_cli}).
 	\item ...
 \end{itemize}
 
-\subsubsection{Paramètre optionnel}
+\subsubsection{Optional parameter}
 \begin{itemize}
-	\item \verb|inverse| : passe en mode inverse, les points d'observation deviennent les points observés
+	\item \verb|inverse| : reverse mode, the observation points become the observed point
 \end{itemize}
 
 \subsubsection{Description}
-La commande \verb|--planmetric| permet de calculer un ensemble de métriques en vue planimétrique. Les points d'observation sont définis en amont par l'option globale \verb|-sampling|. Si l'option n'est pas renseignée, l'échantillonnage par défaut se fait sur la grille pour tous les pixels du MNT ($n=1$).
+The \verb|--planmetric| command allows to calculate a set of metrics in planimetric view.
+The observation points are defined before with the global option \verb|-sampling|. 
+If this global option is not set, the default sampling is used, corresponding to all the pixels of the DTM ($n=1$).
 
-Les résultats sont stockés dans plusieurs fichiers Tiff pour un échantillonnage sur la grille et dans un shapefile pour un échantillonnage vectoriel.
+Results are stored in several rasters for a grid sampling and in one shapefile for a vector sampling.
 
-
-\subsubsection{Exemples}
-
-L'exemple ci-dessous calcule la métrique A sans paramètre. Si l'échantillonnage est sur la grille, le résultat sera stocké dans le fichier \verb|A-.tif|.
+\subsubsection{Examples}
+The example below calculates the A metric without parameter. If the sampling is on the grid, the result will be stored in the file \verb|A-.tif|.
 \begin{Verbatim}
 	--planmetric A
 \end{Verbatim}
 
-L'exemple ci-dessous calcule en vue inversée la métrique A pour le code d'occupation du sol 1 et la métrique A pour le code 2. Si l'échantillonnage est sur la grille, le résultat sera stocké dans les fichiers \verb|A1-.tif| et \verb|A2-.tif|.
+The example below calculates the A metric in reverse mode for the land use category 1 and 2. If the sampling is on the grid, the result will be stored in the files \verb|A1-.tif| and \verb|A2-.tif|.
 \begin{Verbatim}
 	--planmetric inverse A[1] A[2]
 \end{Verbatim}
 
 
-\subsection{--tanmetric : métriques en vue tangentielle}
+\subsection{--tanmetric : metric in tangential view}
 \begin{Verbatim}[commandchars=\\\{\}]
 --tanmetric [prec=\textit{deg}] \textit{metric1}[[\textit{code1,...,coden}]][_\textit{d1,...,dm}] ...
 \end{Verbatim}
 
-\subsubsection{Paramètres obligatoires}
+\subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : métrique tangentielle à calculer avec ses paramètres (cf. \nameref{param_metrics_cli}).
+	\item \verb|metric1[[code1,...,coden]][_d1,...,dm]| : tangential metric to calculate with its parameters (cf. \nameref{param_metrics_cli}).
 	\item ...
 \end{itemize}
 
-\subsubsection{Paramètre optionnel}
+\subsubsection{Optional parameter}
 \begin{itemize}
-	\item \verb|prec=deg| : précision angulaire en degrés
+	\item \verb|prec=deg| : angular precision in degrees
 \end{itemize}
 
 \subsubsection{Description}
-La commande \verb|--tanmetric| permet de calculer un ensemble de métriques en vue tangentielle. Les points d'observation sont définis en amont par l'option globale \verb|-sampling|. Si l'option n'est pas renseignée, l'échantillonnage par défaut se fait sur la grille pour tous les pixels du MNT ($n=1$).
+The \verb|--tanmetric| command allows to calculate a set of metrics in tangential view. The observation points are defined before with the global option \verb|-sampling|. 
+If this global option is not set, the default sampling is used, corresponding to all the pixels of the DTM ($n=1$).
 
-Les résultats sont stockés dans plusieurs fichiers Tiff pour un échantillonnage sur la grille et dans un shapefile pour un échantillonnage vectoriel.
+Results are stored in several rasters for a grid sampling and in one shapefile for a vector sampling.
 
 
-\subsubsection{Exemples}
+\subsubsection{Examples}
 
-L'exemple ci-dessous calcule la métrique A sans paramètre. Si l'échantillonnage est sur la grille, le résultat sera stocké dans le fichier \verb|A-.tif|.
+The example below calculates the A metric without parameter. If the sampling is on the grid, the result will be stored in the file \verb|A-.tif|.
 \begin{Verbatim}
 	--tanmetric A
 \end{Verbatim}
 
-L'exemple ci-dessous calcule les vues tangentielles avec une précision angulaire de 0,05°. La métrique A est calculée 2 fois : pour le code d'occupation du sol 1 et pour le code 2. Si l'échantillonnage est sur la grille, le résultat sera stocké dans les fichiers \verb|A1-.tif| et \verb|A2-.tif|.
+The example below calculates the tangential views with an angular precision of 0.05°. The A metric is calculated twice: one for the land use category 1 and another time for the cateory 2. If the sampling is on the grid, the result will be stored in the files \verb|A1-.tif| and \verb|A2-.tif|.
 \begin{Verbatim}
 	--tanmetric prec=0.05 A[1] A[2]
 \end{Verbatim}
 
 
-\section{Paramétrage des métriques}
+\section{Metric parameters}
 \label{param_metrics_cli}
-Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol ou à certains intervalles de distance. Toutes les métriques ne supportent pas ces paramétrages. Pour connaitre quelle métrique supporte quel paramétrage, voir \nameref{metrics}.
+The calculation of metrics may be restricted to some land use categories or to some distance intervals. Not all metrics support these settings. To know which metric supports which settings, see \nameref{metrics}.
 
-\subsection{Occupation du sol}
-Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol en listant les catégories voulues entre crochet :
+\subsection{Land use}
+The calculation of metrics may be restricted to some land use categories by listing the desired categories between brackets. The example below calculates the area of the categories 1,3,4 and 5 in the current view.
 \begin{Verbatim}
 	A[1,3,4,5]
 \end{Verbatim}
 
-Pour les métriques différenciant les catégories d'occupation du sol en classe (métriques S, IJI et CONTAG), les catégories peuvent être regroupées en une classe par le caractère \verb|-|. L'exemple ci-dessous regroupe les 6 catégories d'occupation du sol en 3 classes : 1-2-3, 4 et 5-6.
+For metrics differentiating land use categories (metric S, IJI, and CONTAG), the categories can be grouped into a class by the character \verb|-|. 
+The example below brings together the 6 land use categories in 3 classes: 1-2-3, 4 and 5-6.
 \begin{Verbatim}
 	S[1-2-3,4,5-6]
 \end{Verbatim}
 
 \subsection{Distances}
-Le calcul des métriques peut aussi être restreint à certains intervalles de distance avec le caractère \verb|_|. L'exemple ci-dessous calculera la métrique A pour 3 intervalles de distance : 0 à 100m, de 100 à 1000m et plus de 1000m. Il faut donc renseigner 4 distances pour obtenir 3 intervalles.
+The calculation of metrics can also be restricted to some distance intervals with the character \verb|_|. The example below will calculate the metric A for 3 distance intervals: 0 to 100m, 100 to 1000m and over 1000m. It is therefore necessary to give 4 distances to obtain 3 intervals.
 \begin{Verbatim}
 	A_0,100,1000,+Infinity
 \end{Verbatim}
 
-Pour les métriques A et S, il est possible de restreindre par occupation du sol et par intervalle de distance. Dans ce cas de figure, les catégories d'occupation du sol doivent être données avant les distances :
+For metrics A and S, it is possible to restrict by land use and by distance interval. In this case, the land use categories must be given before the distances:
 \begin{Verbatim}
 	A[1,2,3]_0,100,1000,+Infinity
 \end{Verbatim}
 
-\textbf{Dans tous les cas, il ne faut aucun espace dans la définition d'une métrique et de ses paramètres !}
+\textbf{In any case, there is no space in the definition of a metric and its parameters!}
 
 \section{Options}
 
-\subsection{Parallélisation : -mpi, -proc, -cuda}
+\subsection{Parallelization : -mpi, -proc, -cuda}
 \begin{Verbatim}[commandchars=\\\{\}]
 -mpi | -proc \textit{n} | -cuda \textit{n}
 \end{Verbatim}
 
-PixScape supporte 3 modes de parallélisation en ligne de commande : par thread pour un ordinateur contenant plusieurs coeurs (\verb|-proc|), sur carte graphique (\verb|-cuda|) ou bien sur cluster (\verb|-mpi|).
+PixScape supports 3 modes of parallelization on the command line: per thread for a computer containing several cores (\verb|-proc|), on graphics card (\verb|-cuda|) or on cluster (\verb|-mpi| ).
 
-Pour plus de détails voir la section \nameref{parallelism}.
+For more details, see \nameref{parallelism} section.
 
-Si aucune des 3 options n'est renseignée, la parallélisation par thread sera utilisée avec le nombre de coeurs défini dans l'interface graphique.
+If none of the 3 options is specified, thread parallelization will be used with the number of cores defined in the graphical interface.
 
-\subsection{Paramétrage de la vue : -zeye, -zdest, -bounds, -earth}
+\subsection{View settings : -zeye, -zdest, -bounds, -earth}
 
 \subsubsection{-zeye}
 \begin{Verbatim}[commandchars=\\\{\}]
 -zeye \textit{val}
 \end{Verbatim}
-L'option \verb|-zeye| permet de définir la hauteur de l'oeil de l'observateur ($h1$). Si elle n'est pas renseignée, la hauteur de l'oeil enregistrée dans le projet sera utilisée à la place.
+The \verb|-zeye| option sets the height of the observer's eye ($h1$). If it is not set, the height of the eye recorded in the project will be used instead.
 
 \subsubsection{-zdest}
 \begin{Verbatim}[commandchars=\\\{\}]
 -zdest \textit{val}
 \end{Verbatim}
-L'option \verb|-zdest| permet de définir la hauteur des pixels observés ($h2$). Si elle n'est pas définie, la hauteur du MNE est utilisée.
+The \verb|-zdest| option sets the height of the observed pixels ($h2$). If it is not set, the height of the DSM will be used instead.
 
 \subsubsection{-bounds}
 \begin{Verbatim}[commandchars=\\\{\}]
 -bounds [dmin=\textit{val}] [dmax=\textit{val}] [orien=\textit{val}] [amp=\textit{val}] [zmin=\textit{val}] [zmax=\textit{val}]
 \end{Verbatim}
-L'option \verb|-bounds| permet de restreindre le champ de vision dans les 3 dimensions par 6 paramètres : \verb|dmin|, \verb|dmax|, \verb|zmin|, \verb|zmax|, \verb|orien|, \verb|amp|. Pour plus de détails sur les paramètres, voir \nameref{bounds}.
+The \verb|-bounds| option allows to limit the eyesight in the 3 dimensions by 6 parameters: \verb|dmin|, \verb|dmax|, \verb|zmin|, \verb|zmax|, \verb|orien|, \verb|amp|. For more details, see \nameref{bounds} section.
 
 \subsubsection{-earth}
 \begin{Verbatim}[commandchars=\\\{\}]
 -earth flat|curved [refrac=\textit{val}]
 \end{Verbatim}
 
-L'option \verb|-earth| permet de définir si la courbure de la Terre doit être pris en compte ou pas. Le paramètre \verb|flat| désactive le calcul de courbure et le paramètre \verb|curved| l'active. Dans ce dernier cas, le coefficient de réfraction de l'atmosphère peut être renseigné par le paramètre \verb|refrac|.
+The \verb|-earth| option is used to define wether the Earth curvature may be taken into account or not. The \verb|flat| parameter disables the curvature calculation and the \verb|curved| parameter enables it. In the latter case, the refraction coefficient of the atmosphere can be given by the parameter \verb|refrac|.
 
-Pour plus de détails sur le calcul de la courbure, voir \nameref{curvature}.
+For more details on the curvature calculation, see \nameref{curvature} section.
 
-Si cette option n'est pas renseignée, le paramétrage enregistré dans le projet sera utilisé à la place.
+If this option is not set, the settings recorded in the project will be used instead.
 
-\subsection{Echantillonnage : -sampling}
+
+\subsection{Sampling : -sampling}
 \begin{Verbatim}[commandchars=\\\{\}]
 -sampling n=\textit{val} | land=\textit{code1,..,coden} | points=\textit{pointfile.shp} id=\textit{fieldname}
 \end{Verbatim}
+The sampling defining the observation points can be given in raster (grid sampling) or in vector form (point sampling). For more details on how sampling works, see \nameref{sampling}.
 
-L'échantillonnage définissant les points d'observation peuvent être donnés en raster ou en vectoriel. Pour plus de détails sur le fonctionnement de l'échantillonnage voir \nameref{sampling}.
+If this option is not set and a command needs a sampling, the exhaustive sampling on the grid will be used: \verb|-sampling n=1|.
 
-L'option \verb|-sampling| est utilisée uniquement par les commandes \verb|--planmetric| et  \verb|--tanmetric|.
-
-Si cette option n'est pas renseignée, l'échantillonnage exhaustif sur la grille sera utilisé : \verb|-sampling n=1|.
-
-\subsubsection{Echantillonnage raster}
+\subsubsection{Grid sampling (raster)}
 \begin{Verbatim}[commandchars=\\\{\}]
 -sampling n=\textit{val} | land=\textit{code1,..,coden}
 \end{Verbatim}
-En raster, 2 échantillonnages sont possibles : régulier (\verb|n|) ou par catégorie d'occupation du sol (\verb|land|).
+In raster, 2 sampling are available: regular (\verb|n|) or by landuse category (\verb|land|).
 
+The grid sampling can be used only by \verb|--planmetric| and \verb|--tanmetric| commands.
 
-\subsubsection{Echantillonnage vectoriel}
+\subsubsection{Point sampling (vector)}
 \begin{Verbatim}[commandchars=\\\{\}]
 -sampling points=\textit{pointfile.shp} id=\textit{fieldname}
 \end{Verbatim}
-Avec un échantillonnage issu d'un shapefile, le résultat des commandes \verb|--planmetric| et \verb|--tanmetric| est stocké dans un shapefile nommé \verb|metrics-pointfile.shp|.
+Point sampling needs a shapefile of points with an identifier field.
+The result of \verb|--planmetric| and \verb|--tanmetric| commands is stored in a shapefile named \verb|metrics-pointfile.shp|.
 
-Cette option est aussi utilisée par la commande \verb|--multiviewshed|.
+The point sampling can be used by \verb|--planmetric|, \verb|--tanmetric| and \verb|--multiviewshed| commands.
 
-
-\subsection{Multi-résolution : -multi, -mono}
+\subsection{Multiscale : -multi, -mono}
 \begin{Verbatim}[commandchars=\\\{\}]
 -multi dmin=\textit{val} | -mono
 \end{Verbatim}
 
-Le calcul en multi-résolution peut être activé ou désactivé avec respectivement l'option \verb|-multi| et \verb|-mono|. 
-L'option \verb|-multi| a besoin du paramètre \verb|distmin| pour définir la distance minimale avant de changer de résolution. Pour utiliser cette option, le projet doit contenir des données multi-résolution. 
+The multiscale calculation can be enabled or disabled with the option \verb|-multi| and \verb|-mono| respectively.
+The \verb|-multi| option requires the \verb|distmin| parameter to set the minimum distance before changing scale. To use this option, the project must contain multiscale data.
 
-Si aucune des 2 options n'est renseignée, le paramétrage enregistré dans le projet sera utilisé à la place.
+If none of the 2 options is defined, the settings stored in the project will be used instead.
 
-\subsection{Emplacement des résultats : -resdir}
+\subsection{Location results : -resdir}
 \begin{Verbatim}[commandchars=\\\{\}]
 -resdir \textit{path}
 \end{Verbatim}
-Par défaut les résultats sont enregistrés dans le répertoire du projet. L'option \verb|-resdir| permet de modifier le répertoire par défaut. 
-Si le répertoire donné n'existe pas, il sera créé automatiquement.
+By default, the results are saved in the project directory. The \verb|-resdir| option allows you to change the default directory.
+If the given directory does not exist, it will be created automatically.
 
-Si c'est un chemin relatif qui est donné, le chemin absolu sera déterminé à partir du répertoire courant au lancement de PixScape.
+If a relative path is given, the absolute path will be determined from the current directory at the start of PixScape.
 
-\section{Exemples}
 
-Dans cette section, quelques exemples de lignes de commande complètes sont illustrés.
+\section{Examples}
 
-\subsection{Métriques tangentielles à partir d'un shapefile de points}
-\subsubsection{Exemple simple}
+In this section, some examples of complete command lines are shown.
+
+\subsection{Tangential metrics with point sampling}
+\subsubsection{Simple example}
 \begin{Verbatim}
 java -jar pixscape-1.0.jar --project Project1/Project1.xml 
 	-sampling points=Points_IDF.shp id=Id 
 	--tanmetric A SL DL
 \end{Verbatim}
 
-L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques tangentielles (\verb|--tanmetric A SL DL|) à partir d'un ensemble de points d'observation défini dans le shapefile \verb|Points_IDF.shp|. Le résultat sera enregistré dans un shapefile nommé \verb|metrics-Points_IDF.shp|, contenant les points d'observations, et les valeurs des 3 métriques.
+The example above loads the project \verb|Project1/Project1.xml| and calculates several tangential metrics (\verb|--tanmetric A SL DL|) from a set of observation points defined in the shapefile \verb|Points_IDF.shp|. The result will be saved in a shapefile named \verb|metrics-Points_IDF.shp|, containing the observation points, and the values of the 3 metrics.
 
-\subsubsection{Exemple complet}
+\subsubsection{Complete example}
 \begin{Verbatim}
 java -Xmx4g -jar  pixscape-1.0.jar -proc 8 --project Project1/Project1.xml -zeye 1.75
 	-resdir res_tan -bounds zmin=-20 zmax=30 -sampling points=Points_IDF.shp 
 	id=Id --tanmetric prec=0.01 A_0,100,1000,+Infinity A[5] A[6] SL DL
 \end{Verbatim}
 
-L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-dossier \verb|res_tan| (\verb|-resdir res_tan|). Le champ de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01° (\verb| prec=0.01|). Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
+The following example uses the same basis as the previous one but with more parameters. In this case, the maximum memory allocated to PixScape is set to 4 gigabytes (\verb|-Xmx4g|) and the computation is parallelized on 8 cores (\verb|-proc 8|). The height of the observer's eye is set at 1.75 meters (\verb|-zeye 1.75|). The results will not be saved in the project folder but in a subfolder \verb|res_tan| of the current directory (\verb|-resdir res_tan|). The eyesight is restricted in the vertical angle between -20° and 30° (\verb|-bounds zmin = -20 zmax = 30|). The angular accuracy is set to 0.01° (\verb|prec = 0.01|). Finally, the metric A is decomposed on the one hand for 3 distance intervals (\verb|A_0,100,1000,+Infinity|) and for 2 landuse categories (\verb|A[5] A[6]|).
 
-\subsection{Métriques planimétriques à partir de la grille}
+\subsection{Planimetric metrics with grid sampling}
 \begin{Verbatim}
-java -jar  pixscape-1.0.jar -cuda 2 --project Project1/Project1.xml
+java -jar pixscape-1.0.jar -cuda 2 --project Project1/Project1.xml
 	-resdir res_plan -sampling land=4 
 	--planmetric A A[2,3] A[10] S
 \end{Verbatim}
-L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le un sous-dossier du projet nommé \verb|res_plan|. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques (\verb|-cuda 2|).
+The example above loads the project \verb|Project1/Project1.xml| and calculates several planimetric metrics (\verb|--planmetric A A[2,3] A[10] S|) from the pixels having the landuse category 4 (\verb|-sampling land=4|). The results will be saved in a subfolder of the current folder named \verb|res_plan|. It will contain 4 tiff files: \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| and \verb|S-.tif|. PixScape will use GPU acceleration on 2 graphics cards (\verb|-cuda 2|) for the calculations.
 
 
-\chapter{Description des calculs de visibilité}
+\chapter{Description of visibility calculations}
 \label{principles}
-Un calcul de visibilité se fait à partir d'un point d'observation noté O. A partir de ce point, un ensemble de rayons sont calculés pour déterminer les pixels visibles ou non. 
-PixScape implémente deux méthodes de calcul de visibilité : la vue planimétrique représentant le bassin de visibilité sur le plan (x,y) et la vue tangentielle représentant la vue "réelle" immergée d'un observateur.
+A visibility calculation is made from a point of observation denoted O. From this point, a set of rays are calculated to determine the visible or not visible pixels.
+PixScape implements two methods of visibility calculation: the planimetric view representing the viewshed on the plane (x,y) and the tangential view showing the "real" immersion of an observer.
 
-\section{Vue planimétrique}
-La vue planimétrique correspond à la surface sur le plan (x,y) contenant l'ensemble des points visibles à partir du point d'observation O. Le résultat est appelé bassin de visibilité ou viewshed en anglais.
-Pour déterminer le bassin de visibilité complet, les rayons doivent couvrir l'ensemble des pixels de l'image.
-Pour couvrir la totalité de l'image, un rayon est lancé du point O vers chaque pixel du bord de l'image (figure \ref{grid}). Comme un raster est une surface discrète, le parcours des pixels pour un rayon n'est pas forcément une ligne droite mais peut être une ligne brisée s'approchant au mieux de la ligne droite (figure \ref{grid} droite). L'algorithme classique de Bresenham est utilisé pour approximer la ligne droite sur l'espace discret du raster.
+\section{Planimetric view}
+The planimetric view corresponds to the surface on the plane (x,y) containing the set of points visible from the observation point O. The result is called viewshed.
+To determine the complete viewshed, the rays must cover all the pixels of the image.
+To cover the entire image, a ray is traced from point O to each pixel of the edge of the image (figure \ref{grid}). As a raster is a discrete surface, the path of the pixels for a ray is not necessarily a straight line but may be a broken line approaching the best of the straight line (right \ref{grid} figure). The classical Bresenham algorithm is used to approximate the straight line on the discrete space of the raster.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/grid.pdf} 
-	\caption{Rayons lancés sur une image de 7x7 pixels à partir d'un point d'observation situé en (4,2). A gauche, le tracé théorique des rayons, à droite le parcours réel des rayons sur les pixels de l'image.}
+	\caption{Rays traced on a 7x7 pixel image from an observation point located at (4,2). On the left, the theoretical tracing of the rays, on the right the actual path of the rays on the pixels of the image.}
 	\label{grid}
 \end{figure}
 
-Pour chaque rayon, les pixels sont parcourus du plus proche du point O aux plus éloignés. A chaque pixel, l'angle de visé vertical entre le point O et le centre du pixel est calculé. Si l'angle est supérieur aux précédents, le pixel est visible, sinon il ne l'est pas. 
+For each ray, the pixels are traversed from the closest of the point O to the farthest. At each pixel, the vertical angle between the point O and the center of the pixel is calculated. If the angle is greater than the previous ones, the pixel is visible, otherwise it is not.
 
-La hauteur des pixels correspond à la somme de l'altitude du MNT et de la hauteur du MNE s'il est présent. La hauteur du point d'observation O correspond à la somme de l'altitude du MNT et du paramètre h1 (Hauteur de l'oeil de l'observateur). La hauteur du MNE n'est jamais prise en compte pour la hauteur de l'observateur (l'observateur ne grimpe pas aux arbres).
+The height of the pixels corresponds to the sum of the elevation of the DTM and the height of the DSM if it is present. The height of the observation point O corresponds to the sum of the elevation of the DTM and the parameter $h1$ (height of the observer eye). The height of the DSM is never taken into account for the height of the observer (the observer does not climb the trees).
 
-La figure \ref{ray_side} représente le calcul d'un rayon sur 5 pixels. Le pixel situé sur le point de l'observateur (pixel 0) est toujours visible. Le pixel suivant (1) est aussi visible, par contre le pixel 2 ne l'est pas car l'angle de visé est plus faible que pour le pixel 1, et ainsi de suite.
+The figure \ref{ray_side} represents the calculation of a ray over 5 pixels. The pixel located on the observer's point (pixel 0) is always visible. The next pixel (1) is also visible, but pixel 2 is not visible because the target angle is smaller than for pixel 1, and so on.
 
 \begin{figure}[H]
 	\includegraphics{img/ray_side-fr.pdf} 
-	\caption{Vue de profil du lancer d'un rayon.}
+	\caption{Side view of a ray tracing}
 	\label{ray_side}
 \end{figure}
 
-Le résultat du calcul du rayon de la figure \ref{ray_side} est montré sur la figure suivante (\ref{grid_result}). Il correspond aux pixels de l'image qui sont traversés par le rayon et qui sont visibles depuis le point d'observation.
+The result of the calculation of the ray of the figure \ref{ray_side} is shown in the following figure (\ref {grid_result}). It corresponds to the pixels of the image which are traversed by the ray and which are visible from the observation point.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/grid_result.pdf} 
-	\caption{Résultat en vue planimétrique du rayon calculé sur la figure \ref{ray_side}. Les pixels en gris sont les pixels visibles pour ce rayon.}
+	\caption{Result in planimetric view of the ray calculated on the figure \ref{ray_side}. The pixels in gray are the visible pixels for this ray.}
 	\label{grid_result}
 \end{figure}
 
-Le résultat complet correspond à la combinaison des résultats pour chaque rayon.
-Comme les pixels de l'image peuvent être traversés par des rayons différents, un pixel est marqué visible à partir du moment où il est visible par au moins un des rayons le traversant.
+The complete result corresponds to the combination of the results for each ray.
+As the pixels of the image can be traversed by different rays, a pixel is marked visible when it is visible by at least one of the rays passing through it.
 
-\subsection{Vue planimétrique inverse}
+\subsection{Reverse planimetric view}
 
-Le mode inverse permet d'inverser l'observateur et l'observé. Le bassin de visibilité n'est plus l'espace visible depuis le point O mais l'espace qui voit le point O. Le point O devient le point observé et l'observateur est positionné sur l'ensemble des points de l'image. La figure \ref{ray_side_inverse} montre le processus pour un rayon donné. 
+The reverse mode inverts the observer and the observed. The viewshed is no longer the area visible from the point O, but the area that sees the point O. The point O is the observed point and the observer is positioned on all points of the image. Figure \ref{ray_side_inverse} shows the process for a given ray.
 
 \begin{figure}[H]
 	\includegraphics{img/ray_side_inverse-fr.pdf} 
-	\caption{Vue de profil du lancer d'un rayon en mode inversé.}
+	\caption{Side view of a ray tracing in reverse mode.}
 	\label{ray_side_inverse}
 \end{figure}
 
-Le résultat est identique ans cet exemple, mais selon la configuration, il peut être différent en vue inverse.
+The result is identical in this example, but according to the configuration, it may be different in reverse mode.
 
-\section{Vue tangentielle}
+\section{Tangential view}
 \label{principles_tan}
-Pour la vue tangentielle, le principe de calcul est proche mais comporte quelques différences. Premièrement, le parcours de l'image n'est pas forcément exhaustif. Le nombre de rayons calculés n'est plus dépendant de la taille de l'image mais du paramètre de résolution angulaire $\alpha$. Par défaut, ce paramètre est défini à 0,1°. Le nombre de rayons calculés est de 3600. La figure \ref{grid_tan} montre un exemple avec une précision angulaire de 30°.
+For the tangential view, the principle of computation is close but has some differences. First, the scan of the image is not necessarily exhaustive. The number of calculated rays is no longer dependent on the size of the image but on the angular resolution parameter $\alpha$. By default, this parameter is set to 0.1 °. The number of calculated rays is 3600. Figure \ref{grid_tan} shows an example with an angular accuracy of 30°.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.8]{img/grid_tan.pdf} 
-	\caption{Rayons lancés sur une image de 7x7 pixels à partir d'un point d'observation situé en (4,2). A gauche, le tracé théorique des rayons, à droite le parcours réel des rayons sur les pixels de l'image. La précision angulaire ($\alpha$) est ici très grossière : 30°.}
+	\caption{Rays traced on a 7x7 pixels image from an observation point located at (4,2). On the left, the theoretical tracing of the rays, on the right the actual path of the rays on the pixels of the image. The angular accuracy ($\alpha$) here is very coarse: 30°.}
 	\label{grid_tan}
 \end{figure}
 
-
-Au niveau du calcul de chaque rayon, un traitement supplémentaire doit être réalisé pour déterminer la hauteur d'angle de chaque pixel visible (figure \ref{ray_side_tan}). Le résultat est représenté par la colonne à droite de la figure \ref{ray_side_tan} pour une précision angulaire ($\alpha$) de 10°.
+In the calculation of each ray, additional processing must be performed to determine the angle height of each visible pixel (figure \ref{ray_side_tan}). The result is represented by the column to the right of the figure \ref{ray_side_tan} for an angular precision ($\alpha$) of 10°.
 
 \begin{figure}[H]
 	\includegraphics{img/ray_side_tan-fr.pdf} 
-	\caption{Vue de profil du lancer d'un rayon. Calcul des hauteurs d'angle des pixels visibles pour la vue tangentielle. La précision angulaire est ici très grossière : 10°.}
+	\caption{Side view of ray tracing. Calculation of the angle heights of the visible pixels for the tangential view. The angular accuracy here is very coarse: 10°.}
 	\label{ray_side_tan}
 \end{figure}
 
-La juxtaposition des colonnes résultant de chaque rayon forme le résultat de la vue tangentielle. La figure \ref{grid_tan_result} montre le positionnement de chaque rayon calculé dans la vue tangentielle pour une précision angulaire de 30°.
+The juxtaposition of the columns resulting from each ray forms the result of the tangential view. Figure \ref{grid_tan_result} shows the position of each ray calculated in the tangential view for an angular accuracy of 30°.
 
 \begin{figure}[H]
 	\includegraphics{img/grid_tan_result.pdf} 
-	\caption{Position de chaque rayon dans la vue tangentielle résultante. La précision angulaire est ici très grossière : 30°.}
+	\caption{Position of each ray calculated in the tangential view. The angular accuracy here is very coarse: 30°.}
 	\label{grid_tan_result}
 \end{figure}
 
-\section{Multi-résolution}
+\section{Multiscale}
 \label{multires}
-Le calcul en multi-résolution permet d'accélérer fortement les traitements de visibilité. En effet, la complexité algorithmique d'un calcul de visibilité est proportionnel au nombre de pixels de l'image $n$. En multi-résolution, la complexité diminue à $log(n)$ du moment que les résolutions évoluent géométriquement.
+The multiscale calculation can greatly speedup visibility processing. Indeed, the algorithmic complexity of a visibility calculation is proportional to the number of pixels of the image $n$. In multiscale, the complexity decreases to $log(n)$ as long as the resolutions evolve geometrically.
 
 \begin{figure}[H]
 	\includegraphics{img/grid_multi.pdf} 
-	\caption{Rayons lancés sur une base multi-résolution d'un facteur 3 avec 3 résolutions}
+	\caption{Ray tracing on a multiscale database of factor 3 with 3 resolutions}
 	\label{grid_multi}
 \end{figure}
 
-Dans l'exemple de la figure \ref{grid_multi}, le nombre de rayons calculés est de 32 au lieu de 306 et la longueur des rayons en pixel est de 11 au lieu de 41. Le gain en temps de calcul est approximativement de 35 tout en conservant la contrainte de couverture complète de l'espace.
+In the example of figure \ref{grid_multi}, the number of calculated rays is 32 instead of 306 and the length of the rays in pixels is 11 instead of 41. The gain in computation time is approximately 35 while retaining the constraint of covering the whole space.
 
 
-\section{Limitation du champ de vision}
+\section{Eyesight bounds}
 \label{bounds}
-Pour tous les calculs de visibilité intégrés dans PixScape, le champ de vision peut être restreint dans les 3 dimensions (figures \ref{bounds_side} et \ref{bounds_2d}) par 6 paramètres : la distance minimale ($d_{min}$) et maximale ($d_{max}$), l'angle vertical minimal ($z_{min}$) et maximal ($z_{max}$) et l'angle horizontal par l'orientation ($orien$) et l'amplitude ($amp$). Les angles sont exprimés en degré dans l'intervalle [0-360] pour les angles horizontaux et [-90;+90] pour les angles verticaux. Les distances sont exprimées en mètre et sont calculées en 2D sur le plan (x,y). 
+For all visibility calculations integrated into PixScape, the eyesight can be restricted in the 3 dimensions (figures \ref{bounds_side} and \ref{bounds_2d}) by 6 parameters: the minimum distance ($d_{min}$) and maximum distance ($d_{max}$), the minimum vertical angle ($z_{min}$) and maximum vertical angle ($z_{max}$), and the horizontal angle by the orientation ($orien$) and the amplitude ($amp$). The angles are expressed in degrees in the interval [0-360] for the horizontal angles and [-90; +90] for the vertical angles. The distances are expressed in meters and are calculated in 2D on the plane (x, y).
 
 \begin{figure}[H]
 	\includegraphics{img/bounds_side.pdf} 
-	\caption{Vue de profil des limites du champ de vision}
+	\caption{Side view of the eyesight bounds}
 	\label{bounds_side}
 \end{figure}
 
 \begin{figure}[H]
 	\includegraphics{img/bounds_2d.pdf} 
-	\caption{Vue du dessus des limites du champ de vision}
+	\caption{Top view of the eyesight bounds}
 	\label{bounds_2d}
 \end{figure}
 
 
-\chapter{Description des métriques}
+\chapter{Metrics description}
 \label{metrics}
-Dans ce chapitre, l'ensemble des métriques disponibles dans PixScape sont décrites. Le tableau \ref{metrics_tab} liste l'ensemble de ces métriques et ce qu'elles supportent : support des vues planimétrique et/ou tangentielle, support ou non de l'occupation du sol et support des intervalles de distance.
+In this chapter, all the metrics available in PixScape are described. The \ref{metrics_tab} table lists all these metrics and what they support: support of planimetric and/or tangential views, support or not of land use and support of distance intervals.
 
 \begin{table}[H]
 	\begin{tabular}{|c|c|c|c|c|c|c|}
 		\hline
-		Métrique & Nom & Planimétrique & Tangentiel & Sans OS & Avec OS & Distance\\
+		Metric & Name & Planimetric & Tangential & Without LU & With LU & Distance\\
 		\hline
-		A & Surface & X & X & X & X & X\\
+		A & Area & X & X & X & X & X\\
 		\hline
-		S & Shannon OS & X & X &  & X & X\\
+		S & Shannon diversity index & X & X &  & X & X\\
 		\hline
-		IJI & Interspersion et juxtaposition & X & X &  & X & \\
+		IJI & Interspersion and juxtaposition & X & X &  & X & \\
 		\hline
 		CONTAG & Contagion & X & X &  & X & \\
 		\hline
-		DIST & Distribution des distances & X & X & X &  & \\
+		DIST & Distance distribution & X & X & X &  & \\
 		\hline
-		P & Périmètre & X &  & X &  & \\
+		P & Perimeter & X &  & X &  & \\
 		\hline
-		C & Compacité & X &  & X &  & \\
+		C & Compactness & X &  & X &  & \\
 		\hline
-		FD & Dimension fractale & X &  & X &  & \\
+		FD & Fractal dimension & X &  & X &  & \\
 		\hline
-		SL & Ligne d'horizon &  & X & X &  & X \\
+		SL & Skyline &  & X & X &  & X \\
 		\hline
-		SD & Shannon distances max. &  & X & X &  & \\
+		SD & Shannon depth &  & X & X &  & \\
 		\hline
-		DL & Profondeur de vue &  & X & X &  & \\		
+		DL & Depth line &  & X & X &  & \\		
 		\hline
 	\end{tabular}
-	\caption{Liste des métriques et de leur paramétrage}
+	\caption{List of metrics and their parameters}
 	\label{metrics_tab}
 \end{table}
 
-\section{Métriques communes}
+\section{Common metrics}
 
-\subsection{Surface : A}
-Cette métrique mesure la superficie visible en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle. On peut restreindre le calcul à certaines catégories d'occupation du sol et pour différents intervalles de distance.
+\subsection{Area: A}
+This metric measures the visible area in square meters for the planimetric view and in square degrees for the tangential view. The calculation may be restricted to certain categories of land use and for different distance intervals.
 
-
-\subsection{Shannon OS : S}
-Cette métrique calcule l'indice de Shannon sur les parts de surface visible de chaque catégorie d'occupation du sol.
+\subsection{Shannon diversity index: S}
+This metric calculates the Shannon index on the parts of the visible area of each land use category. It is used to measure the diversity of the visible land use.
 
 $$S = -\frac{1}{\ln n}\sum_{i=1}^{n}\frac{A_i}{A}\ln\left(\frac{A_i}{A}\right)$$
 
-Avec $n$ le nombre de catégories d'occupation du sol, $A_i$ la surface visible de la catégorie $i$ et $A$ la surface totale visible. L'unité des surfaces est en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle.
+With $n$ the number of land use category, $A_i$ the visible area of the category $i$ and $A$ the total visible area. Areas are expressed in square meters for the planimetric view and in square degrees for the tangential view.
 
-Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+The project must contain the land use layer for using this metric.
 
-\subsection{Interspersion et juxtaposition : IJI}
-Indice d'interspersion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
 
-$$ IJI =  -\frac{100}{\ln 0.5 m(m-1)} \sum_{i=1}^{m} \sum_{k=i+1}^{m}     \dfrac{e_{ik}}{E} \ln \dfrac{e_{ik}}{E}    $$
+\subsection{Interspersion and Juxtaposition Index: IJI}
+The interspersion index defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas.
 
-Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+$$ IJI =  -\frac{100}{\ln 0.5 m(m-1)} \sum_{i=1}^{m} \sum_{k=i+1}^{m}     \dfrac{e_{ik}}{E} \ln \dfrac{e_{ik}}{E}$$
 
-\subsection{Contagion : CONTAG}
-Indice de contagion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
+Based on patch adjacencies of the landscape, each category is evaluated according to its adjacency with all other categories. 
+
+The project must contain the land use layer for using this metric.
+
+\subsection{Contagion: CONTAG}
+The contagion index defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas.
 
 $$ CONTAG = 100 \left[1+\dfrac{1}{2\ln m} \sum _{i=1}^{m}  \sum _{j=1}^{m}  p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }   \ln \left( p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }\right)  \right]$$
 
-Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+It corresponds to the probability of finding a pixel of the land use category $i$
+next to a pixel of the category $j$.
 
-\subsection{Distribution des distances : DIST}
+The project must contain the land use layer for using this metric.
 
-La métrique $DIST$ donne un aperçu de la distribution des distances des pixels visibles depuis le point d'observation par quatre opérateurs d'agrégation : la somme, la moyenne, le minimum et le maximum.
+\subsection{Distance distribution: DIST}
 
-Le résultat de la métrique est différent entre la vue tangentielle et planimétrique, les pixels visibles n'étant pas répartis de la même manière entre les deux vues. En effet, en planimétrique, chaque pixel représente une surface au sol en mètre carré, alors qu'en vue tangentielle, chaque pixel représente un cône du champ de vision en degré carré.
+The $DIST$ metric gives an overview of the distribution of the pixel distances visible from the observation point by four aggregation operators: sum, average, minimum and maximum.
 
-
-\section{Métriques planimétriques}
-
-\subsection{Périmètre : P}
-
-La métrique P correspond au périmètre total du bassin de visibilité, incluant l'ensemble des contours tant extérieur qu'intérieur. L'unité est en mètre.
+The result of the metric is different between the tangential and planimetric view, the visible pixels being not distributed in the same way between the two views. Indeed, in planimetric, each pixel represents a surface on the ground in square meters, whereas in tangential view, each pixel represents a cone of the eyesight in square degrees.
 
 
-\subsection{Compacité : C}
-Cette métrique reprend l'indice de compacité appliqué au bassin de visibilité complet tel que :
+\section{Planimetric metrics}
+
+\subsection{Perimeter: P}
+
+The metric P corresponds to the total perimeter of the viewshed, including the whole of contour both external and internal. The unit is in meters.
+
+
+\subsection{Compactness: C}
+This metric takes the compactness index applied to the whole viewshed such as:
 
 $$C=\frac{P}{2\sqrt{\pi A}}$$
 
-Si $C=1$ le bassin de visibilité est compact \textit{ie.} représente un disque plein. Plus $C$ augmente, moins le bassin de visibilité est compact.
+If $C=1$ the viewshed is compact \textit{ie.} a full disk. The more $C$ increases, the smaller the viewshed compactness is.
 
 
-\subsection{Dimension fractale : FD}
-Cette métrique calcule la dimension fractale du bassin de visibilité. La méthode utilisée est le box counting.
+\subsection{Fractal dimension: FD}
+This metric calculates the fractal dimension of the viewshed. The method used is the box counting.
 
-Le résultat est compris entre 0 et 2. Quand $FD$ tend vers 0 le bassin se réduit à un point, quand $FD$ tend vers 2 le bassin couvre l'espace de façon homogène.
+The result is between 0 and 2. When $FD$ tends to 0 the viewshed is reduced to a point, when $FD$ tends to 2 the viewshed covers the space in a homogeneous way.
 
-\section{Métriques tangentielles}
+\section{Tangential metrics}
 
-\subsection{Ligne d'horizon : SL}
+\subsection{Skyline: SL}
 
-La métrique $SL$ mesure l'aspect plus ou moins accidenté de la ligne d'horizon. Elle est calculée comme le rapport entre la longueur de la ligne d'horizon ($l_h$) et une ligne d'horizon plate ($L=360\deg$). Les longueurs sont exprimées en degré. 
+The $SL$ metric measures the more or less uneven aspect of the skyline. It is calculated as the ratio of the length of the skyline ($l_h$) to a flat horizon line ($L = 360\deg$). The lengths are expressed in degrees.
 
 $$SL=\frac{l_h}{L}$$
 
-Quand $SL=1$ l'horizon est plat, plus $SL$ augmente plus la ligne d'horizon est accidentée.
+$SL$ is close to 1 when the horizon is planar, and highest (unbounded) in the case of a very jagged skyline.
 
-\subsection{Shannon distances max. : SD}
-La métrique $SD$ correspond à l’indice de Shannon standardisé appliqué à la distribution des longueurs de vue maximales regroupées en $m$ classes. Les classes de distance sont définies par une suite géométrique : inférieur à 10m, de 10 à 100m, de 100m à 1km, de 1km à 10km, et plus de 10km.
+\subsection{Shannon depth: SD}
+The $SD$ metric measures the greater or lesser variation of sight lengths.
+
+It corresponds to the standardized Shannon index applied to the distribution of the view depths grouped into $m$ classes. The distance classes are defined by a geometric sequence: less than 10m, 10 to 100m, 100m to 1km, 1km to 10km, and more than 10km.
 
 $$SD = -\frac{1}{\ln m}\sum_{i=1}^{m}\frac{nd_i}{n}\ln\left(\frac{nd_i}{n}\right)$$
 
-avec $nd_i$ le nombre de longueurs maximales dans la classe de distance $i$ et $n$ le nombre total de rayons calculés dans la vue tangentielle.
+with $nd_i$ the number of rays with a maximal length inside the class $i$ and $n$ the total number of rays calculated in the tangential view.
 
-Cette métrique vaut 0 quand toutes les longueurs sont dans la même classe et donc la profondeur de vue est homogène. A l’inverse, elle vaut 1 quand les longueurs de vue sont uniformément réparties dans toutes les classes, ce qui représente une grande variété de profondeurs de vue.
+This metric is 0 when all lengths are inside the same class, the view depth is homogeneous. Conversely, $SD$ is 1 when the ray lengths are equally distributed on all classes, which represents a large variation of view depth.
 
-\subsection{Profondeur de vue : DL}
-Cette métrique nécessite la construction d’un polygone sur le plan (x,y) regroupant les points visibles les plus éloignés du point d’observation pour chaque rayon lancé. La métrique $DL$ est définie comme l’indice de compacité de ce polygone : 
+
+\subsection{Depth line: DL}
+The $DL$ metric also measures the greater or lesser variation of the depths of view but without distance classes a priori as $SD$.
+
+This metric requires the construction of a polygon on the plane (x, y) grouping the visible points furthest from the observation point for each ray being traced. The $DL$ metric is defined as the compactness index of this polygon:
 
 $$DL=\frac{p}{2\sqrt{\pi a}}$$
 
-où $p$ et $a$ représentent respectivement le périmètre et l’aire du polygone. 
+where $p$ and $a$ represent respectively the perimeter and the area of the polygon. 
 
-Cette métrique donne une valeur minimale de 1 dans le cas d’un bassin de visibilité de forme circulaire, et des valeurs élevées (non bornées) dans le cas de variations fortes des profondeurs de vue.
+This metric gives a minimum value of 1 in the case of equal view depths (the polygon is a circle), and high (unbounded) values in the case of strong variations in view depths.
 
 
-\chapter{Performances}
+\chapter{Performance tuning}
 \label{perf}
 
-\section{Parallélisation}
+\section{Parallelism to speed up execution}
 \label{parallelism}
-Pour diminuer les temps d'exécution de calcul de visibilité, PixScape implémente 3 méthodes de parallélisation : par thread pour un ordinateur seul, par CUDA pour utiliser l'accélération GPU (Graphics Processor Unit) et par MPI pour les clusters d'ordinateurs.
+To reduce visibility calculation execution time, PixScape implements 3 parallelization methods: thread based for a single computer, CUDA to use Graphic Processor Unit (GPU) acceleration, and MPI for computer clusters.
 
-Le tableau \ref{perf_table} montre les temps d'exécution pour calculer 10000 vues selon le type de vue (planimétrique ou tangentiel), la taille du MNT en million de pixels et la parallélisation : 1 coeur (sans parallélisation), 4 coeurs, 16 coeurs et GPU (carte graphique NVidia Tesla K40).
+The table \ref{perf_table} shows the execution times to calculate 10000 views according to the type of view (planimetric or tangential), the size of the DTM in million pixels and the parallelization: 1 core (without parallelization), 4 cores, 16 cores and GPU (NVidia Tesla K40 graphics card).
 
 \begin{table}[htbp]
 	
 	\begin{tabular}{|l|r|r|r|r|r|}
 		\hline
-		Type & \multicolumn{1}{l|}{Taille} & \multicolumn{1}{l|}{1 coeur} & \multicolumn{1}{l|}{4 coeurs} & \multicolumn{1}{l|}{16 coeurs} & \multicolumn{1}{l|}{GPU} \\ \hline
-		\multicolumn{ 1}{|c|}{Planimétrique} & 1 M & 9,8 & 2,5 & 0,7 & 0,6 \\ \cline{ 2- 6}
+		Type & \multicolumn{1}{l|}{Size} & \multicolumn{1}{l|}{1 core} & \multicolumn{1}{l|}{4 cores} & \multicolumn{1}{l|}{16 cores} & \multicolumn{1}{l|}{GPU} \\ \hline
+		\multicolumn{ 1}{|c|}{Planimetric} & 1 M & 9,8 & 2,5 & 0,7 & 0,6 \\ \cline{ 2- 6}
 		\multicolumn{ 1}{|l|}{} & 9 M & 103,0 & 26,0 & 6,7 & 1,8 \\ \cline{ 2- 6}
 		\multicolumn{ 1}{|l|}{} & 100 M & 1168,0 & 376,0 & 83,0 & 13,2 \\ \hline
-		\multicolumn{ 1}{|c|}{Tangentiel} & 1 M & 36,0 & 9,8 & 2,7 & 0,8 \\ \cline{ 2- 6}
+		\multicolumn{ 1}{|c|}{Tangential} & 1 M & 36,0 & 9,8 & 2,7 & 0,8 \\ \cline{ 2- 6}
 		\multicolumn{ 1}{|l|}{} & 9 M & 113,0 & 28,8 & 8,0 & 2,2 \\ \cline{ 2- 6}
 		\multicolumn{ 1}{|l|}{} & 100 M & 357,0 & 91,0 & 24,7 & 6,3 \\ \hline
 	\end{tabular}
-	\caption{Temps moyen en minute pour calculer 10000 vues.}
+	\caption{Average time in minutes to calculate 10000 views.}
 	\label{perf_table}
 \end{table}
 
 
-
-\subsection{Un ordinateur : threads}
+\subsection{One computer : threads}
 \label{thread}
-La parallélisation par thread accélère le calcul sur une seule machine contenant plusieurs cœurs ou processeurs.
-Si votre ordinateur a plus qu'un coeur (la plupart), vous pouvez tirer partie de la parallélisation par thread pour accélérer vos calculs avec PixScape. Le temps d'exécution est approximativement inversement proportionnel au nombre de coeurs utilisés. Ce mode de parallélisation est utilisable en interface graphique et en ligne de commande.
+Multi-threaded parallelization accelerates computation time on a single machine containing multiple cores or processors. If your computer has more than one core (most of them), you can take advantage of multi-threading to speed up your calculations with PixScape. The execution time is approximately inversely proportional to the number of cores used. 
 
-\subsubsection{Interface graphique}
-La fenêtre "Préferences" accessible par le menu Fichier permet de régler le nombre de coeurs utilisés par PixScape. Il est défini par défaut au nombre coeurs de la machine moins 1. Après avoir modifié le nombre de coeurs utilisé par PixScape, il vaut mieux relancer PixScape pour être sûr que le changement soit bien pris en compte.
+This parallelism method can be used in GUI and CLI.
 
-\subsubsection{Ligne de commande}
-En ligne de commande, il faut définir le nombre de coeurs (ou processeurs) que PixScape peut utiliser avec l'option \verb|-proc| :
+\subsubsection{Graphical user interface}
+The "Preferences" window accessible from the File menu allows you to set the number of cores used by PixScape. It is set by default to the number of cores of the computer minus 1. After changing the number of cores used by PixScape, it is better to restart PixScape to be sure that the change is taken into account.
+
+\subsubsection{Command line interface}
+On the command line, you have to define the number of cores (or processors) that PixScape can use with the \verb|-proc| option :
 \begin{Verbatim}
 java -jar pixscape-1.0.jar -proc 8 --project path2myproject/myproject.xml ...
 \end{Verbatim}
-Par défaut, en ligne de commande, le nombre de coeurs utilisés correspond au nombre défini dans la fenêtre Préférences de l'interface graphique.
+By default, CLI uses the number of processors defined in the preferences window of the GUI.
 
-En augmentant le nombre de coeurs utilisés par PixScape, vous augmentez, par la même occasion, la taille de la mémoire utilisée par PixScape.
+By increasing the number of cores used by PixScape, you increase the memory size used by PixScape at the same time.
 
-\subsection{Carte graphique : CUDA}
+
+\subsection{Graphics card : CUDA}
 \label{cuda}
-Ce mode de parallélisation permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être important pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). Par contre toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistant.
+This parallelism method makes it possible to carry out the visibility calculations on the graphics card instead of the processor. Runtime gains can be significant for Nvidia Tesla graphics cards, designed for high-performance computing (see \nameref{perf_table}). However, not all metrics are optimized for the GPU. Metrics A and S are the only ones to be optimized. If you use other metrics, the time savings will be minimal or non-existent.
 
-Pour pouvoir utiliser l'accélération GPU il faut une carte graphique Nvidia supportant CUDA et que la version 6.5 de CUDA soit installée. 
+To use GPU acceleration, you need a Nvidia graphics card that supports CUDA and CUDA version 6.5 installed. 
 
-Si PixScape n'arrive pas à utiliser le GPU, les calculs seront basculés automatiquement sur le processeur.
+If PixScape fails to use the GPU, the calculations will be automatically switched to the processor.
 
-Ce mode de parallélisation est utilisable en interface graphique et en ligne de commande.
+This parallelism method can be used in GUI and CLI.
 
-\subsubsection{Interface graphique}
+\subsubsection{Graphical user interface}
 
-L'activation de l'accélération GPU est accessible à partir de la fenêtre Options (voir \nameref{options}).
+The activation of the GPU acceleration can be done from the Options window (see \nameref{options}).
 
-En interface graphique, PixScape ne peut utiliser qu'une seule carte graphique, si votre ordinateur contient plusieurs cartes graphiques, PixScape peut les utiliser en parallèle mais uniquement en ligne de commande.
+In graphical interface, PixScape can only use one graphics card, if your computer contains several graphic cards, PixScape can use them in parallel but only on the command line.
 
-\subsubsection{Ligne de commande}
-En ligne de commande, l'option \verb|-cuda| permet d'activer l'utilisation du GPU. Il faut aussi donner le nombre de cartes graphiques à utiliser.
+\subsubsection{Command line interface}
+At the command line, the \verb|-cuda| option activates the use of the GPU. It is also necessary to give the number of graphics cards to use.
 
 \begin{Verbatim}
 java -jar pixscape-1.0.jar -cuda 1 --project path2myproject/myproject.xml ...
 \end{Verbatim}
-Dans l'exemple ci-dessus, PixScape utilisera une carte graphique pour les calculs de visibilité. Si votre ordinateur contient plusieurs cartes graphiques il est possible d'augmenter le paramètre pour les utiliser en parallèle et diminuer d'autant le temps d'exécution.
+In the example above, PixScape use one graphics card for visibility calculations. If your computer contains several graphics cards, it is possible to increase the parameter to use them in parallel and decrease the time of execution accordingly.
 
 
-\subsection{Cluster : MPI}
-PixScape peut aussi être utilisé sur des clusters de calcul supportant Java avec OpenMPI. Ce mode de parallélisation n'est accessible qu'en ligne de commande.
+\subsection{Computer cluster : mpi}
+PixScape can also be used on computing clusters supporting Java with OpenMPI. This parallelism method is only available on the command line.
 
 Exemple :
 \begin{Verbatim}
 mpirun java -jar pixscape-1.0.jar -mpi --project path2myproject/myproject.xml ...
 \end{Verbatim}
-Seulement certaines commandes peuvent être utilisées dans l'environnement MPI : \verb|--planmetric|, \verb|--tanmetric|, \verb|--landmod|
+Only some commands can be used in the MPI environment: \verb|--planmetric|, \verb|--tanmetric|, \verb|--landmod|
 
 
-\section{Gestion mémoire}
+\section{Memory management}
 \label{memory}
-Par défaut, la taille de la mémoire utilisable par PixScape est dépendante du système et peut varier de 128 MB à plusieurs GB.
-Si vous avez un gros projets, certaines commandes stopperont le programme à cause d'un manque de mémoire. De plus, si vous utilisez la parallélisation par thread (\nameref{thread}), PixScape aura besoin de plus de mémoire pour chaque coeur utilisé.
-Dans tous les cas, si l'exécution se termine par une erreur OutOfMemoryError ou GC overhead, vous devez augmenter la mémoire disponible pour PixScape.
+By default, the amount of memory available for PixScape is system dependent.  It can vary from 128 Mb to several Gb.  In most cases, PixScape will run normally.  But if you have a large project, some processes would be slow or even crash due to memory limitation.
 
-\subsection{Interface graphique}
-La mémoire allouée pour PixScape peut être modifiée dans la fenêtre "Préférences" dans le menu Fichier / Préférences. Après avoir changé ce paramètre, PixScape doit être relancé pour qu'il tienne compte de la nouvelle taille mémoire.
+Also, if you use thread-based parallelism (\nameref{thread}), PixScape will need more memory for each core used.
 
-En interface graphique, PixScape a besoin de plus de mémoire qu'en ligne de commande du fait de l'affichage des couches. Si vous êtes trop limité en mémoire vive, vous pouvez lancer les calculs en ligne de commande pour diminuer les besoins en mémoire de PixScape (voir \nameref{cli}).
+In all cases, if PixScape execution terminates with OutOfMemoryError
+or GC overhead, you need to increase memory allocated to PixScape.
 
-\subsection{Interface en ligne de commande}
-Pour définir la mémoire maximale utilisable par PixScape en ligne de commande, il faut utiliser l'option Java \verb|-Xmx| :
+
+\subsection{Graphical user interface}
+The memory allocated for PixScape can be changed in the "Preferences" window on the File / Preferences menu. After changing this setting, PixScape must be restarted to take the new memory size into account.
+
+In GUI, PixScape needs more memory than command line because of the layers display. If you are too limited in RAM, you can run the calculations on command line interface to reduce PixScape memory requirements (see \nameref {cli}).
+
+\subsection{Command line interface}
+To define manually the maximum amount of memory allocated to PixScape, use Java option \verb|-Xmx|:
+
 \begin{Verbatim}
 java -Xmx4g -jar pixscape-1.0.jar ... # 4Gb allocated
 java -Xmx1500m -jar pixscape-1.0.jar ... # 1500 Mb -> 1.5Gb allocated
 \end{Verbatim}
 
-
-Si vous ne pouvez pas allouer plus de 1 GB ou 1.5 GB alors que votre ordinateur a plus de mémoire vive, vous utilisez sûrement une version 32-bit de Java qui est limitée à moins de 2 GB.
-Pour tester votre version de Java :
+If you cannot allocate more than 1Gb or 1.5Gb and your computer has more memory available, you have
+probably a 32-bit version of Java, which is limited to less than 2Gb of memory.  Check your Java version:
 \begin{Verbatim}
 java -version
 \end{Verbatim}
-Si vous avez une version 32-bit, installez une version 64-bit de Java pour allouer plus de mémoire à PixScape.
+If it is a 32-bit version, install a 64-bit Java version to handle all your computer memory.
 
 
 %\section{Multi-résolution}

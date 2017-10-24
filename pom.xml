@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>1.0.1</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <description>Software for analysing landscape visibility</description>
@@ -67,7 +67,6 @@
                         <phase>site</phase>
                         <goals>
                             <goal>latex</goal>
-                            <goal>tex4ht</goal>
                         </goals>
                     </execution>
                 </executions>
@@ -181,20 +180,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
+                <version>2.9</version>
                 <reportSets>
                     <reportSet>
                         <reports>
                             <report>summary</report>
                             <report>license</report>
+                            <report>scm</report>
+                            <report>project-team</report>
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.7</version>
             </plugin>
         </plugins>
     </reporting>

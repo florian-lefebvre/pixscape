@@ -57,7 +57,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		21/03/2017\\
+		26/07/2017\\
 	}
 	
 \end{titlepage}
@@ -637,7 +637,7 @@ Toutes les commandes qui suivent dans ce manuel ont besoin d'un projet chargé.
 \end{itemize}
 
 \subsubsection{Description}
-Cette commande doit être placée avant les commandes de calcul de visibilité. Elle va dupliquer le projet pour chaque polygone du shapefile et modifier l'occupation du sol couvert par le polygone ainsi que le MNE. Les commandes suivantes seront exécutées sur chaque projet modifié.
+Cette commande doit être placée avant les commandes de calcul de visibilité. Elle va dupliquer le projet pour chaque polygone du shapefile et modifier l'occupation du sol couvert par le polygone ainsi que le MNE. Les commandes suivant celle-ci seront exécutées sur chaque projet modifié.
 
 Les projets créés seront nommés par l'identifiant du (ou des) polygones et stockés dans le répertoire du projet.
 
@@ -700,14 +700,14 @@ La commande \verb|--viewtan| permet de calculer la vue tangentielle à partir d'
 La taille des raster dépend de la précision angulaire. Pour une précision de 0,1° et une vue à 360°, les images auront une taille de 3600x1800 pixels. Leur système de coordonnées est défini en degré. 
 
 \subsubsection{Exemples}
-L'exemple ci-dessous calcule la vue tangentielle pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans les fichiers nommés : \verb|viewshed-925560,6702495-elev.tif|, \verb|viewshed-925560,6702495-dist.tif| et \verb|viewshed-925560,6702495-land.tif| si le projet contient une couche d'occupation du sol.
+L'exemple ci-dessous calcule la vue tangentielle pour un observateur situé au point de coordonnées (925560, 6702495). Le résultat sera stocké dans le répertoire du projet dans les fichiers nommés : \verb|viewtan-925560,6702495-elev.tif|, \verb|viewtan-925560,6702495-dist.tif| et \verb|viewtan-925560,6702495-land.tif| si le projet contient une couche d'occupation du sol.
 \begin{Verbatim}
 	--viewtan 925560 6702495
 \end{Verbatim}
 
 Le second exemple calcule la vue tangentielle avec une précision angulaire de 0,05° et enregistre le résultat dans les fichiers \verb|vue1-elev.tif|, \verb|vue1-dist.tif| et \verb|vue1-land.tif| si le projet contient une couche d'occupation du sol.
 \begin{Verbatim}
-	--viewshed prec=0.05 925560 6702495 resname=vue1
+	--viewtan prec=0.05 925560 6702495 resname=vue1
 \end{Verbatim}
 
 
@@ -734,12 +734,11 @@ En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce ra
 
 En vectoriel, le résultat est un shapefile contenant le bassin de visibilité de chaque point d'observation.
 
-\subsubsection{Exemples}
+\subsubsection{Exemple}
 L'exemple ci-dessous calcule les bassins de visibilité des points d'observation donnés dans le shapefile points.shp et stocke le résultat dans un shapefile dans le répertoire du projet nommé : \verb|multiviewshed.shp|.
 \begin{Verbatim}
 -sampling points=points.shp id=fid --multiviewshed format=vector
 \end{Verbatim}
-
 
 
 \subsection{--planmetric : métriques en vue planimétrique}
@@ -818,7 +817,7 @@ L'exemple ci-dessous calcule les vues tangentielles avec une précision angulair
 Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol ou à certains intervalles de distance. Toutes les métriques ne supportent pas ces paramétrages. Pour connaitre quelle métrique supporte quel paramétrage, voir \nameref{metrics}.
 
 \subsection{Occupation du sol}
-Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol en listant les catégories voulues entre crochet :
+Le calcul des métriques peut être restreint à certaines catégories d'occupation du sol en listant les catégories voulues entre crochet. L'exemple ci-dessous calcule la superficie des catégories 1,3,4 et 5 de la vue courante.
 \begin{Verbatim}
 	A[1,3,4,5]
 \end{Verbatim}
@@ -892,9 +891,7 @@ Si cette option n'est pas renseignée, le paramétrage enregistré dans le proje
 
 L'échantillonnage définissant les points d'observation peuvent être donnés en raster ou en vectoriel. Pour plus de détails sur le fonctionnement de l'échantillonnage voir \nameref{sampling}.
 
-L'option \verb|-sampling| est utilisée uniquement par les commandes \verb|--planmetric| et  \verb|--tanmetric|.
-
-Si cette option n'est pas renseignée, l'échantillonnage exhaustif sur la grille sera utilisé : \verb|-sampling n=1|.
+Si cette option n'est pas renseignée et qu'une commande a besoin d'un échantillonnage, l'échantillonnage exhaustif sur la grille sera utilisé : \verb|-sampling n=1|.
 
 \subsubsection{Echantillonnage raster}
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -902,14 +899,17 @@ Si cette option n'est pas renseignée, l'échantillonnage exhaustif sur la grill
 \end{Verbatim}
 En raster, 2 échantillonnages sont possibles : régulier (\verb|n|) ou par catégorie d'occupation du sol (\verb|land|).
 
+L'échantillonnage raster est utilisé uniquement par les commandes \verb|--planmetric| et  \verb|--tanmetric|.
 
 \subsubsection{Echantillonnage vectoriel}
 \begin{Verbatim}[commandchars=\\\{\}]
 -sampling points=\textit{pointfile.shp} id=\textit{fieldname}
 \end{Verbatim}
+L'échantillonnage vectoriel a besoin d'un shapefile de points contenant un champ identifiant.
+
 Avec un échantillonnage issu d'un shapefile, le résultat des commandes \verb|--planmetric| et \verb|--tanmetric| est stocké dans un shapefile nommé \verb|metrics-pointfile.shp|.
 
-Cette option est aussi utilisée par la commande \verb|--multiviewshed|.
+L'échantillonnage vectoriel est utilisé par les commandes \verb|--planmetric|,  \verb|--tanmetric| et \verb|--multiviewshed|.
 
 
 \subsection{Multi-résolution : -multi, -mono}
@@ -952,7 +952,7 @@ java -Xmx4g -jar  pixscape-1.0.jar -proc 8 --project Project1/Project1.xml -zeye
 	id=Id --tanmetric prec=0.01 A_0,100,1000,+Infinity A[5] A[6] SL DL
 \end{Verbatim}
 
-L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-dossier \verb|res_tan| (\verb|-resdir res_tan|). Le champ de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01° (\verb| prec=0.01|). Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
+L'exemple suivant reprend la même base que le précédent mais avec plus de paramètres. Dans celui-ci la mémoire maximale allouée à PixScape est définie à 4 gigaoctets (\verb|-Xmx4g|) et le calcul est parallélisé sur 8 coeurs (\verb|-proc 8|). La hauteur de l'oeil de l'observateur est défini à 1,75 mètres (\verb|-zeye 1.75|). Les résultats ne seront pas enregistrés dans le dossier du projet mais dans un sous-répertoire \verb|res_tan| du répertoire courant (\verb|-resdir res_tan|). Le champ de vision est restreint dans l'angle vertical entre -20° et 30° (\verb|-bounds zmin=-20 zmax=30|). La précision angulaire est définie à 0,01° (\verb| prec=0.01|). Enfin la métrique A est décomposée d'une part pour 3 intervalles de distance (\verb|A_0,100,1000,+Infinity|) et pour 2 catégories d'occupation du sol (\verb|A[5] A[6]|).
 
 \subsection{Métriques planimétriques à partir de la grille}
 \begin{Verbatim}
@@ -960,7 +960,7 @@ java -jar  pixscape-1.0.jar -cuda 2 --project Project1/Project1.xml
 	-resdir res_plan -sampling land=4 
 	--planmetric A A[2,3] A[10] S
 \end{Verbatim}
-L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le un sous-dossier du projet nommé \verb|res_plan|. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques (\verb|-cuda 2|).
+L'exemple ci-dessus, charge le projet \verb|Project1/Project1.xml| et calcule plusieurs métriques planimétriques (\verb|--planmetric A A[2,3] A[10] S|) à partir des points ayant la catégorie 4 d'occupation du sol (\verb|-sampling land=4|). Les résultats seront enregistrés dans le sous-répertoire \verb|res_plan| du répertoire courant. Il contiendra 4 fichiers tiff : \verb|A-.tif|, \verb|A2,3-.tif|, \verb|A10-.tif| et \verb|S-.tif|. Enfin PixScape utilisera l'accélération GPU sur 2 cartes graphiques (\verb|-cuda 2|).
 
 
 \chapter{Description des calculs de visibilité}
@@ -1012,7 +1012,7 @@ Le mode inverse permet d'inverser l'observateur et l'observé. Le bassin de visi
 	\label{ray_side_inverse}
 \end{figure}
 
-Le résultat est identique ans cet exemple, mais selon la configuration, il peut être différent en vue inverse.
+Le résultat est identique dans cet exemple, mais selon la configuration, il peut être différent en vue inverse.
 
 \section{Vue tangentielle}
 \label{principles_tan}
@@ -1098,7 +1098,7 @@ Dans ce chapitre, l'ensemble des métriques disponibles dans PixScape sont décr
 		\hline
 		SL & Ligne d'horizon &  & X & X &  & X \\
 		\hline
-		SD & Shannon distances max. &  & X & X &  & \\
+		SD & Shannon profondeur &  & X & X &  & \\
 		\hline
 		DL & Profondeur de vue &  & X & X &  & \\		
 		\hline
@@ -1173,8 +1173,10 @@ $$SL=\frac{l_h}{L}$$
 
 Quand $SL=1$ l'horizon est plat, plus $SL$ augmente plus la ligne d'horizon est accidentée.
 
-\subsection{Shannon distances max. : SD}
-La métrique $SD$ correspond à l’indice de Shannon standardisé appliqué à la distribution des longueurs de vue maximales regroupées en $m$ classes. Les classes de distance sont définies par une suite géométrique : inférieur à 10m, de 10 à 100m, de 100m à 1km, de 1km à 10km, et plus de 10km.
+\subsection{Shannon profondeur : SD}
+La métrique $SD$ mesure la plus ou moins grande variation des profondeurs de vue.
+
+Elle correspond à l’indice de Shannon standardisé appliqué à la distribution des profondeurs de vue regroupées en $m$ classes. Les classes de distance sont définies par une suite géométrique : inférieur à 10m, de 10 à 100m, de 100m à 1km, de 1km à 10km, et plus de 10km.
 
 $$SD = -\frac{1}{\ln m}\sum_{i=1}^{m}\frac{nd_i}{n}\ln\left(\frac{nd_i}{n}\right)$$
 
@@ -1183,13 +1185,15 @@ avec $nd_i$ le nombre de longueurs maximales dans la classe de distance $i$ et $
 Cette métrique vaut 0 quand toutes les longueurs sont dans la même classe et donc la profondeur de vue est homogène. A l’inverse, elle vaut 1 quand les longueurs de vue sont uniformément réparties dans toutes les classes, ce qui représente une grande variété de profondeurs de vue.
 
 \subsection{Profondeur de vue : DL}
+La métrique $DL$ mesure aussi la plus ou moins grande variation des profondeurs de vue mais sans à priori de classes de distance comme $SD$.
+
 Cette métrique nécessite la construction d’un polygone sur le plan (x,y) regroupant les points visibles les plus éloignés du point d’observation pour chaque rayon lancé. La métrique $DL$ est définie comme l’indice de compacité de ce polygone : 
 
 $$DL=\frac{p}{2\sqrt{\pi a}}$$
 
 où $p$ et $a$ représentent respectivement le périmètre et l’aire du polygone. 
 
-Cette métrique donne une valeur minimale de 1 dans le cas d’un bassin de visibilité de forme circulaire, et des valeurs élevées (non bornées) dans le cas de variations fortes des profondeurs de vue.
+Cette métrique donne une valeur minimale de 1 dans le cas de profondeurs de vue égales (le polygone forme un cercle), et des valeurs élevées (non bornées) dans le cas de variations fortes des profondeurs de vue.
 
 
 \chapter{Performances}
@@ -1238,7 +1242,7 @@ En augmentant le nombre de coeurs utilisés par PixScape, vous augmentez, par la
 
 \subsection{Carte graphique : CUDA}
 \label{cuda}
-Ce mode de parallélisation permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être important pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf}). Par contre toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistant.
+Ce mode de parallélisation permet de réaliser les calculs de visibilité sur la carte graphique au lieu du processeur. Les gains en temps d'exécution peuvent être important pour des cartes graphiques Nvidia de la gamme Tesla, conçues pour le calcul haute performance (voir \nameref{perf_table}). Par contre toutes les métriques ne sont pas optimisées pour le GPU. Les métriques A et S sont les seules à être optimisées. Si vous utilisez d'autres métriques, les gains de temps seront minimes voire inexistant.
 
 Pour pouvoir utiliser l'accélération GPU il faut une carte graphique Nvidia supportant CUDA et que la version 6.5 de CUDA soit installée. 
 
