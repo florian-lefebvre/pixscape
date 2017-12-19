@@ -48,8 +48,12 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     }
     
     @Override
-    public final Raster getLanduse() {
-        return compute.getData().getLand();
+    public final int getLand(int x, int y) {
+        final int ind = getView().getSample(x, y, 0);
+        if(ind != 1) {
+            return -1;
+        }
+        return getData().getLand().getSample(x, y, 0) & 0xff;
     }
     
     @Override
@@ -77,7 +81,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         final byte[] buf = ((DataBufferByte) getView().getDataBuffer()).getData();
         for (int i = 0; i < buf.length; i++) {
             if (buf[i] == 1) {
-                count[getLanduse().getSample(i % getW(), i / getW(), 0)] += res2D2;
+                count[getData().getLand().getSample(i % getW(), i / getW(), 0)] += res2D2;
             }
         }
         return count;
@@ -97,7 +101,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
         for(int y = (int) r.getMinY(); y < r.getMaxY(); y++) {
             for(int x = (int) r.getMinX(); x < r.getMaxX(); x++) {
                 if(view.getSample(x, y, 0) == 1 && isInside(x, y, dmin, dmax)) {
-                    count[getLanduse().getSample(x, y, 0)] += res2D2;
+                    count[getData().getLand().getSample(x, y, 0)] += res2D2;
                 }
             }
         }

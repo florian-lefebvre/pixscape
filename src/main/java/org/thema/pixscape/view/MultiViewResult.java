@@ -45,7 +45,7 @@ public abstract class MultiViewResult extends AbstractViewResult {
     
     private final TreeMap<Double, Point2D> coords;
     
-    protected WritableRaster view, land;
+    protected WritableRaster view;
 
     /**
      * Creates a new MultiViewResult.
@@ -87,7 +87,7 @@ public abstract class MultiViewResult extends AbstractViewResult {
      * Returns the grid coordinates of the point of view for each scale.
      * @return the grid coordinates of the point of view for each scale
      */
-    public TreeMap<Double, Point2D> getCoords() {
+    public final TreeMap<Double, Point2D> getCoords() {
         return coords;
     }
     
@@ -102,10 +102,29 @@ public abstract class MultiViewResult extends AbstractViewResult {
         }
         return view;
     }
+    
+    @Override
+    public final synchronized Raster getLanduseView() {
+        if(landuse == null) {
+            calcViewLand();
+        }
+        
+        return landuse;
+    }
+    
+    @Override
+    public final int getLand(int x, int y) {
+        return getLanduseView().getSample(x, y, 0);
+    }
+
+    @Override
+    public final ScaleData getData() {
+        return compute.getDatas().firstEntry().getValue();
+    }
 
     @Override
     public final GridGeometry2D getGrid() {
-        return compute.getDatas().firstEntry().getValue().getGridGeometry();
+        return getData().getGridGeometry();
     }
 
     @Override

@@ -43,21 +43,23 @@ import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.coverage.grid.GridCoverage2D;
-import org.geotools.gce.geotiff.GeoTiffWriter;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
 import org.thema.data.IOImage;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.pixscape.metric.AbstractDistMetric;
+import org.thema.pixscape.metric.AggregationMetric;
 import org.thema.pixscape.metric.AreaMetric;
 import org.thema.pixscape.metric.CONTAGMetric;
 import org.thema.pixscape.metric.CompactMetric;
 import org.thema.pixscape.metric.DepthLineMetric;
 import org.thema.pixscape.metric.DistMetric;
+import org.thema.pixscape.metric.EdgeDensityMetric;
 import org.thema.pixscape.metric.FractalDimMetric;
-import org.thema.pixscape.metric.IJIMetric;
 import org.thema.pixscape.metric.Metric;
+import org.thema.pixscape.metric.PatchDensityMetric;
+import org.thema.pixscape.metric.PatchMeanSizeMetric;
 import org.thema.pixscape.metric.PerimeterMetric;
 import org.thema.pixscape.metric.ShanDistMetric;
 import org.thema.pixscape.metric.ShannonMetric;
@@ -715,9 +717,11 @@ public final class Project {
     
     private static final List<Metric> METRICS;
     static {
-        METRICS = new ArrayList(Arrays.asList(new AreaMetric(), new PerimeterMetric(), 
-                new CompactMetric(), new ShannonMetric(), new FractalDimMetric(),
-                new IJIMetric(), new CONTAGMetric(), new DistMetric(), new SkyLineMetric(), 
+        METRICS = new ArrayList(Arrays.asList(new AreaMetric(),new ShannonMetric(),
+                new PerimeterMetric(), new CompactMetric(), new FractalDimMetric(),
+                new AggregationMetric(), new CONTAGMetric(), new EdgeDensityMetric(), 
+                new PatchDensityMetric(), new PatchMeanSizeMetric(), 
+                new DistMetric(), new SkyLineMetric(), 
                 new ShanDistMetric(), new DepthLineMetric()));
     }
     

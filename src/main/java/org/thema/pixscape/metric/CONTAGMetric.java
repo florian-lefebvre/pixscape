@@ -51,65 +51,49 @@ public class CONTAGMetric extends AbstractMetric implements ViewShedMetric, View
 
     @Override
     public Double[] calcMetric(ViewShedResult result) {
-        int [] count = new int[256];
-        int[][] border = new int[256][256];
-        Raster view = result.getView();
-        Raster land = result.getLanduse();
-
-        for(int y = 0; y < view.getHeight(); y++) {
-            for(int x = 0; x < view.getWidth(); x++) {
-                if(view.getSample(x, y, 0) != 1) {
-                    continue;
-                }
-                final int l = land.getSample(x, y, 0) & 0xff;
-                count[l]++;
-                if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) == 1) {
-                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
-                    border[l][l1]++;
-                    border[l1][l]++;
-                }
-                if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) == 1) {
-                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
-                    border[l][l1]++;
-                    border[l1][l]++;
-                }
-            }
-        }
-        
-        return new Double[] {calcCONTAG(result, border, count)};
+        return new Double[] {calcCONTAG(result, false)};
     }
 
     @Override
     public Double[] calcMetric(ViewTanResult result) {
+        return new Double[] {calcCONTAG(result, result.isView360())};
+    }
+    
+    private double calcCONTAG(ViewResult result, boolean cylinder) {
         int [] count = new int[256];
         int[][] border = new int[256][256];
-        Raster view = result.getView();
         Raster land = result.getLanduseView();
 
-        for(int y = 0; y < view.getHeight(); y++) {
-            for(int x = 0; x < view.getWidth(); x++) {
-                if(view.getSample(x, y, 0) == -1) {
+        for(int y = 0; y < land.getHeight(); y++) {
+            for(int x = 0; x < land.getWidth(); x++) {
+                final int l = land.getSample(x, y, 0);
+                if(l == -1) {
                     continue;
                 }
-                final int l = land.getSample(x, y, 0) & 0xff;
                 count[l]++;
-                if(x < view.getWidth()-1 && view.getSample(x+1, y, 0) != -1) {
-                    final int l1 = land.getSample(x+1, y, 0) & 0xff;
-                    border[l][l1]++;
-                    border[l1][l]++;
+                if(x < land.getWidth()-1) {
+                    final int l1 = land.getSample(x+1, y, 0);
+                    if(l1 != -1) {
+                        border[l][l1]++;
+                        border[l1][l]++;
+                    }
+                } else if(cylinder) {
+                    final int l1 = land.getSample(0, y, 0);
+                    if(l1 != -1) {
+                        border[l][l1]++;
+                        border[l1][l]++;
+                    }
                 }
-                if(y < view.getHeight()-1 && view.getSample(x, y+1, 0) != -1) {
-                    final int l1 = land.getSample(x, y+1, 0) & 0xff;
-                    border[l][l1]++;
-                    border[l1][l]++;
+                if(y < land.getHeight()-1) {
+                    final int l1 = land.getSample(x, y+1, 0);
+                    if(l1 != -1) {
+                        border[l][l1]++;
+                        border[l1][l]++;
+                    }
                 }
             }
         }
         
-        return new Double[] {calcCONTAG(result, border, count)};
-    }
-    
-    private double calcCONTAG(ViewResult result, int[][] border, int [] count) {
         SortedSet<Integer> codes;
         if(hasCodeGroup()) {
             HashMapList<Integer, Integer> groups = getCodeGroups();

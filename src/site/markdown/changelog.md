@@ -1,5 +1,10 @@
 ## Changelog
 
+##### version 1.1 (19/12/2017)
+- Metric : add metrics AG, ED, PD, PMS
+- Metric : remove IJI metric 
+- Metric : for metric calculation, in tangential view, with 360° amplitude, the contiguity is respected between 359° and 0° 
+
 ##### version 1.0.2 (24/10/2017)
 - CLI : set the locale as defined in GUI
 

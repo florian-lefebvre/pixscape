@@ -44,7 +44,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.0\\
+		PixScape 1.1\\
 		\bigskip
 		Manuel d’utilisation\\
 	}
@@ -57,7 +57,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		26/07/2017\\
+		19/12/2017\\
 	}
 	
 \end{titlepage}
@@ -98,8 +98,8 @@ PixScape est téléchargeable à cette adresse : \url{http://sourcesup.renater.f
 
 \begin{itemize}
 	\item Télécharger et installer Java 7 ou + (\href{http://www.java.com}{java.com}). Installer de préférence la version 64 bits de Java.
-	\item Télécharger pixscape-1.0.jar
-	\item Lancer pixscape-1.0.jar
+	\item Télécharger pixscape-1.1.jar
+	\item Lancer pixscape-1.1.jar
 \end{itemize}
 
 PixScape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
@@ -561,7 +561,7 @@ Dans l'écran d'aide, les éléments entourés de crochets sont optionnels, et d
 \subsection{--help : affichage de l'aide}
 Commande :
 \begin{Verbatim}
-java -jar pixscape-1.0.jar --help
+java -jar pixscape-1.1.jar --help
 \end{Verbatim}
 Résultat :
 \begin{Verbatim}
@@ -589,7 +589,7 @@ Cette commande affiche l'ensemble des métriques disponibles avec leur abréviat
 
 Commande :
 \begin{Verbatim}
-java -jar pixscape-1.0.jar --metrics
+java -jar pixscape-1.1.jar --metrics
 \end{Verbatim}
 Résultat :
 \begin{Verbatim}
@@ -610,7 +610,7 @@ DL - Profondeur de vue
 \subsection{--project : chargement d'un projet}
 Cette commande définit le chemin vers le fichier xml du projet à charger.
 \begin{Verbatim}[commandchars=\\\{\}]
-java -jar pixscape-1.0.jar --project \textit{path2myproject/myproject.xml}
+java -jar pixscape-1.1.jar --project \textit{path2myproject/myproject.xml}
 \end{Verbatim}
 Charge le projet \textit{myproject} contenu dans le répertoire \textit{path2myproject}.
 
@@ -1084,9 +1084,15 @@ Dans ce chapitre, l'ensemble des métriques disponibles dans PixScape sont décr
 		\hline
 		S & Shannon OS & X & X &  & X & X\\
 		\hline
-		IJI & Interspersion et juxtaposition & X & X &  & X & \\
+		AG & Indice d'agrégation & X & X &  & X & \\
 		\hline
 		CONTAG & Contagion & X & X &  & X & \\
+		\hline
+		ED & Densité de bord & X & X &  & X & \\
+		\hline
+		PD & Densité de taches & X & X &  & X & \\
+		\hline
+		PMS & Taille moyenne des taches & X & X &  & X & \\
 		\hline
 		DIST & Distribution des distances & X & X & X &  & \\
 		\hline
@@ -1122,17 +1128,48 @@ Avec $n$ le nombre de catégories d'occupation du sol, $A_i$ la surface visible 
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 
-\subsection{Interspersion et juxtaposition : IJI}
-Indice d'interspersion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
+\subsection{Indice d'agrégation : AG}
+Cette métrique correspond à "Aggregation Index" (AI) défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée uniquement aux surfaces d'occupation du sol visibles.
 
-$$ IJI =  -\frac{100}{\ln 0.5 m(m-1)} \sum_{i=1}^{m} \sum_{k=i+1}^{m}     \dfrac{e_{ik}}{E} \ln \dfrac{e_{ik}}{E}    $$
+$$AG = \sum_{i=1}^n \frac{A_i}{A} AG_i, AG_i = 100 \frac{g_{ii}}{\max g_{ii}}$$
+
+Avec $g_{ii}$ le nombre d'adjacence entre 2 pixels de la catégorie d'occupation du sol $i$ et $\max g_{ii}$ le maximum théorique \textit{ie.} quand la surface de la classe $i$ forme un carré.
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 
 \subsection{Contagion : CONTAG}
-Indice de contagion défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée aux surfaces d'occupation du sol visibles.
+Cette métrique correspond à l'indice "CONTAG" défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée uniquement aux surfaces d'occupation du sol visibles.
 
 $$ CONTAG = 100 \left[1+\dfrac{1}{2\ln m} \sum _{i=1}^{m}  \sum _{j=1}^{m}  p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }   \ln \left( p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }\right)  \right]$$
+
+Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+
+\subsection{Densité de bords : ED}
+Cette métrique correspond à l'indice "Edge Density" (ED) défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée uniquement aux surfaces d'occupation du sol visibles.
+
+$$ED = \frac{E}{A} = \frac{1}{2} \sum_{i=1}^{n} ED_i, ED_i = \frac{E_i}{A}$$
+
+Avec $E$ le nombre d'adjacence entre 2 pixels de catégorie différente et $A$ la surface visible totale en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle.
+
+Les pixels au bord de la surface visible ne sont pas décomptés.
+
+Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+
+\subsection{Densité de taches : PD}
+Cette métrique correspond à l'indice "Patch Density" (PD) défini dans Fragstat. Dans PixScape, le calcul de cette métrique est appliquée uniquement aux surfaces d'occupation du sol visibles.
+
+$$PD = \frac{p}{A} = \sum_{i=1}^{n} PD_i, PD_i = \frac{p_i}{A}$$
+
+Avec $p_i$ le nombre de taches de la catégorie d'occupation du sol $i$ et $A$ la surface visible totale en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle.
+
+Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
+
+\subsection{Taille moyenne des taches : PMS}
+Cette métrique correspond à la taille moyenne des taches en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle. Le calcul de cette métrique est appliquée uniquement aux surfaces d'occupation du sol visibles.
+
+$$PMS = \frac{A}{p}, PMS_i = \frac{A_i}{p_i}$$
+
+Avec $p_i$ le nombre de taches de la catégorie d'occupation du sol $i$ et $A$ la surface visible totale en mètre carré pour la vue planimétrique et en degré carré pour la vue tangentielle.
 
 Le projet doit contenir la couche d'occupation du sol pour pouvoir calculer cette métrique.
 

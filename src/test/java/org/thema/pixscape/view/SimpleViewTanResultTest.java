@@ -32,10 +32,12 @@ import org.thema.pixscape.TestTools;
 public class SimpleViewTanResultTest {
         
     private static SimpleViewTanResult tanResult;
+    private static ComputeViewJava compute;
     
     @BeforeClass
     public static void setUpClass() {
-        tanResult = (SimpleViewTanResult) new ComputeViewJava(TestTools.createRandomData(10), 0.1, false, 0).calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
+        compute = new ComputeViewJava(TestTools.createRandomData(10), 0.1, false, 0);
+        tanResult = (SimpleViewTanResult) compute.calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
     }
     
 
@@ -60,4 +62,16 @@ public class SimpleViewTanResultTest {
         }
     }
     
+    @Test
+    public void testIsView360() {
+        System.out.println("isView360");
+        
+        assertEquals(true, tanResult.isView360());
+        
+        ViewTanResult result = compute.calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds().createBounds(0, 359));
+        assertEquals(false, result.isView360());
+        
+        result = compute.calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds().createBounds(100, 360));
+        assertEquals(true, result.isView360());
+    }
 }

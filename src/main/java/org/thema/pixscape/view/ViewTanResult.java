@@ -75,7 +75,7 @@ public interface ViewTanResult extends ViewResult {
      */    
     Raster getElevationView();
     /**
-     * @return the tangential view of the landuse of the seen pixels
-     */    
-    Raster getLanduseView();
+     * @return true if the view amplitude is full : 360°
+     */
+    boolean isView360();
 }

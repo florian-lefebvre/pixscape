@@ -43,7 +43,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.0\\
+		PixScape 1.1\\
 		\bigskip
 		User manual\\
 	}
@@ -56,7 +56,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2017-07-26\\
+		2017-12-19\\
 	}
 	
 \end{titlepage}
@@ -98,8 +98,8 @@ PixScape is available for downloading at : \url{http://sourcesup.renater.fr/pixs
 
 \begin{itemize}
 	\item Download and install Java 7 or later (\href{http://www.java.com}{java.com}). It is best to install 64 bits version of Java.
-	\item Download pixscape-1.0.jar
-	\item Launch pixscape-1.0.jar
+	\item Download pixscape-1.1.jar
+	\item Launch pixscape-1.1.jar
 \end{itemize}
 
 PixScape can be used through 2 user interface : the graphical user interface (GUI) and the command line interface (CLI).
@@ -568,7 +568,7 @@ In the help screen, elements enclosed in brackets are optional. Therefore, eleme
 \subsection{--help : show help screen}
 Command:
 \begin{Verbatim}
-java -jar pixscape-1.0.jar --help
+java -jar pixscape-1.1.jar --help
 \end{Verbatim}
 Result:
 \begin{Verbatim}
@@ -596,7 +596,7 @@ This command lists all available metrics with their short name and full name.
 
 Commande :
 \begin{Verbatim}
-java -jar pixscape-1.0.jar --metrics
+java -jar pixscape-1.1.jar --metrics
 \end{Verbatim}
 Résultat :
 \begin{Verbatim}
@@ -1093,9 +1093,15 @@ In this chapter, all the metrics available in PixScape are described. The \ref{m
 		\hline
 		S & Shannon diversity index & X & X &  & X & X\\
 		\hline
-		IJI & Interspersion and juxtaposition & X & X &  & X & \\
+		AG & Aggregation index & X & X &  & X & \\
 		\hline
 		CONTAG & Contagion & X & X &  & X & \\
+		\hline
+		ED & Edge Density & X & X &  & X & \\
+		\hline
+		PD & Patch Density & X & X &  & X & \\
+		\hline
+		PMS & Patch Mean Size & X & X &  & X & \\
 		\hline
 		DIST & Distance distribution & X & X & X &  & \\
 		\hline
@@ -1130,23 +1136,51 @@ With $n$ the number of land use category, $A_i$ the visible area of the category
 
 The project must contain the land use layer for using this metric.
 
+\subsection{Aggregation index: AG}
+This metric corresponds to the Aggregation index (AI) defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas only.
 
-\subsection{Interspersion and Juxtaposition Index: IJI}
-The interspersion index defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas.
+$$AG = \sum_{i=1}^n \frac{A_i}{A} AG_i, AG_i = 100 \frac{g_{ii}}{\max g_{ii}}$$
 
-$$ IJI =  -\frac{100}{\ln 0.5 m(m-1)} \sum_{i=1}^{m} \sum_{k=i+1}^{m}     \dfrac{e_{ik}}{E} \ln \dfrac{e_{ik}}{E}$$
-
-Based on patch adjacencies of the landscape, each category is evaluated according to its adjacency with all other categories. 
+With $g_{ii}$ the number of like adjacencies (joins) between pixels of landuse class $i$ based on the single-count method and $\max g_{ii}$ the theoretical maximum \textit{ie.} when the shape of the landuse class $i$ is a square.
 
 The project must contain the land use layer for using this metric.
 
 \subsection{Contagion: CONTAG}
-The contagion index defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas.
+This metric corresponds to the contagion index defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas only.
 
 $$ CONTAG = 100 \left[1+\dfrac{1}{2\ln m} \sum _{i=1}^{m}  \sum _{j=1}^{m}  p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }   \ln \left( p_i\dfrac{g_{ij}}{\sum _{k=1}^{m}g_{ik} }\right)  \right]$$
 
 It corresponds to the probability of finding a pixel of the land use category $i$
 next to a pixel of the category $j$.
+
+The project must contain the land use layer for using this metric.
+
+\subsection{Edge density: ED}
+This metric corresponds to the Edge density (ED) defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas only.
+
+$$ED = \frac{E}{A} = \frac{1}{2} \sum_{i=1}^{n} ED_i, ED_i = \frac{E_i}{A}$$
+
+With $E$ the number of edges and $A$ the total visible area in square meters for the planimetric view and in square degrees for the tangential view.
+
+Edges at the border of the visible area are not counted.
+
+The project must contain the land use layer for using this metric.
+
+\subsection{Patch density: PD}
+This metric corresponds to the Patch density (PD) defined in Fragstat. In PixScape, the calculation of this metric is applied to the visible land use areas only.
+
+$$PD = \frac{p}{A} = \sum_{i=1}^{n} PD_i, PD_i = \frac{p_i}{A}$$
+
+With $p_i$ the number of patches of the landuse category $i$ and $A$ the total visible area in square meters for the planimetric view and in square degrees for the tangential view.
+
+The project must contain the land use layer for using this metric.
+
+\subsection{Patch Mean Size: PMS}
+This metric corresponds to the average size of a patch in square meters for the planimetric view and in square degrees for the tangential view. The calculation of this metric is applied to the visible land use areas only.
+
+$$PMS = \frac{A}{p}, PMS_i = \frac{A_i}{p_i}$$
+
+With $p_i$ the number of patches of the landuse category $i$ and $A$ the total visible area in square meters for the planimetric view and in square degrees for the tangential view.
 
 The project must contain the land use layer for using this metric.
 

@@ -20,9 +20,11 @@
 package org.thema.pixscape.view;
 
 import java.awt.image.Raster;
+import java.util.Set;
 import java.util.SortedSet;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.thema.pixscape.ScaleData;
 
 /**
  * Stores the result of a view calculation : viewshed or tangential view.
@@ -54,6 +56,12 @@ public interface ViewResult {
     double[] getAreaLand();
     
     /**
+     * Returns the area for all landuse code, if no codes are set, returns the total area
+     * @return the view area in squared data unit for viewshed and squared degree for tangential view
+     */
+    double getAreaLandCodes(Set<Integer> codes);
+    
+    /**
      * Returns the view area between distance dmin and dmax
      * @param dmin minimal distance (include)
      * @param dmax maximal distance (exclude)
@@ -69,6 +77,11 @@ public interface ViewResult {
      */
     double[] getAreaLand(double dmin, double dmax);
 
+    /**
+     * @return the datascale used
+     */
+    ScaleData getData();
+    
     /**
      * @return the grid geometry of the datascale
      */
@@ -88,4 +101,16 @@ public interface ViewResult {
      */
     Raster getView();
     
+    /**
+     * Returns the land use category of the pixel seen at this position
+     * @param x the abscisse of the view
+     * @param y the ordinate of the view
+     * @return the and use category of the pixel seen at this position or -1 if nothing is visible
+     */
+    int getLand(int x, int y);
+    
+    /**
+     * @return the landuse view of the seen pixels
+     */    
+    Raster getLanduseView();
 }

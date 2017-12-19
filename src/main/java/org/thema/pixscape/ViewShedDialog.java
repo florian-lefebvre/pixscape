@@ -414,14 +414,14 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     private void addRasterViewShedLayer(Raster view, Rectangle2D zone, String name) {
         Layer layer;
 
-//            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
-//                        zone, new RasterStyle( new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0),
-//                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0))), true), true), project.getCRS());
+            layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+                        zone, new RasterStyle( new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0),
+                                Arrays.asList(new Color(0, 0, 0, 120), new Color(0, 0, 0, 0), new Color(0, 0, 0, 0))), true), true), project.getCRS());
 
 //        // for debugging pixels not tested
-        layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
-                    zone, new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
-                            Arrays.asList(new Color(127, 127, 127), new Color(255, 255, 255), new Color(255, 0, 0))), true), true), project.getCRS());
+//        layer = new RasterLayer("Viewshed-" + name, new RasterShape(view,
+//                    zone, new RasterStyle(new UniqueColorTable(Arrays.asList(0.0, 1.0, 255.0), 
+//                            Arrays.asList(new Color(127, 127, 127), new Color(255, 255, 255), new Color(255, 0, 0))), true), true), project.getCRS());
         
         layer.setRemovable(true);
         layers.addLayerLast(layer);

@@ -80,7 +80,7 @@ public class CONTAGMetricTest {
     public void testCalcMetric_ViewTanResult() {
         ViewTanResult view = compute.calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
         Double[] result = new CONTAGMetric().calcMetric(view);
-        assertEquals("CONTAG 10 tan", 65.23151238552525, result[0], 0.0);
+        assertEquals("CONTAG 10 tan", 65.23153263606073, result[0], 0.0);
         
         ViewTanResult view5 = computeAggr.calcViewTan(new DirectPosition2D(2, 2), 2, new Bounds());
         result = new CONTAGMetric().calcMetric(view5);

@@ -23,7 +23,11 @@ import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.awt.image.BandedSampleModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferShort;
 import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -66,18 +70,6 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
      */
     public final TreeMap<Double, Raster> getViews() {
         return views;
-    }
-    
-    /**
-     * Returns the landuse in the first scale grid geometry.
-     * {@inheritDoc }
-     */
-    @Override
-    public final synchronized Raster getLanduse() {
-        if(land == null) {
-            calcViewLand();
-        }
-        return land;
     }
     
     @Override
@@ -138,14 +130,16 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
 
         return counts;
     }
-
+    
     @Override
     protected synchronized void calcViewLand() {
         ScaleData first = getDatas().firstEntry().getValue();
         GridGeometry2D firstGrid = first.getGridGeometry();
         view = getViews().firstEntry().getValue().createCompatibleWritableRaster(firstGrid.getGridRange2D());
+        WritableRaster land = null;
         if(first.getLand() != null) {
-            land = first.getLand().createCompatibleWritableRaster();
+            land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_SHORT, view.getWidth(), view.getHeight(), 1), null);
+            Arrays.fill(((DataBufferShort)land.getDataBuffer()).getData(), (short)-1);
         }
         for(Double res : getViews().descendingKeySet()) {
             int[] tab = new int[0];
@@ -183,6 +177,8 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
             }
         }
         
+        landuse = land;
+        
     }
     
     @Override
@@ -195,4 +191,5 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
         }
         return JTS.flattenGeometryCollection(new GeometryFactory().buildGeometry(geoms));
     }
+
 }

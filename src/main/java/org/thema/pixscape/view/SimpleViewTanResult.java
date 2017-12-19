@@ -23,6 +23,7 @@ import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
+import java.awt.image.DataBufferShort;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import org.geotools.coverage.grid.GridCoordinates2D;
@@ -35,7 +36,6 @@ import org.thema.pixscape.Bounds;
  */
 public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResult {
        
-    private Raster landuse;
     private WritableRaster elevation, distance;
 
     /**
@@ -81,11 +81,10 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double res = Math.pow(getAres()*180/Math.PI, 2);
         final double[] count = new double[256];
         
-        int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
-        byte[] landBuf = ((DataBufferByte) getLanduseView().getDataBuffer()).getData();
+        short[] buf = ((DataBufferShort) getLanduseView().getDataBuffer()).getData();
         for(int i = 0; i < buf.length; i++) {
-            if(buf[i] > -1) {
-                count[landBuf[i]] += res;
+            if(buf[i] != -1) {
+                count[buf[i]] += res;
             }
         }
         return count;
@@ -115,7 +114,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         final double[] count = new double[256];
         
         int[] buf = ((DataBufferInt) getView().getDataBuffer()).getData();
-        byte[] landBuf = ((DataBufferByte) getLanduseView().getDataBuffer()).getData();
+        short[] landBuf = ((DataBufferShort) getLanduseView().getDataBuffer()).getData();
         for(int i = 0; i < buf.length; i++) {
             final int ind = buf[i];
             final int x = ind % getW();
@@ -144,6 +143,15 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         }
         return getData().getZ(ind%getW(), ind/getW());
     }
+    
+    @Override
+    public final int getLand(int theta1, int theta2) {
+        final int ind = getView().getSample(theta1, theta2, 0);
+        if(ind == -1) {
+            return -1;
+        }
+        return compute.getData().getLand().getSample(ind%getW(), ind/getW(), 0) & 0xff;
+    }
 
     @Override
     public synchronized Raster getElevationView() {
@@ -159,29 +167,6 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
             fillViews();
         }
         return distance;
-    }
-
-    @Override
-    public synchronized Raster getLanduseView() {
-        if(landuse == null && compute.getData().hasLandUse()) {
-            final int w = getView().getWidth();
-            final int h = getView().getHeight();
-            Raster land = compute.getData().getLand();
-            WritableRaster landuse = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, w, h, 1), null);
-            for(int y = 0; y < h; y++) {
-                for(int x = 0; x < w; x++) {
-                    final int ind = getView().getSample(x, y, 0);
-                    if(ind == -1) {
-                        landuse.setSample(x, y, 0, -1);
-                    } else {
-                        landuse.setSample(x, y, 0, land.getSample(ind%getW(), ind/getW(), 0));
-                    }
-                    
-                }
-            }
-            this.landuse = landuse;
-        }
-        return landuse;
     }
     
     private void fillViews() {
@@ -216,4 +201,10 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         } 
         return y == h ? 0 : getDistance(theta1, y);
     }
+
+    @Override
+    public boolean isView360() {
+        return getAres() * getThetaWidth() >= 2*Math.PI;
+    }
+    
 }

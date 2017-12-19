@@ -22,6 +22,7 @@ package org.thema.pixscape.view;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.util.TreeMap;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridEnvelope2D;
@@ -57,7 +58,7 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
         this.multiView = multiView;
         this.scale = scale;
         calcViewLand();
-        resultDelegate = new SimpleViewTanResult(cg, view, land, new ComputeViewJava(getDatas().firstEntry().getValue(), 
+        resultDelegate = new SimpleViewTanResult(cg, view, landuse, new ComputeViewJava(getDatas().firstEntry().getValue(), 
                     compute.getaPrec(), compute.isEarthCurv(), compute.getCoefRefraction()));
     }
 
@@ -105,11 +106,6 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
     }
 
     @Override
-    public Raster getLanduseView() {
-        return land;
-    }
-
-    @Override
     public int getThetaWidth() {
         return resultDelegate.getThetaWidth();
     }
@@ -125,13 +121,19 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
     }
 
     @Override
-    protected void calcViewLand() {
+    public boolean isView360() {
+        return resultDelegate.isView360();
+    }
+    
+    @Override
+    protected synchronized void calcViewLand() {
         final ScaleData first = getDatas().firstEntry().getValue();
         final GridGeometry2D firstGrid = first.getGridGeometry();
         final int firstW = first.getDtm().getWidth();
         view = multiView.createCompatibleWritableRaster();
+        WritableRaster land = null;
         if(first.hasLandUse()) {
-            land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, view.getWidth(), view.getHeight(), 1), null);
+            land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_SHORT, view.getWidth(), view.getHeight(), 1), null);
         }
         
         ScaleData[] datas = getDatas().values().toArray(new ScaleData[getDatas().size()]);
@@ -169,6 +171,8 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
                 }
             }
         }
+        
+        landuse = land;
         
     }
 

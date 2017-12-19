@@ -19,8 +19,13 @@
 
 package org.thema.pixscape.view;
 
+import java.awt.image.BandedSampleModel;
+import java.awt.image.DataBuffer;
+import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.geotools.coverage.grid.GridCoordinates2D;
 
 /**
@@ -35,6 +40,8 @@ public abstract class AbstractViewResult implements ViewResult {
     private final GridCoordinates2D coord;
     private double area = -1;
     private Map<Pair, double []> areaLand = null;
+    
+    protected Raster landuse;
 
     /**
      * Creates a new Viewresult
@@ -57,6 +64,20 @@ public abstract class AbstractViewResult implements ViewResult {
         }
         return area;
     }
+    
+    @Override
+    public double getAreaLandCodes(Set<Integer> codes) {
+        if(codes.isEmpty()) {
+            return getArea();
+        } else {
+            double a = 0;
+            double[] areaLand = getAreaLand();
+            for(int code : codes) {
+                a += areaLand[code];
+            }
+            return a;
+        }
+    }
 
     @Override
     public double[] getAreaLand() {
@@ -76,6 +97,21 @@ public abstract class AbstractViewResult implements ViewResult {
     
     protected abstract double[] calcAreaLand(double dmin, double dmax);
     
+    @Override
+    public synchronized Raster getLanduseView() {
+        if(landuse == null && getData().hasLandUse()) {
+            final int w = getView().getWidth();
+            final int h = getView().getHeight();
+            WritableRaster landview = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_SHORT, w, h, 1), null);
+            for(int y = 0; y < h; y++) {
+                for(int x = 0; x < w; x++) {
+                    landview.setSample(x, y, 0, getLand(x, y));
+                }
+            }
+            this.landuse = landview;
+        }
+        return landuse;
+    }
 
     private static class Pair {
         private double min, max;
