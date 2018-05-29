@@ -128,8 +128,6 @@ public final class ComputeViewJava extends SimpleComputeView {
             int ddx = (int) Math.round((c0.y-y1) / Math.tan(a));
             x1 = c0.x + ddx;
         }
-
-        System.out.println(x1 + " - " + y1 + " - a:" + a/Math.PI);
         
         final double z0 = dtm.getSample(c0.x, c0.y, 0) + startZ;
         
