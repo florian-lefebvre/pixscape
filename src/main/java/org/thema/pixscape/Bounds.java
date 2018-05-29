@@ -106,6 +106,9 @@ public final class Bounds implements Serializable {
      * @param zmax maximum vertical angle in degree [-90 +90]
      */
     public Bounds(double dmin, double dmax, double orientation, double amplitude, double zmin, double zmax) {
+        if(amplitude > 360) {
+            throw new IllegalArgumentException("Amplitude cannot be greater than 360°");
+        }
         this.dmin = dmin;
         this.dmax = dmax;
         this.orientation = deg2rad(orientation);

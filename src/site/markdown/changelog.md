@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.1.1 (29/05/2018)
+- Out of bounds exception when amplitude > 360°
+- Multiviewshed : height can be overidden for each point if the attribute table of the shapefile contains "height" field
+
 ##### version 1.1 (19/12/2017)
 - Metric : add metrics AG, ED, PD, PMS
 - Metric : remove IJI metric 

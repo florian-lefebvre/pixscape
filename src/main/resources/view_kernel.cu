@@ -419,62 +419,6 @@ __global__  void calcRayTan(int x0, int y0, double startZ, float * dtm, int w, i
         x1 = x0 + sens * ddx;
     }
     
-/*
-    if(a == 0) { // droite
-        y1 = y0;
-        x1 = w-1;
-    } else if(a < M_PI/2) { // haut droit
-        int dx = round(tan(M_PI/2-a) * y0); 
-        if(x0+dx < w) {
-            x1 = x0 + dx;
-            y1 = 0;
-        } else {
-            int dy = round(tan(a) * (w-1-x0)); 
-            x1 = w-1;
-            y1 = y0-dy;
-        }
-    } else if(a == M_PI/2) { // haut 
-        y1 = 0;
-        x1 = x0;
-    } else if(a < M_PI) { // haut gauche
-        int dx = round(tan(a-M_PI/2) * y0); 
-        if(x0-dx >= 0) {
-            x1 = x0 - dx;
-            y1 = 0;
-        } else {
-            int dy = round(tan(M_PI-a) * x0); 
-            x1 = 0;
-            y1 = y0-dy;
-        }
-    } else if(a == M_PI) { // gauche
-        x1 = 0;
-        y1 = y0;
-    } else if(a < 1.5*M_PI) { // bas gauche
-        int dx = round(tan(1.5*M_PI-a) * (h-1-y0)); 
-        if(x0-dx >= 0) {
-            x1 = x0 - dx;
-            y1 = h-1;
-        } else {
-            int dy = round(tan(a-M_PI) * x0); 
-            x1 = 0;
-            y1 = y0+dy;
-        }
-    } else if(a == 1.5*M_PI) { // bas
-        x1 = x0;
-        y1 = h-1;
-    } else { // bas droit
-        int dx = round(tan(a-1.5*M_PI) * (h-1-y0)); 
-        if(x0+dx >= 0 && x0+dx < w) {
-            x1 = x0 + dx;
-            y1 = h-1;
-        } else {
-            int dy = round(tan(2*M_PI-a) * (w-1-x0)); 
-            x1 = w-1;
-            y1 = y0+dy;
-        }
-    }
-*/
-    
     if(x1 < 0 || x1 >= w || y1 < 0 || y1 >= h) {
         for(int yz = 0; yz < wa/2; yz++) {
             view[yz*wa + ax] = -1;

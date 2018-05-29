@@ -80,8 +80,18 @@ public class MultiViewshedTask extends SimpleParallelTask<Feature, Object> {
     protected Object executeOne(Feature point) {
         Point p = point.getGeometry().getCentroid();
         Bounds b = bounds.updateBounds(point);
+        double zOrig = project.getStartZ();
+        double zDest = this.zDest;
+        if(point.getAttributeNames().contains("height")) {
+            double h = ((Number)point.getAttribute("height")).doubleValue();
+            if(inverse) {
+                zDest = h;
+            } else {
+                zOrig = h;
+            }
+        }
         ViewShedResult viewshed = project.getDefaultComputeView().calcViewShed(
-                new DirectPosition2D(p.getX(), p.getY()), project.getStartZ(), zDest, inverse, b);
+                new DirectPosition2D(p.getX(), p.getY()), zOrig, zDest, inverse, b);
         if(vectorOutput) {
             return b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon());
         } else {
