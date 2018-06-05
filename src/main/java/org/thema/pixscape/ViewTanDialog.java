@@ -346,8 +346,8 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
             gl.addLayerFirst(new RasterLayer("Distance", new RasterShape(result.getDistanceView(), r, s, true)));
         }
         if(project.hasLandUse() && landRadioButton.isSelected()) {
-            RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()));
-            s.setNoDataValue(255);
+            RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()), false, false);
+            s.setNoDataValue(-1);
             gl.addLayerFirst(new RasterLayer("Land use", new RasterShape(result.getLanduseView(), r, s, true)));
         }
 

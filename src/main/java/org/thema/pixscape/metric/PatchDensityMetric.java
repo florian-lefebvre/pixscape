@@ -65,31 +65,29 @@ public class PatchDensityMetric extends AbstractMetric implements ViewShedMetric
         Raster land = view.getLanduseView();
         final int h = land.getHeight();
         final int w = land.getWidth();
-        final int wMax = w + (cylinder ? 1 : 0);
         int k = 0;
         WritableRaster clust = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_INT, w, h, 1), null);
         TreeSet<Integer> set = new TreeSet<>();
         ArrayList<Integer> idClust = new ArrayList<>();
 
         for(int j = 0; j < h; j++) {
-            for(int i = 0; i < wMax; i++) {
-                final int ii = i%w;
-                int val = land.getSample(ii, j, 0);
+            for(int i = 0; i < w; i++) {
+                int val = land.getSample(i, j, 0);
                 if(val != -1 && (codes.isEmpty() || codes.contains(val))) {
                     if(i > 0 && land.getSample(i-1, j, 0) == val) {
                         set.add(clust.getSample(i-1, j, 0));
                     }
-                    if(j > 0 && land.getSample(ii, j-1, 0) == val) {
-                        set.add(clust.getSample(ii, j-1, 0));
+                    if(j > 0 && land.getSample(i, j-1, 0) == val) {
+                        set.add(clust.getSample(i, j-1, 0));
                     }
                     set.remove(0);
                     if(set.isEmpty()) {
                         k++;
-                        clust.setSample(ii, j, 0, k);
+                        clust.setSample(i, j, 0, k);
                         idClust.add(k);
                     } else if(set.size() == 1) {
                         int id = set.iterator().next();
-                        clust.setSample(ii, j, 0, idClust.get(id-1));
+                        clust.setSample(i, j, 0, idClust.get(id-1));
                     } else {
                         int minId = Integer.MAX_VALUE;
                         for(Integer id : set) {
@@ -103,11 +101,29 @@ public class PatchDensityMetric extends AbstractMetric implements ViewShedMetric
                             idClust.set(getMinId(idClust, id)-1, minId);
                         }
 
-                        clust.setSample(ii, j, 0, minId);
-
+                        clust.setSample(i, j, 0, minId);
                     }
                     set.clear();
                 } 
+            }
+            if(cylinder) {
+                set.add(clust.getSample(0, j, 0));
+                set.add(clust.getSample(w-1, j, 0));
+                set.remove(0);
+                if(set.size() == 2 && land.getSample(0, j, 0) == land.getSample(w-1, j, 0)) {
+                    int minId = Integer.MAX_VALUE;
+                    for(Integer id : set) {
+                        int min = getMinId(idClust, id);
+                        if(min < minId) {
+                            minId = min;
+                        }
+                    }
+
+                    for(Integer id : set) {
+                        idClust.set(getMinId(idClust, id)-1, minId);
+                    }
+                }
+                set.clear();
             }
         }
 
