@@ -474,9 +474,9 @@ public class MultiComputeViewJava extends ComputeView {
         int x1 = (int)(a >= Math.PI/2 && a < 1.5*Math.PI ? rect.getMinX() : rect.getMaxX()-1); // droite ou gauche ?
         
         double ddy = Math.tan(a) * (p0.getX()-x1);
-        int y = (int)Math.round(p0.getY() + ddy);   
+        double y = Math.round(p0.getY() + ddy);   
         if(y >= rect.getMinY() && y < rect.getMaxY()) {
-            y1 = y;   
+            y1 = (int)y;   
         } else {
             double ddx = (p0.getY()-y1) / Math.tan(a);
             x1 = (int)Math.round(p0.getX() + ddx);

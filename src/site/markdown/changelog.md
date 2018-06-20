@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.1.3 (20/06/2018)
+- Bug in tangential view at 0°
+- In tangential view, optional viewshed was not rendered correctly
+
 ##### version 1.1.2 (05/06/2018)
 - Java 9 compatibility
 - Bug in tangential view rendering

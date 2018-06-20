@@ -323,7 +323,7 @@ public class ViewTanDialog extends javax.swing.JDialog implements PanelMap.Shape
                 mapViewer.getMap().removeShapes(Arrays.asList(viewshed));
             }
             Raster view = project.getDefaultComputeView().calcViewShed(
-                    new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, true, bounds).getView();
+                    new DirectPosition2D(p), Double.parseDouble(zEyeTextField.getText()), -1, false, bounds).getView();
             viewshed = new RasterShape(view,
                     project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(
                             new Color[] {new Color(0, 0, 0, 120), new Color(0, 0, 0, 0)}, 255, new Color(0, 0, 0, 0)), true);

@@ -120,10 +120,10 @@ public final class ComputeViewJava extends SimpleComputeView {
         int y1 = a >= 0 && a < Math.PI ? 0 : h-1; // haut ou bas ?
         int x1 = a >= Math.PI/2 && a < 1.5*Math.PI ? 0 : w-1; // droite ou gauche ?
         
-        int ddy = (int) Math.round(Math.tan(a) * (c0.x-x1));
-        int y = c0.y + ddy;   
+        double ddy = Math.round(Math.tan(a) * (c0.x-x1));
+        double y = c0.y + ddy;   
         if(y >= 0 && y < h) {
-            y1 = y;   
+            y1 = (int)y;   
         } else {
             int ddx = (int) Math.round((c0.y-y1) / Math.tan(a));
             x1 = c0.x + ddx;
@@ -164,9 +164,6 @@ public final class ComputeViewJava extends SimpleComputeView {
                 ind += sy*w;
             }
 
-            if(ind >= dtmBuf.length) {
-                ind--;
-            }
             double z = dtmBuf[ind] + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
             if(Double.isNaN(z)) {
                 return;
