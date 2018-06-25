@@ -21,6 +21,7 @@ package org.thema.pixscape;
 
 import com.vividsolutions.jts.geom.Point;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
@@ -338,9 +339,21 @@ public class MainFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_loadProjectMenuItemActionPerformed
 
     private void viewShedMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewShedMenuItemActionPerformed
-        if(viewshedDlg == null) {
+    	if(viewshedDlg == null) {
             viewshedDlg = new ViewShedDialog(this, project, mapViewer);
-            viewshedDlg.setLocation(getX()+getWidth(), getY());
+            
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            double screenWidth = screenSize.getWidth(); 
+            int x = getX()+getWidth();
+            int y = getY();
+            //Vérification de la position de la fenêtre créée
+            if(screenWidth < x + viewshedDlg.getWidth()) {
+            	x = (int)(screenWidth-viewshedDlg.getWidth());
+            }
+            if(y < 0) {
+            	y = 0;
+            }
+            viewshedDlg.setLocation(x, y);
         }
         viewshedDlg.setVisible(true);
         
@@ -380,7 +393,19 @@ public class MainFrame extends javax.swing.JFrame {
     private void viewTanMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_viewTanMenuItemActionPerformed
         if(viewtanDlg == null) {
             viewtanDlg = new ViewTanDialog(this, project, mapViewer);
-            viewtanDlg.setLocation(getX()+getWidth(), getY());
+            
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            double screenWidth = screenSize.getWidth(); 
+            int x = getX()+getWidth();
+            int y = getY();
+          //Vérification de la position de la fenêtre créée
+            if(screenWidth < x + viewtanDlg.getWidth()) {
+            	x = (int)(screenWidth-viewtanDlg.getWidth());
+            }
+            if(y < 0) {
+            	y = 0;
+            }
+            viewtanDlg.setLocation(x, y);
         }
         viewtanDlg.setVisible(true);
 

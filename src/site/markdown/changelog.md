@@ -1,5 +1,8 @@
 ## Changelog
 
+#### version 1.1.4 (25/06/2018)
+- Solved bug in viewshed/viewtan window position for Windows
+
 ##### version 1.1.3 (20/06/2018)
 - Bug in tangential view at 0°
 - In tangential view, optional viewshed was not rendered correctly
