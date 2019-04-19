@@ -19,7 +19,7 @@
 
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
@@ -433,13 +433,16 @@ public class MainFrame extends javax.swing.JFrame {
                 ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
                     List<Feature> points = (List)GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
-                    MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, progressBar);
+                    MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, dlg.degree, progressBar);
                     ExecutorService.execute(task);
+                    progressBar.setNote("Saving...");
+                    String name = dlg.pathFile.getName().replace(".shp", "");
+                    task.saveResult(project.getDirectory(), name);
                     Layer l;
                     if(dlg.vectorOutput) {
-                        l = new FeatureLayer("Multi viewshed", (List)task.getResult(), new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
+                        l = new FeatureLayer("Multi viewshed - " + name, (List)task.getResult(), new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
                     } else {
-                        l = new RasterLayer("Multi viewshed", new RasterShape((Raster)task.getResult(), 
+                        l = new RasterLayer("Multi viewshed - " + name, new RasterShape((Raster)task.getResult(), 
                                 project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(), true), project.getCRS());
                     }
                     l.setRemovable(true);

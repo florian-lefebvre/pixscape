@@ -16,26 +16,35 @@
  */
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.Point;
+import java.awt.image.BandedSampleModel;
+import org.locationtech.jts.geom.Point;
 import java.awt.image.DataBuffer;
+import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
+import java.awt.image.WritableRaster;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.common.ProgressBar;
+import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
-import org.thema.parallel.SimpleParallelTask;
+import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.view.ViewShedResult;
 
 /**
  *
  * @author gvuidel
  */
-public class MultiViewshedTask extends SimpleParallelTask<Feature, Object> {
+public class MultiViewshedTask extends AbstractParallelTask<Object, Object> {
     
     private Project project;
+    
+    private List<Feature> points;
     
     /** Is from observer eye or to ? */
     private boolean inverse;
@@ -48,18 +57,22 @@ public class MultiViewshedTask extends SimpleParallelTask<Feature, Object> {
     
     /** Is vector output or raster ? */
     private boolean vectorOutput;
+    /** for raster output, is degree or count ? */
+    private boolean degree;
     
     /** Results */
     private List<DefaultFeature> viewSheds;
-    private Raster viewshedRast;
+    private WritableRaster viewshedRast;
 
-    public MultiViewshedTask(List<Feature> points, Project project, boolean inverse, double zDest, Bounds bounds, boolean vectorOutput, ProgressBar monitor) {
-        super(points, monitor);
+    public MultiViewshedTask(List<Feature> points, Project project, boolean inverse, double zDest, Bounds bounds, boolean vectorOutput, boolean degree, ProgressBar monitor) {
+        super(monitor);
+        this.points = points;
         this.project = project;
         this.inverse = inverse;
         this.zDest = zDest;
         this.bounds = bounds;
         this.vectorOutput = vectorOutput;
+        this.degree = degree;
     }
     
     
@@ -67,7 +80,7 @@ public class MultiViewshedTask extends SimpleParallelTask<Feature, Object> {
     public void init() {
         super.init();
         viewSheds = vectorOutput ? new ArrayList<DefaultFeature>() : null;
-        viewshedRast = !vectorOutput ? Raster.createBandedRaster(DataBuffer.TYPE_INT, project.getDtm().getWidth(), project.getDtm().getHeight(), 1, null) : null;
+        viewshedRast = !vectorOutput ? Raster.createWritableRaster(new BandedSampleModel(degree ? DataBuffer.TYPE_DOUBLE : DataBuffer.TYPE_INT, project.getDtm().getWidth(), project.getDtm().getHeight(), 1), null) : null;
     }
 
 
@@ -77,42 +90,93 @@ public class MultiViewshedTask extends SimpleParallelTask<Feature, Object> {
     }
 
     @Override
-    protected Object executeOne(Feature point) {
-        Point p = point.getGeometry().getCentroid();
-        Bounds b = bounds.updateBounds(point);
-        double zOrig = project.getStartZ();
-        double zDest = this.zDest;
-        if(point.getAttributeNames().contains("height")) {
-            double h = ((Number)point.getAttribute("height")).doubleValue();
-            if(inverse) {
-                zDest = h;
+    public Object execute(int start, int end) {
+        List<DefaultFeature> viewsheds = new ArrayList<>();
+        WritableRaster sumViewshed = null;
+        if(!vectorOutput) {
+            int type;
+            if(degree) {
+                type = DataBuffer.TYPE_DOUBLE;
+            } else if(end-start < 255) {
+                type = DataBuffer.TYPE_BYTE;
+            } else if(end-start < 65535) {
+                type = DataBuffer.TYPE_USHORT;
             } else {
-                zOrig = h;
+                type = DataBuffer.TYPE_INT;
             }
+            sumViewshed = Raster.createWritableRaster(new BandedSampleModel(type, project.getDtm().getWidth(), project.getDtm().getHeight(), 1), null);
         }
-        ViewShedResult viewshed = project.getDefaultComputeView().calcViewShed(
-                new DirectPosition2D(p.getX(), p.getY()), zOrig, zDest, inverse, b);
+        for(Feature point : points.subList(start, end)) {
+            Point p = point.getGeometry().getCentroid();
+            Bounds b = bounds.updateBounds(point);
+            double zOrig = project.getStartZ();
+            double zDest = this.zDest;
+            if(point.getAttributeNames().contains("height")) {
+                double h = ((Number)point.getAttribute("height")).doubleValue();
+                if(inverse) {
+                    zDest = h;
+                } else {
+                    zOrig = h;
+                }
+            }
+            ViewShedResult viewshed = degree ? 
+                    project.getDefaultComputeView().calcViewShedDeg(new DirectPosition2D(p.getX(), p.getY()), zOrig, zDest, inverse, b) :
+                    project.getDefaultComputeView().calcViewShed(new DirectPosition2D(p.getX(), p.getY()), zOrig, zDest, inverse, b);
+            if(vectorOutput) {
+                viewsheds.add(b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon()));
+            } else {
+                DataBuffer sumBuf = sumViewshed.getDataBuffer();
+                DataBuffer viewBuf = viewshed.getView().getDataBuffer();
+                for(int i = 0; i < viewBuf.getSize(); i++) {
+                    sumBuf.setElemDouble(i, sumBuf.getElemDouble(i)+viewBuf.getElemDouble(i));
+                }
+            }
+            incProgress(1);
+        }
+        
         if(vectorOutput) {
-            return b.createFeatureWithBoundAttr(point.getId(), viewshed.getPolygon());
+            return viewsheds;
         } else {
-            return viewshed.getView().getDataBuffer();
+            return sumViewshed;
         }
     }
 
     @Override
-    public void gather(List results) {
+    public void gather(Object result) {
         if(vectorOutput) {
-            viewSheds.addAll(results);
+            viewSheds.addAll((List)result);
+        } else if(degree) {
+            double[] viewTot = ((DataBufferDouble)viewshedRast.getDataBuffer()).getData();
+            DataBuffer sumBuf = ((Raster)result).getDataBuffer();
+            for(int i = 0; i < sumBuf.getSize(); i++) {
+                 viewTot[i] += sumBuf.getElemDouble(i);
+            }
         } else {
             int[] viewTot = ((DataBufferInt)viewshedRast.getDataBuffer()).getData();
-            for(DataBuffer viewBuf : (List<DataBuffer>)results) {
-                for(int i = 0; i < viewBuf.getSize(); i++) {
-                    if(viewBuf.getElem(i) > 0) {
-                        viewTot[i]++;
-                    }
-                }
+            DataBuffer sumBuf = ((Raster)result).getDataBuffer();
+            for(int i = 0; i < sumBuf.getSize(); i++) {
+                 viewTot[i] += sumBuf.getElem(i);
             }
         }
     }
+
+    @Override
+    public int getSplitRange() {
+        return points.size();
+    }
     
+    public void saveResult(File dir, String name) throws IOException {
+        if(dir == null) {
+            dir = project.getDirectory();
+        }
+        if(name == null) {
+            name = "multiviewshed" + (inverse ? "-inverse" : "") + (degree ? "-deg" : "");
+        }
+        if(vectorOutput) {
+            DefaultFeature.saveFeatures(viewSheds, new File(dir, name + ".shp"), project.getCRS());
+        } else {
+            IOImage.saveTiffCoverage(new File(dir, name + ".tif"),
+                new GridCoverageFactory().create("view", viewshedRast, project.getDtmCov().getEnvelope2D()));
+        }
+    }
 }

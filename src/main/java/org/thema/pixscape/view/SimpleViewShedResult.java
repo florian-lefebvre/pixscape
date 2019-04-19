@@ -19,7 +19,7 @@
 
 package org.thema.pixscape.view;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import java.awt.Rectangle;
 import java.awt.image.DataBufferByte;
 import java.awt.image.Raster;
@@ -50,7 +50,7 @@ public class SimpleViewShedResult extends SimpleViewResult implements ViewShedRe
     @Override
     public final int getLand(int x, int y) {
         final int ind = getView().getSample(x, y, 0);
-        if(ind != 1) {
+        if(ind == 0) {
             return -1;
         }
         return getData().getLand().getSample(x, y, 0) & 0xff;

@@ -16,7 +16,6 @@
  */
 package org.thema.pixscape.metric;
 
-import static org.thema.pixscape.metric.PatchDensityMetric.getNbPatch;
 import org.thema.pixscape.view.ViewShedResult;
 import org.thema.pixscape.view.ViewTanResult;
 
@@ -36,7 +35,7 @@ public class PatchMeanSizeMetric extends AbstractMetric implements ViewShedMetri
         if(hasCodeGroup()) {
             throw new IllegalArgumentException("PMS does not support land category groups");
         }
-        return new Double[] {result.getAreaLandCodes(getCodes()) / getNbPatch(result, getCodes(), false)};
+        return new Double[] {result.getAreaLandCodes(getCodes()) / result.getNbPatch(getCodes())};
     }
 
     @Override
@@ -44,7 +43,7 @@ public class PatchMeanSizeMetric extends AbstractMetric implements ViewShedMetri
         if(hasCodeGroup()) {
             throw new IllegalArgumentException("PMS does not support land category groups");
         }
-        return new Double[] {result.getAreaLandCodes(getCodes()) / getNbPatch(result, getCodes(), result.isView360())};
+        return new Double[] {result.getAreaLandCodes(getCodes()) / result.getNbPatch(getCodes())};
     }
 
     @Override

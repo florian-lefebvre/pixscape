@@ -17,8 +17,8 @@
 package org.thema.pixscape.view;
 
 import java.awt.image.Raster;
+import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.geometry.DirectPosition2D;
-import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -31,13 +31,89 @@ import org.thema.pixscape.TestTools;
  */
 public class ComputeViewJavaTest {
     
-    private static ComputeViewJava compute;
+    private static ComputeViewJava compute, computeDsm;
     
     @BeforeClass
     public static void setUpClass() {
         compute = new ComputeViewJava(TestTools.createFlatData(30, 20), 0.1, false, 0);
+        computeDsm = new ComputeViewJava(TestTools.createFlatDataWithDsm(30, 20, 2), 0.1, false, 0);
     }
 
+    @Test
+    public void testCalcRay() {
+        assertEquals(90*90, compute.calcRay(new GridCoordinates2D(0, 0), 0.5, new GridCoordinates2D(0, 0), 0, new Bounds()), 1e-10);
+        assertEquals(90*90, compute.calcRay(new GridCoordinates2D(0, 0), 0.5, new GridCoordinates2D(0, 0), 1, new Bounds()), 1e-10);
+        
+        assertEquals(0.0, compute.calcRay(new GridCoordinates2D(0, 0), 0, new GridCoordinates2D(0, 1), 0, new Bounds()), 1e-10);
+        
+        assertEquals(ComputeViewJava.rad2deg2((Math.atan(-1/1.5)-Math.atan(-1/0.5))*2*Math.atan(0.5/1)), 
+                compute.calcRay(new GridCoordinates2D(0, 0), 1, new GridCoordinates2D(0, 1), 0, new Bounds()), 1e-10);
+        assertEquals(ComputeViewJava.rad2deg2((Math.atan(0/1)-Math.atan(-1/0.5))*2*Math.atan(0.5/1)), 
+                compute.calcRay(new GridCoordinates2D(0, 0), 1, new GridCoordinates2D(0, 1), 1, new Bounds()), 1e-10);
+        assertEquals(ComputeViewJava.rad2deg2((Math.atan(1/0.5)-Math.atan(-1/0.5))*2*Math.atan(0.5/1)), 
+                compute.calcRay(new GridCoordinates2D(0, 0), 1, new GridCoordinates2D(0, 1), 2, new Bounds()), 1e-10);
+        
+    }
+    
+    @Test
+    public void testCalcViewShedDeg() {
+        DirectPosition2D p = new DirectPosition2D(14.5, 9.5);
+        ViewShedResult result = compute.calcViewShedDeg(p, 2, -1, false, new Bounds());
+        checkRay(compute, result, 2, -1);
+        result = compute.calcViewShedDeg(p, 2, 1, false, new Bounds());
+        checkRay(compute, result, 2, 1);
+        result = compute.calcViewShedDeg(p, 2, 2, false, new Bounds());
+        checkRay(compute, result, 2, 2);
+        result = compute.calcViewShedDeg(p, 0, 1, false, new Bounds());
+        checkRay(compute, result, 0, 1);
+        result = computeDsm.calcViewShedDeg(p, 0, -1, false, new Bounds());
+        checkRay(computeDsm, result, 0, -1);
+        result = computeDsm.calcViewShedDeg(p, 3, -1, false, new Bounds());
+        checkRay(computeDsm, result, 3, -1);
+        result = computeDsm.calcViewShedDeg(p, 3, 3, false, new Bounds());
+        checkRay(computeDsm, result, 3, 3);
+        
+        result = compute.calcViewShedDeg(p, 2, -1, true, new Bounds());
+        checkRayInv(result, 2, -1);
+        result = compute.calcViewShedDeg(p, 2, 1, true, new Bounds());
+        checkRayInv(result, 2, 1);
+        result = compute.calcViewShedDeg(p, 2, 2, true, new Bounds());
+        checkRayInv(result, 2, 2);
+        result = compute.calcViewShedDeg(p, 0, 1, true, new Bounds());
+        checkRayInv(result, 0, 1);
+    }
+ 
+    private void checkRay(ComputeViewJava compute, ViewShedResult result, double zEye, double zDest) {
+        GridCoordinates2D c = result.getCoord();
+        Raster r = result.getView();
+        for(int y = 0; y < r.getHeight(); y++) {
+            for(int x = 0; x < r.getWidth(); x++) {
+                double d = c.distance(x, y);
+                double expect = compute.calcRay(c, zEye, new GridCoordinates2D(x, y), zDest, new Bounds());
+                if(x == 0 || y == 0 || x == r.getWidth()-1 || y == r.getHeight()-1 || x == c.x || y == c.y || d <= 2) {
+                    assertEquals("Ray error at "+x+"-"+y, expect, 
+                            r.getSampleDouble(x, y, 0), 1e-10);
+                } else {
+                    assertEquals("Ray error at "+x+"-"+y, expect, 
+                            r.getSampleDouble(x, y, 0), expect*0.6);
+                }
+            }
+        }
+    }
+    
+    private void checkRayInv(ViewShedResult result, double zEye, double zDest) {
+        GridCoordinates2D c = result.getCoord();
+        Raster r = result.getView();
+        for(int y = 0; y < r.getHeight(); y++) {
+            for(int x = 0; x < r.getWidth(); x++) {
+                double expect = compute.calcRay(new GridCoordinates2D(x, y), zEye, c, zDest, new Bounds());
+                assertEquals("Ray inv error at "+x+"-"+y, expect, 
+                        r.getSampleDouble(x, y, 0), expect*0.3);      
+            }
+        }
+    }
+    
+    
     /**
      * Test of calcViewTan method, of class ComputeViewJava.
      */

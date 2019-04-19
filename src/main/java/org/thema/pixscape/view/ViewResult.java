@@ -78,6 +78,13 @@ public interface ViewResult {
     double[] getAreaLand(double dmin, double dmax);
 
     /**
+     * Returns the number of patches for landuse having codes
+     * @param codes set of landuse codes
+     * @return 
+     */
+    int getNbPatch(Set<Integer> codes);
+    
+    /**
      * @return the datascale used
      */
     ScaleData getData();
@@ -113,4 +120,9 @@ public interface ViewResult {
      * @return the landuse view of the seen pixels
      */    
     Raster getLanduseView();
+    
+    /**
+     * @return true if the resulting view is cyclic (in tangential at 360°)
+     */
+    boolean isCyclic();
 }

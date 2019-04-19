@@ -86,6 +86,11 @@ public class ComputeViewCUDA extends SimpleComputeView {
         }
         
     }
+
+    @Override
+    public double calcRay(GridCoordinates2D c0, double startZ, GridCoordinates2D c1, double destZ, Bounds bounds) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
     
     @Override
     public List<Double[]> aggrViewShed(final DirectPosition2D p, final double startZ, final double destZ, final boolean inverse, 
@@ -113,6 +118,11 @@ public class ComputeViewCUDA extends SimpleComputeView {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Override
+    public ViewShedResult calcViewShedDeg(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds) {
+        throw new UnsupportedOperationException("Degree viewshed is not supported on CUDA"); 
     }
     
     @Override

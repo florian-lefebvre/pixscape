@@ -1,5 +1,12 @@
 ## Changelog
 
+##### version 1.1.5 (19/04/2019)
+- Metric calculation with point sampling : height can be overidden for each point if the attribute table of the shapefile contains "height" field
+- CLI : add --toobject command for point to point visibility
+- optimize memory usage for Multiviewshed
+- Multiviewshed may store the square degree surface in raster
+- Multiviewshed saves automatically the result in project directory
+
 #### version 1.1.4 (25/06/2018)
 - Solved bug in viewshed/viewtan window position for Windows
 

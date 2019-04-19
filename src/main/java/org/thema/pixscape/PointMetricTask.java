@@ -19,7 +19,7 @@
 
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Coordinate;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.common.ProgressBar;
 import org.thema.data.GlobalDataStore;
@@ -57,7 +56,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     
     // options for viewshed
     private double destZ;
-    private boolean inverse;
+    private boolean inverse = false;
     
     private final Bounds bounds;
     
@@ -158,14 +157,24 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
                 break;
             }
             Feature p = points.get(i);
+            double zOrig = startZ;
+            double zDest = destZ;
+            if(p.getAttributeNames().contains("height")) {
+                double h = ((Number)p.getAttribute("height")).doubleValue();
+                if(inverse) {
+                    zDest = h;
+                } else {
+                    zOrig = h;
+                }
+            }
             Coordinate c = p.getGeometry().getCoordinate();
             DirectPosition2D gc = new DirectPosition2D(c.x, c.y);
             List<Double[]> values;          
             Bounds b = bounds.updateBounds(p);
             if(isTan) {
-                values = compute.aggrViewTan(gc, startZ, b, (List) metrics);
+                values = compute.aggrViewTan(gc, zOrig, b, (List) metrics);
             } else {
-                values = compute.aggrViewShed(gc, startZ, destZ, inverse, b, (List) metrics);
+                values = compute.aggrViewShed(gc, zOrig, zDest, inverse, b, (List) metrics);
             }
             map.put(points.get(i).getId(), values);
             incProgress(1);

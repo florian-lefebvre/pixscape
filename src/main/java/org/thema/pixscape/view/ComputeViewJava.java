@@ -18,8 +18,10 @@
 
 package org.thema.pixscape.view;
 
+import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
@@ -59,6 +61,95 @@ public final class ComputeViewJava extends SimpleComputeView {
     }
     
     @Override
+    public double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
+            final double destZ, Bounds bounds) {
+        return calcRay(c0, startZ, c1, destZ, bounds, 1);
+    }
+    
+    public double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
+            final double destZ, Bounds bounds, int dd) {
+        
+        if(bounds.isOrienBounded() && !bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
+            return 0;
+        }
+        final double res = getData().getResolution();
+        final int w = dtm.getWidth();
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
+        int err = dx-dy;
+        int xx = 0;
+        int yy = 0;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
+        final double z0 = dtmBuf[ind] + startZ;
+        
+        if(ind == ind1 && bounds.getDmin() == 0) {
+            final double si = Math.min(-startZ / (res/2), bounds.getSlopemax());
+            if(bounds.getSlopemin() < si) {
+                final double a1 = Math.atan(si);
+                final double a2 = Math.atan(bounds.getSlopemin());
+                return rad2deg2(Math.pow(2*(a1-a2), 2));
+            }
+        }
+        double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
+        while(ind != ind1) {           
+            final int e2 = (err << 1);
+            if(e2 > -dy) {
+                err -= dy;
+                xx += sx;
+                ind += sx;
+            }
+            if(e2 < dx) {
+                err += dx;
+                yy += sy;
+                ind += sy*w;
+            }
+            
+            double z = dtmBuf[ind];
+            if(Double.isNaN(z)) {
+                return 0;
+            }
+            
+            // distance 
+            final double dist = res * Math.sqrt(xx*xx + yy*yy);
+            if(dist >= bounds.getDmax()) {
+                return 0;
+            }
+            
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * dist*dist / EARTH_DIAM;
+            }
+            final double zSurf = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double zView = destZ == -1 ? zSurf : (z + destZ);
+
+            final double zzSurf = (zSurf - z0);
+            final double slopeSurf = zzSurf / (dist-dd*Math.signum(zzSurf)*res/2);
+            if(slopeSurf > bounds.getSlopemax()) {
+                return 0;
+            }
+
+            if(ind == ind1 && dist >= bounds.getDmin()) {
+                final double zzView = (zView - z0);
+                final double slopeView = zzView / (dist-dd*Math.signum(zzView)*res/2);
+                if(slopeView > maxSlope) {
+                    final double z1 = Math.atan(Math.min(slopeView, bounds.getSlopemax()));
+                    final double z2 = Math.atan(maxSlope);
+                    return Math.abs(rad2deg2((z1-z2) * 2*Math.atan((res/2) / dist)));
+                }
+                
+            }
+            if(slopeSurf > maxSlope) {
+                maxSlope = slopeSurf;
+            }
+        }
+        
+        return 0;
+   
+    }
+    
+    @Override
     public ViewShedResult calcViewShed(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds)  {
         long time = System.currentTimeMillis();
         WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_BYTE, dtm.getWidth(), dtm.getHeight(), 1, null);
@@ -76,6 +167,43 @@ public final class ComputeViewJava extends SimpleComputeView {
             calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
             c.x = dtm.getWidth()-1;
             calcRay(inverse, cg, c, startZ, destZ, bounds, viewBuf);
+        }
+        Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
+        return new SimpleViewShedResult(cg, view, this);
+    }
+    
+    /**
+     * Calculate the viewshed from cg and stores the visible surface of each pixel in squared degree
+     * 
+     * @param cg the point of view if direct=true, the observed point otherwise. cg is in world coordinate
+     * @param startZ the height of the eye of the observer
+     * @param destZ the height of the observed points, -1 if not used
+     * @param inverse if false, observer is on cg, else observed point is on cg
+     * @param bounds the limits of the viewshed
+     * @return the resulting viewshed in squared degree
+     */
+    @Override
+    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds)  {
+        return calcViewShedDeg(p, startZ, destZ, inverse, bounds, 1);
+    }
+    
+    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds, int dd)  {
+        long time = System.currentTimeMillis();
+        WritableRaster view = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_DOUBLE, dtm.getWidth(), dtm.getHeight(), 1), null);
+        double [] viewBuf = ((DataBufferDouble)view.getDataBuffer()).getData();
+        GridCoordinates2D cg = getWorld2Grid(p);
+        GridCoordinates2D c = new GridCoordinates2D();
+        for(c.x = 0; c.x < dtm.getWidth(); c.x++) {
+            c.y = 0;
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            c.y = dtm.getHeight()-1;
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+        }
+        for(c.y = 1; c.y < dtm.getHeight()-1; c.y++) {
+            c.x = 0;
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            c.x = dtm.getWidth()-1;
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
         }
         Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         return new SimpleViewShedResult(cg, view, this);
@@ -203,6 +331,246 @@ public final class ComputeViewJava extends SimpleComputeView {
             }
         }
    
+    }
+    
+    /**
+     * Calculates the ray starting from c0 to c1.
+     * Set view to the surface visible in squared degree when the pixel is seen from the point of view (direct) or sees the observed point (indirect).
+     * @param inverse
+     * @param c0 the point of view if direct = true, the observed point otherwise, in grid coordinate
+     * @param c1 the end point of the ray, in grid coordinate
+     * @param startZ the height of the eye
+     * @param destZ the eight of the observed point or -1
+     * @param bounds the limits of the view
+     * @param view the resulting viewshed in squared degree (buffer of the size of dtm data)
+     */
+    private void calcRayDeg(final boolean inverse, final GridCoordinates2D c0, final GridCoordinates2D c1, 
+            final double startZ, final double destZ, Bounds bounds, final double[] view, int dd) {
+        if(!bounds.isOrienBounded() || bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
+            if(inverse) {
+                calcRayIndirectDeg(c0, c1, startZ, destZ, bounds, view, dd);
+            } else {
+                calcRayDirectDeg(c0, c1, startZ, destZ, bounds, view, dd);
+            }
+        }
+    }
+    
+    /**
+     * Calculates the ray from c0 to c1.
+     * Set view to the surface visible in squared degree when the pixel is seen from the point of view c0.
+     * @param c0 the point of view, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the eye
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * @param view the result view (buffer of the size of dtm data)
+     */
+    private void calcRayDirectDeg(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, 
+            final double destZ, Bounds bounds, final double[] view, int dd) {
+        final double res = getData().getResolution();
+        final int w = dtm.getWidth();
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
+        int err = dx-dy;
+        int xx = 0;
+        int yy = 0;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
+        final double z0 = dtmBuf[ind] + startZ;
+        
+        if(view[ind] == 0 && bounds.getDmin() == 0) {
+            final double si = Math.min(-startZ / (res/2), bounds.getSlopemax());
+            if(bounds.getSlopemin() < si) {
+                final double a1 = Math.atan(si);
+                final double a2 = Math.atan(bounds.getSlopemin());
+                view[ind] = rad2deg2(Math.pow(2*(a1-a2), 2));
+            }
+        }
+        double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
+        double maxZ = -Double.MAX_VALUE;
+        while(ind != ind1) {           
+            final int e2 = (err << 1);
+            if(e2 > -dy) {
+                err -= dy;
+                xx += sx;
+                ind += sx;
+            }
+            if(e2 < dx) {
+                err += dx;
+                yy += sy;
+                ind += sy*w;
+            }
+            
+            double z = dtmBuf[ind];
+            if(Double.isNaN(z)) {
+                return;
+            }
+
+            // distance
+            final double dist = res * Math.sqrt(xx*xx + yy*yy);
+            if(dist >= bounds.getDmax()) {
+                return;
+            }
+            
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * dist*dist / EARTH_DIAM;
+            }
+            
+            final double zSurf = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double zView = destZ == -1 ? zSurf : (z + destZ);
+            
+            if(maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
+                continue;
+            }
+            
+            if(view[ind] == 0 && dist >= bounds.getDmin()) {
+                final double slopeView = (zView - z0) / (dist-dd*Math.signum(zView - z0)*res/2);
+                if(slopeView > maxSlope) {
+                    final double z2 = Math.atan(maxSlope);
+                    final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeView));
+                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                }
+            }
+            final double slopeSurf = (zSurf - z0) / (dist-dd*Math.signum(zSurf - z0)*res/2);
+            if(slopeSurf > bounds.getSlopemax()) {
+                return;
+            }
+            
+            if(slopeSurf > maxSlope) {
+                maxSlope = slopeSurf;
+            }
+            if(zSurf > maxZ) {
+                maxZ = zSurf;
+            }
+        }
+   
+    }
+    
+    /**
+     * Calculates the ray from c0 to c1.
+     * Set view to the surface visible in squared degree when the pixel sees the observed point c0.
+     * @param c0 the observed point, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the point of view
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * @param view the result view (buffer of the size of dtm data)
+     */
+    private void calcRayIndirectDeg(final GridCoordinates2D c0, final GridCoordinates2D c1, 
+            final double startZ, double destZ, Bounds bounds, final double[] view, int dd) {
+        final double dsmZ = (getData().getDsm()!= null ? getData().getDsm().getSampleDouble(c0.x, c0.y, 0) : 0);
+        if(destZ != -1 && destZ < dsmZ) {
+            return;
+        }
+        final double res = getData().getResolution();
+        double zBase = dtm.getSampleDouble(c0.x, c0.y, 0);
+        final double zTop = zBase + (destZ != -1 ? destZ : dsmZ);
+        final int w = dtm.getWidth();
+        final int dx = Math.abs(c1.x-c0.x);
+        final int dy = Math.abs(c1.y-c0.y);
+        final int sx = c0.x < c1.x ? 1 : -1;
+        final int sy = c0.y < c1.y ? 1 : -1;
+        int err = dx-dy;
+        int xx = 0;
+        int yy = 0;
+        int ind = c0.x + c0.y*w;
+        final int ind1 = c1.x + c1.y*w;
+        
+        if(view[ind] == 0 && bounds.getDmin() == 0) {
+            final double si = Math.min(-startZ / (res/2), bounds.getSlopemax());
+            if(bounds.getSlopemin() < si) {
+                final double a1 = Math.atan(si);
+                final double a2 = Math.atan(bounds.getSlopemin());
+                view[ind] = rad2deg2(Math.pow(2*(a1-a2), 2));
+            }
+        }
+        double dBase = res/2;
+        
+        double maxSlope = -Double.MAX_VALUE;//Math.max(-startZ / (res/2), bounds.getSlopemin());
+        double maxSlopeBase = maxSlope;
+        double maxZ = -Double.MAX_VALUE;
+        boolean first = true;
+        while(ind != ind1) {
+            final int e2 = err << 1;
+            if(e2 > -dy) {
+                err -= dy;
+                xx += sx;
+                ind += sx;
+            }
+            if(e2 < dx) {
+                err += dx;
+                yy += sy;
+                ind += sy*w;
+            }
+            
+            double z = dtmBuf[ind];
+            if(Double.isNaN(z)) {
+                return;
+            }
+            
+            if(first) {
+                zBase = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+                if(zBase > zTop) {
+                    zBase = zTop;
+                }
+                int x = ind % w;
+                int y = ind / w;
+                if(Math.abs(x-c0.x) + Math.abs(y-c0.y) == 2) { // si on a progressé en diagonale
+                    dBase += res * (Math.sqrt(2) - 1); 
+                }
+                first = false;
+            }
+            
+            final double dist = res * Math.sqrt(xx*xx + yy*yy);
+            if(dist >= bounds.getDmax()) {
+                return;
+            }
+            if(isEarthCurv()) {
+                z -= (1 - getCoefRefraction()) * dist*dist / EARTH_DIAM;
+            }
+            if(maxSlope >= 0 && z+startZ <= maxZ) {
+                continue;
+            }
+            final double zEye = z + startZ;
+            final double slopeEye = (zEye - zTop) / (dist+dd*Math.signum(zEye - zTop)*res/2);
+            if(view[ind] == 0 && slopeEye > maxSlope && dist >= bounds.getDmin()) {
+                final double slopeEyeBase = (zEye - zBase) / (dist-dBase);
+                if(slopeEyeBase >= maxSlopeBase) { // on voit l'élément en entier
+                    final double z2 = Math.atan(slopeEyeBase);
+                    final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeEye));
+                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                } else {
+                    final double zb = zTop + maxSlope * dist;
+                    final double zh = zBase + maxSlopeBase * dist;
+                    final double zi = (zEye - zb) / (zh-zb) * (zTop-zBase);
+                    if(zi < 0 || zi > (zTop - zBase)) {
+                        throw new IllegalStateException("bad calculation !!");
+                    }
+                    final double zzi = zEye - (zi+zBase);
+                    final double z2 = Math.atan(zzi / (dist+dd*Math.signum(zzi)*res/2));
+                    final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeEye));
+                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                }
+            } 
+            final double zDsm = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double slope = (zDsm - zTop) / (dist+dd*Math.signum(zDsm - zTop)*res/2);
+            if(slope > maxSlope) {
+                maxSlope = slope;
+            }
+            if(maxSlope > bounds.getSlopemax()) {
+                return;
+            }
+            if(zDsm > maxZ) {
+                maxZ = zDsm;
+            }
+            
+            final double slopeBase = (zBase - zDsm) / dist;
+            if(slopeBase > maxSlopeBase) {
+                maxSlopeBase = slopeBase;
+            }
+        }
     }
     
     /**
@@ -470,5 +838,9 @@ public final class ComputeViewJava extends SimpleComputeView {
             }
         }
    
+    }
+    
+    public static double rad2deg2(double rad2) {
+        return rad2*Math.pow(180/Math.PI, 2);
     }
 }

@@ -18,7 +18,7 @@
 
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;

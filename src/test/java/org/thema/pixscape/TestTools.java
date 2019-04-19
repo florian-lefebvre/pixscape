@@ -80,6 +80,18 @@ public class TestTools {
         return new ScaleData(mntCov, null, mne, 1);
     }
     
+    public static ScaleData createFlatDataWithDsm(int w, int h, int dsmHeight) {
+        WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
+        WritableRaster mne = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
+        GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, w, h));
+        for(int y = 0; y < h; y++) {
+            for(int x = 0; x < w; x++) {
+                mne.setSample(x, y, 0, dsmHeight);
+            }
+        }
+        return new ScaleData(mntCov, null, mne, 1);
+    }
+    
     public static ScaleData createRandomData(int size) {
         WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);
         WritableRaster mne = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, size, size, 1), null);

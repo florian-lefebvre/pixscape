@@ -19,7 +19,7 @@
 
 package org.thema.pixscape;
 
-import com.vividsolutions.jts.geom.util.AffineTransformation;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBuffer;
@@ -32,12 +32,14 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import javax.media.jai.iterator.RandomIter;
 import javax.media.jai.iterator.RandomIterFactory;
+import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
-import org.geotools.gce.geotiff.GeoTiffWriter;
+import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
+import org.opengis.referencing.operation.TransformException;
 import org.thema.common.RasterImage;
 import org.thema.data.IOImage;
 
@@ -214,8 +216,21 @@ public final class ScaleData {
     /**
      * @return grid geometry of the coverage
      */
-    public GridGeometry2D getGridGeometry() {
+    public final GridGeometry2D getGridGeometry() {
         return dtmCov.getGridGeometry();
+    }
+    
+    /**
+     * Transform a point from world coordinate to grid coordinate
+     * @param p the point in world coordinate
+     * @return the point in grid coordinate
+     */
+    public final GridCoordinates2D getWorld2Grid(DirectPosition2D p) {
+        try {
+            return getGridGeometry().worldToGrid(p);
+        } catch (TransformException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
     
     /**

@@ -19,7 +19,7 @@
 
 package org.thema.pixscape.view;
 
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 /**
  * Results from viewshed computation.

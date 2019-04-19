@@ -76,6 +76,7 @@ public abstract class SimpleViewResult extends AbstractViewResult {
     /**
      * @return the datascale used
      */
+    @Override
     public final ScaleData getData() {
         return compute.getData();
     }

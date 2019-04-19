@@ -206,5 +206,10 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
     public boolean isView360() {
         return getAres() * getThetaWidth() >= 2*Math.PI;
     }
+
+    @Override
+    public boolean isCyclic() {
+        return isView360();
+    }
     
 }

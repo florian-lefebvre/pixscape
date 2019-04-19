@@ -19,8 +19,8 @@
 
 package org.thema.pixscape.view;
 
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
 import java.awt.image.BandedSampleModel;

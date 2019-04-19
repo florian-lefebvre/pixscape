@@ -53,6 +53,9 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     
     /** Is vector output or raster ? */
     public boolean vectorOutput;
+    /** for raster output, is degree or count ? */
+    public boolean degree;
+    
     /** 
      * Creates new form PathViewDialog 
      * @param parent the parent frame
@@ -84,8 +87,10 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
+        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
         buttonGroup1 = new javax.swing.ButtonGroup();
+        buttonGroup2 = new javax.swing.ButtonGroup();
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         boundsButton = new javax.swing.JButton();
@@ -94,6 +99,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         jPanel1 = new javax.swing.JPanel();
         vectorRadioButton = new javax.swing.JRadioButton();
         rasterRadioButton = new javax.swing.JRadioButton();
+        countRadioButton = new javax.swing.JRadioButton();
+        degreeRadioButton = new javax.swing.JRadioButton();
         jLabel3 = new javax.swing.JLabel();
         zDestTextField = new javax.swing.JTextField();
 
@@ -137,6 +144,19 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         buttonGroup1.add(rasterRadioButton);
         rasterRadioButton.setText(bundle.getString("MultiViewshedDialog.rasterRadioButton.text")); // NOI18N
 
+        buttonGroup2.add(countRadioButton);
+        countRadioButton.setSelected(true);
+        countRadioButton.setText(bundle.getString("MultiViewshedDialog.countRadioButton.text")); // NOI18N
+
+        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, rasterRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), countRadioButton, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
+        buttonGroup2.add(degreeRadioButton);
+        degreeRadioButton.setText(bundle.getString("MultiViewshedDialog.degreeRadioButton.text")); // NOI18N
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, rasterRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), degreeRadioButton, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
+
         org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -145,7 +165,12 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(vectorRadioButton)
-                    .add(rasterRadioButton))
+                    .add(rasterRadioButton)
+                    .add(jPanel1Layout.createSequentialGroup()
+                        .add(12, 12, 12)
+                        .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                            .add(degreeRadioButton)
+                            .add(countRadioButton))))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -155,7 +180,11 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
                 .add(vectorRadioButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(rasterRadioButton)
-                .addContainerGap())
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(countRadioButton)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(degreeRadioButton)
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jLabel3.setText(bundle.getString("MultiViewshedDialog.jLabel3.text")); // NOI18N
@@ -169,7 +198,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 431, Short.MAX_VALUE)
+                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(inverseCheckBox)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -181,9 +210,9 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
                             .add(layout.createSequentialGroup()
                                 .add(jLabel3)
                                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(zDestTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 58, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                                .add(zDestTextField, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 81, Short.MAX_VALUE))
                             .add(boundsButton))
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
@@ -199,7 +228,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .add(18, 18, Short.MAX_VALUE)
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                             .add(cancelButton)
                             .add(okButton)))
@@ -217,6 +246,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
 
         getRootPane().setDefaultButton(okButton);
 
+        bindingGroup.bind();
+
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
@@ -226,6 +257,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         inverse = inverseCheckBox.isSelected();
         zDest = Double.parseDouble(zDestTextField.getText());
         vectorOutput = vectorRadioButton.isSelected();
+        degree = degreeRadioButton.isSelected();
         if(bounds == null) {
             bounds = new Bounds();
         }
@@ -259,7 +291,10 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton boundsButton;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.ButtonGroup buttonGroup2;
     private javax.swing.JButton cancelButton;
+    private javax.swing.JRadioButton countRadioButton;
+    private javax.swing.JRadioButton degreeRadioButton;
     private javax.swing.JCheckBox inverseCheckBox;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
@@ -268,6 +303,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     private javax.swing.JRadioButton rasterRadioButton;
     private javax.swing.JRadioButton vectorRadioButton;
     private javax.swing.JTextField zDestTextField;
+    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
     // End of variables declaration//GEN-END:variables
 
 }

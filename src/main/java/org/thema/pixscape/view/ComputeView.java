@@ -21,6 +21,7 @@ package org.thema.pixscape.view;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.pixscape.Bounds;
 import org.thema.pixscape.metric.ViewShedMetric;
@@ -118,6 +119,31 @@ public abstract class ComputeView {
      */
     public abstract ViewShedResult calcViewShed(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds) ;
     
+    /**
+     * Calculate the viewshed from cg and stores the visible surface of each pixel in squared degree
+     * 
+     * @param cg the point of view if direct=true, the observed point otherwise. cg is in world coordinate
+     * @param startZ the height of the eye of the observer
+     * @param destZ the height of the observed points, -1 if not used
+     * @param inverse if false, observer is on cg, else observed point is on cg
+     * @param bounds the limits of the viewshed
+     * @return the resulting viewshed
+     */
+    public abstract ViewShedResult calcViewShedDeg(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds) ;
+    
+    /**
+     * Calculates the ray from c0 to c1.
+     * 
+     * @param c0 the point of view, starting point of the ray
+     * @param c1 the ending point of the ray
+     * @param startZ the height of the eye
+     * @param destZ the height of observed point or -1
+     * @param bounds the limits of the view
+     * 
+     * @return the surface of c1 seen from c0 in squared degree
+     */
+    public abstract double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
+            final double destZ, Bounds bounds);
     
     /**
      * Default implementation does nothing

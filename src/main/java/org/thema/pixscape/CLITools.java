@@ -18,14 +18,19 @@
 
 package org.thema.pixscape;
 
+import au.com.bytecode.opencsv.CSVWriter;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
@@ -42,6 +47,7 @@ import org.thema.data.feature.Feature;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
+import org.thema.pixscape.Point2PointViewTask.Agreg;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
@@ -84,9 +90,10 @@ public class CLITools {
                     "Commands list :\n" +
                     "--viewshed [inverse] x y [resfile=raster.tif]\n" +
                     "--viewtan [prec=deg] x y [resname=name]\n" +
-                    "--multiviewshed format=vector|raster [inverse] [resname=name]\n" +
+                    "--multiviewshed format=vector|raster [inverse] [degree] [resname=name]\n" +
                     "--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
-                    "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n");
+                    "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
+                    "--toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]");
             return;
         }
         
@@ -234,7 +241,10 @@ public class CLITools {
                         break;
                     case "--tanmetric":
                         tanMetric(args);
-                        break;    
+                        break;   
+                    case "--toobject":
+                        toObject(args);
+                        break;   
                     default:
                         throw new IllegalArgumentException("Unknown command " + p);
                 }
@@ -316,6 +326,12 @@ public class CLITools {
             inverse = true;
             args.remove(0);
         }
+        
+        boolean degree = false;
+        if(!args.isEmpty() && args.get(0).equals("degree")) {
+            degree = true;
+            args.remove(0);
+        }
 
         String name = "multiviewshed" + (inverse ? "-inverse" : "");
         if(!args.isEmpty() && args.get(0).startsWith("resname=")) {
@@ -323,15 +339,11 @@ public class CLITools {
         }
         
         List<Feature> points = (List)GlobalDataStore.getFeatures(pointFile, idField, null);
-        MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, null);
+        MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, degree, null);
+        
         ExecutorService.execute(task);
         
-        if(vectorOutput) {
-            DefaultFeature.saveFeatures((List)task.getResult(), new File(resDir, name + ".shp"), GlobalDataStore.getCRS(pointFile));
-        } else {
-            IOImage.saveTiffCoverage(new File(resDir, name + ".tif"),
-                new GridCoverageFactory().create("view", (WritableRaster)task.getResult(), project.getDtmCov().getEnvelope2D()));
-        }
+        task.saveResult(resDir, name);
 
     }
     
@@ -385,6 +397,61 @@ public class CLITools {
         ExecutorService.execute(task);
     }
     
+    private void toObject(List<String> args) throws IOException, SchemaException {   
+        
+        if(pointFile == null) {
+            throw new IllegalArgumentException("-sampling points option is mandatory for --toobject command");
+        }
+        
+        Map<String, String> params = extractAndCheckParams(args, Arrays.asList("objects", "id"), Arrays.asList("degree", "agreg"));
+        
+        boolean degree = params.containsKey("degree");
+        Agreg agreg = null;
+        if(params.containsKey("agreg")) {
+            if(params.get("agreg").equals("eye")) {
+                agreg = Agreg.EYE;
+            } else {
+                agreg = Agreg.OBJECT;
+            }
+        }
+        String resname = "toobject";
+        if(params.containsKey("resname")) {
+            resname = params.get("resname");
+        }
+        File objFile = new File(params.get("objects"));
+        String objId = params.get("id");
+
+        Point2PointViewTask task = new Point2PointViewTask(pointFile, idField, zEye, objFile, objId, zDest, degree, agreg, bounds, project, new TaskMonitor.EmptyMonitor());
+        ExecutorService.execute(task);
+        
+        Map result = task.getResult();
+        
+        if(agreg == null) {
+            File f = new File(resDir, resname + ".csv");
+            try (CSVWriter w = new CSVWriter(new FileWriter(f))) {
+                w.writeNext(new String[]{"IdEye", "IdObj", "SurfView"});
+                for(Object idEye : result.keySet()) {
+                    Map objs = (Map)result.get(idEye);
+                    for(Object idObj : objs.keySet()) {
+                        double surf = (double) objs.get(idObj);
+                        if(surf > 0) {
+                            w.writeNext(new String[]{idEye.toString(), idObj.toString(), String.valueOf(surf)});
+                        }
+                    }
+                }
+            }
+        } else {
+            File f = new File(resDir, resname + ".shp");
+            List<DefaultFeature> points = agreg == Agreg.EYE ? (List)GlobalDataStore.getFeatures(pointFile, idField, null) : 
+                    GlobalDataStore.getFeatures(objFile, objId, null);
+            DefaultFeature.addAttribute("SurfView", points, 0.0);
+            for(DefaultFeature point : points) {
+                point.setAttribute("SurfView", result.get(point.getId()));
+            }
+            DefaultFeature.saveFeatures(points, f);
+        }
+    }
+    
     private void landmod(final List<String> args) throws IOException, SchemaException {
         File fileZone = new File(args.remove(0).split("=")[1]);
         String idZoneField = args.remove(0).split("=")[1];
@@ -409,5 +476,37 @@ public class CLITools {
        
     }
     
+    private static Map<String, String> extractAndCheckParams(List<String> args, List<String> mandatoryParams, List<String> optionalParams) {
+        Map<String, String> params = new LinkedHashMap<>();
+                
+        while(!args.isEmpty() && !args.get(0).startsWith("--")) {
+            String arg = args.remove(0);
+            if(arg.contains("=")) {
+                String[] tok = arg.split("=");
+                params.put(tok[0], tok[1]);
+            } else {
+                params.put(arg, null);
+            }
+        }
+        
+        // check mandatory parameters
+        if(!params.keySet().containsAll(mandatoryParams)) {
+            HashSet<String> set = new HashSet<>(mandatoryParams);
+            set.removeAll(params.keySet());
+            throw new IllegalArgumentException("Mandatory parameters are missing : " + Arrays.deepToString(set.toArray()));
+        }
+        
+        // check unknown parameters if optionalParams is set
+        if(optionalParams != null) {
+            HashSet<String> set = new HashSet<>(params.keySet());
+            set.removeAll(mandatoryParams);
+            set.removeAll(optionalParams);
+            if(!set.isEmpty()) {
+                throw new IllegalArgumentException("Unknown parameters : " + Arrays.deepToString(set.toArray()));
+            }
+        }
+        
+        return params;
+    }
     
 }

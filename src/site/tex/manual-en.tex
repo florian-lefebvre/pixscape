@@ -43,7 +43,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.1\\
+		PixScape 1.1.5\\
 		\bigskip
 		User manual\\
 	}
@@ -56,7 +56,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2017-12-19\\
+		2019-04-19\\
 	}
 	
 \end{titlepage}
@@ -82,7 +82,7 @@ PixScape has been developed at \href{http://thema.univ-fcomte.fr}{ThéMA} labora
 PixScape is distributed in open source, under the \href{https://www.gnu.org/licenses/gpl-3.0.html}{GPL} license.\\
 Source code can be downloaded from the sourcesup git repository : \url{git://git.renater.fr/pixscape.git}.\\
 Users must cite the following reference in their publications :\\
-??
+Sahraoui Y., Vuidel G., Joly D, Foltête J-C., 2018. \href{http://dx.doi.org/10.1111/tgis.12457}{Integrated GIS software for computing landscape visibility metrics}, Transactions in GIS, 22 (5), 1310-1323. 
 
 
 \section{System requirements}
@@ -307,6 +307,7 @@ The Visibility / Multi Viewshed menu allows you to calculate several viewsheds f
 	\item Dest. height (h2): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
 	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.
 	\item Output : format of the result layer : vector or raster.
+	\item Raster : for raster output, the result may be the number of visible points (count) or the total visible angular surface (square degree surface).
 \end{itemize}
 
 The eye height (h1) parameter and the use of the multiscale database cannot be set in this window but only on the Options window (see \nameref{options}).
@@ -322,12 +323,18 @@ In vector, the layer contains a multi-polygon for each viewshed (figure \ref{mul
 	\label{multi_viewshed_vector}
 \end{figure}
 
-In raster, the value of the pixel corresponds to the number of times the pixel is contained in a viewshed \textit{ie.} the number of observation points seeing the pixel or, in inverse mode, the number of observation points seen from the pixel (figure \ref{multi_viewshed_raster}).
+In raster, the value of the pixel corresponds to the number of times the pixel is contained in a viewshed \textit{ie.} the number of observation points seeing the pixel or, in inverse mode, the number of observation points seen from the pixel (figure \ref{multi_viewshed_raster}). If "square degree surface" is selected, the pixel value is the total visible angular surface in square degree (figure \ref{multi_viewshed_raster_deg}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster-en.png} 
-	\caption{Multi-viewshed in raster format}
+	\caption{Multi-viewshed in raster format - Dest. height (h2) = -1 - count option}
 	\label{multi_viewshed_raster}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/multi_viewshed_raster_deg-en.png} 
+	\caption{Multi-viewshed in raster format - Dest. height (h2) = 200 - degree option}
+	\label{multi_viewshed_raster_deg}
 \end{figure}
 
 \subsection{Eyesight bounds}
@@ -587,8 +594,10 @@ commands
 Commands list :
 --viewshed [inverse] x y [resfile=raster.tif]
 --viewtan [prec=deg] x y [resname=name]
+--multiviewshed format=vector|raster [inverse] [degree] [resname=name]
 --planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
+--toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
 \end{Verbatim}
 
 \subsection{--metrics : show metrics}
@@ -602,15 +611,18 @@ Résultat :
 \begin{Verbatim}
 ===== Metrics =====
 A - Area
+S - Shannon land use
 P - Perimeter
 C - Compactness
-S - Shannon land use
 FD - Fractal Dimension
-IJI - Interspersion and juxtaposition
+AG - Aggregation index
 CONTAG - Contagion
+ED - Edge Density
+PD - Patch Density
+PMS - Patch Mean Size
 DIST - Distances distribution
 SL - Skyline ratio
-SD - Shannon max. distances
+SD - Shannon depth
 DL - Depth line
 \end{Verbatim}
 
@@ -721,7 +733,7 @@ The second example calculates the tangential view with an angular precision of 0
 
 \subsection{--multiviewshed : multiple viewshed}
 \begin{Verbatim}[commandchars=\\\{\}]
---multiviewshed format=vector|raster [inverse] [resname=\textit{name}]
+--multiviewshed format=vector|raster [inverse] [degree] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Required parameter}
@@ -732,6 +744,7 @@ The second example calculates the tangential view with an angular precision of 0
 \subsubsection{Optional parameters}
 \begin{itemize}
 	\item \verb|inverse| : reverse mode, the point O becomes the observed point
+	\item \verb|degree| : for raster format, cumulate visible surface in square degree instead of the number of visible points
 	\item \verb|resname=name| : allow to specify another name for the file storing the result
 \end{itemize}
 
@@ -739,7 +752,7 @@ The second example calculates the tangential view with an angular precision of 0
 The \verb|--multiviewshed| command allows to calculate several viewsheds from a set of observation points. The observation points must be given by the \verb|-sampling| option. 
 The result is stored in a raster file or a shapefile depending on the selected format.
 
-In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel.
+In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel. If the \verb|degree| option is used, each pixel represents the total visible surface in square degree of this pixel seen from all observation point. In reverse mode, each pixel contains the total visible surface in square degree from this pixel to all observation points.
 
 In vector, the result is a shapefile storing the viewshed of each observation point.
 
@@ -819,6 +832,35 @@ The example below calculates the A metric without parameter. If the sampling is 
 The example below calculates the tangential views with an angular precision of 0.05°. The A metric is calculated twice: one for the land use category 1 and another time for the cateory 2. If the sampling is on the grid, the result will be stored in the files \verb|A1-.tif| and \verb|A2-.tif|.
 \begin{Verbatim}
 	--tanmetric prec=0.05 A[1] A[2]
+\end{Verbatim}
+
+\subsection{--toobject : point to point visibility}
+\begin{Verbatim}[commandchars=\\\{\}]
+--toobject [degree] [agreg=eye|object] objects=\textit{pointfile.shp} id=\textit{fieldname} [resname=\textit{name}]
+\end{Verbatim}
+
+\subsubsection{Required parameters}
+\begin{itemize}
+	\item \verb|objects=pointfile.shp| : shapefile of observed points
+	\item \verb|id=fieldname| : shapefile field containing an identifier
+\end{itemize}
+
+\subsubsection{Optional parameters}
+\begin{itemize}
+	\item \verb|degree| : angular result
+	\item \verb/agreg=eye|object/ : aggregate results by observation point (\verb|eye|) or by observed point (\verb|object|)
+	\item \verb|resname=name| : allow to specify another name for the file storing the result
+\end{itemize}
+
+\subsubsection{Description}
+This command calculates the visibility between 2 sets of points. The observation points must be defined by the genral option \verb|-sampling points=...|. The observed points are defined by the parameter \verb|object|. The result is stored by default in the file \verb|toobject.csv|.\\
+Without verb|agreg| parameter, the result contains the list of points couples (observer, observed) where observer sees the observed point. If the \verb|degree| option is used, the column \verb|SurfView| of the result file contains the angular surface.\\
+With \verb|agreg| parameter, the result is aggregated by observer or observed point and the column \verb|SurfView| contains the sum of the grouped values.
+
+\subsubsection{Example}
+This example calculates the intervisibility of the points given in points.shp and stores the result in the file \verb|toobject.csv| in project directory. In this example, observation and observed points are the same.
+\begin{Verbatim}
+-sampling points=points.shp id=id --toobject objects=points.shp id=id
 \end{Verbatim}
 
 

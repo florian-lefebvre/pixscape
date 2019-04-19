@@ -21,7 +21,7 @@ package org.thema.pixscape.view;
 
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.geometry.DirectPosition2D;
-import org.opengis.referencing.operation.TransformException;
+import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
 
 /**
@@ -44,7 +44,7 @@ public abstract class SimpleComputeView extends ComputeView {
         super(aPrec, earthCurv, coefRefraction);
         this.data = data;
     }
-
+    
     /**
      * 
      * @return the data for this scale
@@ -59,10 +59,6 @@ public abstract class SimpleComputeView extends ComputeView {
      * @return the point in grid coordinate
      */
     protected final GridCoordinates2D getWorld2Grid(DirectPosition2D p) {
-        try {
-            return data.getGridGeometry().worldToGrid(p);
-        } catch (TransformException ex) {
-            throw new IllegalArgumentException(ex);
-        }
+        return data.getWorld2Grid(p);
     }
 }

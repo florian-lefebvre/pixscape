@@ -21,6 +21,7 @@ package org.thema.pixscape;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferDouble;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -62,24 +63,6 @@ import static org.thema.pixscape.TestTools.printArray;
  */
 public class ComputeViewTest {
     
-    public ComputeViewTest() {
-    }
-    
-    @BeforeClass
-    public static void setUpClass() {
-    }
-    
-    @AfterClass
-    public static void tearDownClass() {
-    }
-    
-    @Before
-    public void setUp() {
-    }
-    
-    @After
-    public void tearDown() {
-    }
 
     @Test
     public void testCalcViewShedJava() throws IOException, TransformException {
@@ -299,14 +282,43 @@ public class ComputeViewTest {
                         result = compute.calcViewShed(p, startZ, 0, !direct, bounds).getView(); 
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                     }
+                    // test with calcRay
+                    if(compute instanceof ComputeViewJava) {
+                        for(int i = 0; i < 5; i++) {
+                            for(int j = 0; j < 5; j++) {
+                                double val = ((ComputeViewJava)compute).calcRay(c, startZ, new GridCoordinates2D(j, i), destZ, bounds, 0);
+                                if(val != 0) {
+                                    Assert.assertEquals("Ray error on "+j+"-"+i, test[i*5+j], 1);
+                                } else {
+                                    if(i == 0 || j == 0 || i == 4 || j == 4 || j == c.x || j == c.y) {
+                                        Assert.assertEquals("Ray error on "+j+"-"+i, test[i*5+j], val == 0 ? 0 : 1);
+                                    }
+                                }
+                            }
+                        }
+                        double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, !direct, bounds, 0).getView().getDataBuffer()).getData();
+                        for(int i = 0; i < 5; i++) {
+                            for(int j = 0; j < 5; j++) {
+                                Assert.assertEquals("Viewshed deg error on "+j+"-"+i, test[i*5+j], res[i*5+j] == 0 ? 0 : 1);
+                            }
+                        }
+                        
+                    }
                     if(tokens[4].equals("?")) {
                         System.out.println("Test indirect");
-                        direct = false;
-                        result = compute.calcViewShed(p, startZ, destZ, !direct, bounds).getView();  
+                        result = compute.calcViewShed(p, startZ, destZ, direct, bounds).getView();  
                         Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         if(destZ == -1) {
-                            result = compute.calcViewShed(p, startZ, 0, !direct, bounds).getView();  
+                            result = compute.calcViewShed(p, startZ, 0, direct, bounds).getView();  
                             Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
+                        }
+                        if(compute instanceof ComputeViewJava) {
+                            double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, direct, bounds, 0).getView().getDataBuffer()).getData();
+                            for(int i = 0; i < 5; i++) {
+                                for(int j = 0; j < 5; j++) {
+                                    Assert.assertEquals("Viewshed deg error on "+j+"-"+i, test[i*5+j], res[i*5+j] == 0 ? 0 : 1);
+                                }
+                            }
                         }
                     }
                     //test metrics

@@ -44,7 +44,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.1\\
+		PixScape 1.1.5\\
 		\bigskip
 		Manuel d’utilisation\\
 	}
@@ -57,7 +57,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		19/12/2017\\
+		19/04/2019\\
 	}
 	
 \end{titlepage}
@@ -303,6 +303,7 @@ Le menu Visibilité / Bassins multiples permet de calculer plusieurs bassins de 
 	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
 	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si le shapefile contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
 	\item Sortie : choix du format de la couche résultat : vecteur ou raster.
+	\item Raster : en raster, le résultat peut être le nombre de points visibles (nombre) ou bien la surface angulaire totale visible (surface en degré carré).
 \end{itemize}
 
 Le paramétrage de la hauteur de l'observateur ainsi que l'utilisation d'une base multi-résolution n'est pas accessible dans cette fenêtre mais uniquement dans la fenêtre des Options (voir \nameref{options}).
@@ -318,12 +319,18 @@ En vectoriel, la couche contient un polygone multiple pour chaque bassin de visi
 	\label{multi_viewshed_vector}
 \end{figure}
 
-En raster, la valeur du pixel correspond au nombre de fois où le pixel est contenu dans un bassin de visibilité \textit{ie.} le nombre de points d'observation voyant le pixel ou bien, en mode inverse, le nombre de points d'observation vus par le pixel (figure \ref{multi_viewshed_raster}).
+En raster, la valeur du pixel correspond au nombre de fois où le pixel est contenu dans un bassin de visibilité \textit{ie.} le nombre de points d'observation voyant le pixel ou bien, en mode inverse, le nombre de points d'observation vus par le pixel (figure \ref{multi_viewshed_raster}). Si l'option "surface en degré carré" est sélectionnée, la valeur du pixel n'est plus un nombre de points visibles mais la surface angulaire totale visible en degré carré (figure \ref{multi_viewshed_raster_deg}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster-fr.png} 
-	\caption{Résultat raster du calcul de bassins multiples}
+	\caption{Résultat raster du calcul de bassins multiples - Hauteur dest. (h2) = -1 - nombre de points}
 	\label{multi_viewshed_raster}
+\end{figure}
+
+\begin{figure}[H]
+	\includegraphics[scale=0.5]{img/multi_viewshed_raster_deg-fr.png} 
+	\caption{Résultat raster du calcul de bassins multiples - Hauteur dest. (h2) = 200 - surface en degré}
+	\label{multi_viewshed_raster_deg}
 \end{figure}
 
 \subsection{Limitation du champ de vision}
@@ -580,8 +587,10 @@ commands
 Commands list :
 --viewshed [inverse] x y [resfile=raster.tif]
 --viewtan [prec=deg] x y [resname=name]
+--multiviewshed format=vector|raster [inverse] [degree] [resname=name]
 --planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
+--toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
 \end{Verbatim}
 
 \subsection{--metrics : affichage des métriques}
@@ -595,15 +604,18 @@ Résultat :
 \begin{Verbatim}
 ===== Metrics =====
 A - Surface
+S - Shannon OS
 P - Périmètre
 C - Compacité
-S - Shannon OS
 FD - Dimension fractale
-IJI - Interspersion et juxtaposition
+AG - Indice d'agrégation
 CONTAG - Contagion
+ED - Densité de bords
+PD - Densité de taches
+PMS - Taille moyenne des taches
 DIST - Distribution des distances
 SL - Ligne d'horizon
-SD - Shannon distances max.
+SD - Shannon profondeur
 DL - Profondeur de vue
 \end{Verbatim}
 
@@ -713,7 +725,7 @@ Le second exemple calcule la vue tangentielle avec une précision angulaire de 0
 
 \subsection{--multiviewshed : bassin de visibilité multiple}
 \begin{Verbatim}[commandchars=\\\{\}]
---multiviewshed format=vector|raster [inverse] [resname=\textit{name}]
+--multiviewshed format=vector|raster [inverse] [degree] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Paramètre obligatoire}
@@ -724,13 +736,14 @@ Le second exemple calcule la vue tangentielle avec une précision angulaire de 0
 \subsubsection{Paramètres optionnels}
 \begin{itemize}
 	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
+	\item \verb|degree| : pour le format raster, cumule les surfaces visibles en degré carré au lieu du nombre de points visibles. Cette option ne fonctionne qu'en format raster
 	\item \verb|resname=name| : permet de spécifier un autre nom pour le fichier stockant le résultat
 \end{itemize}
 
 \subsubsection{Description}
 La commande \verb|--multiviewshed| permet de calculer les bassins de visibilité à partir d'un ensemble de points d'observation. Les points d'observation doivent être donnés par l'option \verb|-sampling|. Le résultat est stocké dans un fichier raster ou vecteur selon le format choisi. 
 
-En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel.
+En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel. Si l'option \verb|degree| est utilisée, chaque pixel représente la surface totale en degré carré de ce pixel visible depuis chaque point d'observation. En mode inverse, chaque pixel contient la surface visible en degré carré depuis ce pixel vers tous les points d'observation.
 
 En vectoriel, le résultat est un shapefile contenant le bassin de visibilité de chaque point d'observation.
 
@@ -803,13 +816,45 @@ Les résultats sont stockés dans plusieurs fichiers Tiff pour un échantillonna
 
 L'exemple ci-dessous calcule la métrique A sans paramètre. Si l'échantillonnage est sur la grille, le résultat sera stocké dans le fichier \verb|A-.tif|.
 \begin{Verbatim}
-	--tanmetric A
+--tanmetric A
 \end{Verbatim}
 
 L'exemple ci-dessous calcule les vues tangentielles avec une précision angulaire de 0,05°. La métrique A est calculée 2 fois : pour le code d'occupation du sol 1 et pour le code 2. Si l'échantillonnage est sur la grille, le résultat sera stocké dans les fichiers \verb|A1-.tif| et \verb|A2-.tif|.
 \begin{Verbatim}
-	--tanmetric prec=0.05 A[1] A[2]
+--tanmetric prec=0.05 A[1] A[2]
 \end{Verbatim}
+
+
+\subsection{--toobject : visibilité point à point}
+\begin{Verbatim}[commandchars=\\\{\}]
+--toobject [degree] [agreg=eye|object] objects=\textit{pointfile.shp} id=\textit{fieldname} [resname=\textit{name}]
+\end{Verbatim}
+
+\subsubsection{Paramètres obligatoires}
+\begin{itemize}
+	\item \verb|objects=pointfile.shp| : shapefile de points observés
+	\item \verb|id=fieldname| : champs du shapefile permettant d'identifier chaque point
+\end{itemize}
+
+\subsubsection{Paramètres optionnels}
+\begin{itemize}
+	\item \verb|degree| : résultat en degré carré
+	\item \verb/agreg=eye|object/ : agrégé le résultat par point d'observation (\verb|eye|) ou par point observé (\verb|object|)
+	\item \verb|resname=name| : permet de spécifier un autre nom pour le fichier stockant le résultat	
+\end{itemize}
+
+\subsubsection{Description}
+Cette commande permet de calculer la visibilité entre 2 ensembles de points. Les points d'observation doivent être défini par l'option générale \verb|-sampling points=...|. Les points observé sont définis par le paramètre \verb|object|. Le résultat est stocké par défaut dans le fichier \verb|toobject.csv|.\\
+Sans le paramètre \verb|agreg|, le résultat liste les couples de points (observateur, observé) où l'observateur voit le point observé. Si l'option \verb|degree| est utilisée, la colonne \verb|SurfView| du fichier résultat contient la surface angulaire.\\
+Avec le paramètre \verb|agreg|, le résultat est agrégé par observateur ou par observé et la colonne \verb|SurfView| contient la somme des valeurs ainsi agrégées.
+
+
+\subsubsection{Exemple}
+L'exemple ci-dessous calcule l'intervisibilité des points donnés dans le shapefile points.shp et stocke le résultat dans un fichier dans le répertoire du projet nommé : \verb|toobject.csv|. Les points d'observation et les points observés sont identiques dans ce cas.
+\begin{Verbatim}
+-sampling points=points.shp id=id --toobject objects=points.shp id=id
+\end{Verbatim}
+
 
 
 \section{Paramétrage des métriques}
