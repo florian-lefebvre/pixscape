@@ -6,8 +6,9 @@
 - optimize memory usage for Multiviewshed
 - Multiviewshed may store the square degree surface in raster
 - Multiviewshed saves automatically the result in project directory
+- Menu Metrics - Planimetric: Dest height param was not used in point sampling
 
-#### version 1.1.4 (25/06/2018)
+##### version 1.1.4 (25/06/2018)
 - Solved bug in viewshed/viewtan window position for Windows
 
 ##### version 1.1.3 (20/06/2018)

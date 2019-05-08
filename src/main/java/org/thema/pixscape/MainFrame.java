@@ -561,7 +561,7 @@ public class MainFrame extends javax.swing.JFrame {
                     gl.getLayerFirst().setVisible(true);
                     rootLayer.addLayerFirst(gl);
                 } else {
-                    PointMetricTask task = new PointMetricTask(project, project.getStartZ(), -1, 
+                    PointMetricTask task = new PointMetricTask(project, project.getStartZ(), dlg.zDest, 
                             dlg.inverse, dlg.bounds, (List)dlg.metrics, dlg.pointFile, dlg.idField, null, progressBar);
                     ExecutorService.execute(task);
                     List<DefaultFeature> features = task.getResult();
