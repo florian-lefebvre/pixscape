@@ -11,7 +11,6 @@
 \usepackage[top=2.501cm,bottom=2.501cm,left=2.501cm,right=2.501cm,nohead]{geometry}
 \usepackage{float}
 \usepackage{parskip}
-\usepackage{multirow}
 \usepackage{caption}
 \usepackage{fancyvrb}
 \makeatletter
@@ -1326,7 +1325,7 @@ The "Preferences" window accessible from the File menu allows you to set the num
 \subsubsection{Command line interface}
 On the command line, you have to define the number of cores (or processors) that PixScape can use with the \verb|-proc| option :
 \begin{Verbatim}
-java -jar pixscape-1.0.jar -proc 8 --project path2myproject/myproject.xml ...
+java -jar pixscape-1.2.jar -proc 8 --project path2myproject/myproject.xml ...
 \end{Verbatim}
 By default, CLI uses the number of processors defined in the preferences window of the GUI.
 
@@ -1353,7 +1352,7 @@ In graphical interface, PixScape can only use one graphics card, if your compute
 At the command line, the \verb|-cuda| option activates the use of the GPU. It is also necessary to give the number of graphics cards to use.
 
 \begin{Verbatim}
-java -jar pixscape-1.0.jar -cuda 1 --project path2myproject/myproject.xml ...
+java -jar pixscape-1.2.jar -cuda 1 --project path2myproject/myproject.xml ...
 \end{Verbatim}
 In the example above, PixScape use one graphics card for visibility calculations. If your computer contains several graphics cards, it is possible to increase the parameter to use them in parallel and decrease the time of execution accordingly.
 
@@ -1363,7 +1362,7 @@ PixScape can also be used on computing clusters supporting Java with OpenMPI. Th
 
 Exemple :
 \begin{Verbatim}
-mpirun java -jar pixscape-1.0.jar -mpi --project path2myproject/myproject.xml ...
+mpirun java -jar pixscape-1.2.jar -mpi --project path2myproject/myproject.xml ...
 \end{Verbatim}
 Only some commands can be used in the MPI environment: \verb|--planmetric|, \verb|--tanmetric|, \verb|--landmod|
 
@@ -1387,8 +1386,8 @@ In GUI, PixScape needs more memory than command line because of the layers displ
 To define manually the maximum amount of memory allocated to PixScape, use Java option \verb|-Xmx|:
 
 \begin{Verbatim}
-java -Xmx4g -jar pixscape-1.0.jar ... # 4Gb allocated
-java -Xmx1500m -jar pixscape-1.0.jar ... # 1500 Mb -> 1.5Gb allocated
+java -Xmx4g -jar pixscape-1.2.jar ... # 4Gb allocated
+java -Xmx1500m -jar pixscape-1.2.jar ... # 1500 Mb -> 1.5Gb allocated
 \end{Verbatim}
 
 If you cannot allocate more than 1Gb or 1.5Gb and your computer has more memory available, you have

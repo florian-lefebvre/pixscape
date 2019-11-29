@@ -1,0 +1,8 @@
+/target/
+*.pdf
+*.out
+*.toc
+*.aux
+*.log
+*.synctex.gz
+

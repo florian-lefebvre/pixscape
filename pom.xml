@@ -99,6 +99,11 @@
     <dependencies>    
         <dependency>
             <groupId>${project.groupId}</groupId>
+            <artifactId>common</artifactId>
+            <version>1.7.1</version>
+        </dependency>
+        <dependency>
+            <groupId>${project.groupId}</groupId>
             <artifactId>drawshape</artifactId>
             <version>1.7.3</version>
         </dependency>        

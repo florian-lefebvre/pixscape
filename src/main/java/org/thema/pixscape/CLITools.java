@@ -24,7 +24,6 @@ import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -40,7 +39,7 @@ import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.thema.common.Config;
-import org.thema.common.swing.TaskMonitor;
+import org.thema.common.ConsoleProgress;
 import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
@@ -104,7 +103,7 @@ public class CLITools {
             return;
         }
         
-        TaskMonitor.setHeadlessStream(new PrintStream(File.createTempFile("java", "monitor")));
+        Config.setProgressBar(new ConsoleProgress());
 
         List<String> args = new ArrayList<>(Arrays.asList(arg));
         int useCUDA = 0;
@@ -358,9 +357,9 @@ public class CLITools {
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(project, zEye, zDest, inverse, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(project, zEye, zDest, inverse, bounds, from, metrics, sample, resDir, Config.getProgressBar("Metric"));
         } else {
-            task = new PointMetricTask(project, zEye, zDest, inverse, bounds, metrics, pointFile, idField, resDir, null);
+            task = new PointMetricTask(project, zEye, zDest, inverse, bounds, metrics, pointFile, idField, resDir, Config.getProgressBar("Metric"));
         }
         
         ExecutorService.execute(task);
@@ -383,9 +382,9 @@ public class CLITools {
         }
         ParallelTask task;
         if(pointFile == null) {
-            task = new GridMetricTask(project, zEye, bounds, from, metrics, sample, resDir, null);
+            task = new GridMetricTask(project, zEye, bounds, from, metrics, sample, resDir, Config.getProgressBar("Metric"));
         } else {
-            task = new PointMetricTask(project, zEye, bounds, metrics, pointFile, idField, resDir, null);
+            task = new PointMetricTask(project, zEye, bounds, metrics, pointFile, idField, resDir, Config.getProgressBar("Metric"));
         }
         
         ExecutorService.execute(task);
