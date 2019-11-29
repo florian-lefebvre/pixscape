@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.2 (29/11/2019)
+- Multiviewshed can also store the angular height in raster
+- CLI : --toobject command may store angular height or angular area (degree option)
+
 ##### version 1.1.5 (19/04/2019)
 - Metric calculation with point sampling : height can be overidden for each point if the attribute table of the shapefile contains "height" field
 - CLI : add --toobject command for point to point visibility

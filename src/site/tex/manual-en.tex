@@ -43,7 +43,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.1.5\\
+		PixScape 1.2\\
 		\bigskip
 		User manual\\
 	}
@@ -56,7 +56,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2019-04-19\\
+		2019-11-29\\
 	}
 	
 \end{titlepage}
@@ -87,7 +87,7 @@ Sahraoui Y., Vuidel G., Joly D, Foltête J-C., 2018. \href{http://dx.doi.org/10.
 
 \section{System requirements}
 
-PixScape runs on any computer supporting Java 7 or later (PC under Linux, Windows, Mac, ...). 
+PixScape runs on any computer supporting Java 8 or later (PC under Linux, Windows, Mac, ...). 
 However, when dealing with large datasets, the amount of memory (RAM) will limit the maximum area that can be processed. In addition, processing power (CPU) will determine the speed of computing. For details, see section \nameref{perf}.
 
 For GPU computing, PixScape supports only Nvidia graphics card with CUDA. By default, PixScape is compiled with CUDA 6.5. If you cannot install CUDA 6.5, you will need to install the JCuda library corresponding to your CUDA version and launch PixScape in command line (see \nameref{cuda}). JCuda binaries are available here: \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
@@ -97,9 +97,9 @@ For GPU computing, PixScape supports only Nvidia graphics card with CUDA. By def
 PixScape is available for downloading at : \url{http://sourcesup.renater.fr/pixscape}.
 
 \begin{itemize}
-	\item Download and install Java 7 or later (\href{http://www.java.com}{java.com}). It is best to install 64 bits version of Java.
-	\item Download pixscape-1.1.jar
-	\item Launch pixscape-1.1.jar
+	\item Download and install Java 8 or later (\href{http://www.java.com}{java.com}). It is best to install 64 bits version of Java.
+	\item Download pixscape-1.2.jar
+	\item Launch pixscape-1.2.jar
 \end{itemize}
 
 PixScape can be used through 2 user interface : the graphical user interface (GUI) and the command line interface (CLI).
@@ -307,13 +307,13 @@ The Visibility / Multi Viewshed menu allows you to calculate several viewsheds f
 	\item Dest. height (h2): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
 	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.
 	\item Output : format of the result layer : vector or raster.
-	\item Raster : for raster output, the result may be the number of visible points (count) or the total visible angular surface (square degree surface).
+	\item Raster : for raster output, the result may be the number of visible points (count), the total visible area (angular area) or the total visible height(angular height).
 \end{itemize}
 
 The eye height (h1) parameter and the use of the multiscale database cannot be set in this window but only on the Options window (see \nameref{options}).
 
 \subsubsection{Result}
-The resulting viewsheds can be displayed on the map in raster or vector format according to the selected option on Output panel. In both cases, the result layer can be exported by right clicking on it.
+The resulting viewsheds can be displayed on the map in raster or vector format according to the selected option on Output panel. In both cases, the result layer is saved in the project directory.
 
 In vector, the layer contains a multi-polygon for each viewshed (figure \ref{multi_viewshed_vector}). Each multi-polygon has an Id attribute allowing to link the shape with the corresponding observation point.
 
@@ -323,7 +323,8 @@ In vector, the layer contains a multi-polygon for each viewshed (figure \ref{mul
 	\label{multi_viewshed_vector}
 \end{figure}
 
-In raster, the value of the pixel corresponds to the number of times the pixel is contained in a viewshed \textit{ie.} the number of observation points seeing the pixel or, in inverse mode, the number of observation points seen from the pixel (figure \ref{multi_viewshed_raster}). If "square degree surface" is selected, the pixel value is the total visible angular surface in square degree (figure \ref{multi_viewshed_raster_deg}).
+In raster, the value of the pixel corresponds to the number of times the pixel is contained in a viewshed \textit{ie.} the number of observation points seeing the pixel or, in inverse mode, the number of observation points seen from the pixel (figure \ref{multi_viewshed_raster}). 
+If "angular area" or "angular height" is selected, the pixel value is the total area or height in degree (figure \ref{multi_viewshed_raster_deg}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster-en.png} 
@@ -333,7 +334,7 @@ In raster, the value of the pixel corresponds to the number of times the pixel i
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster_deg-en.png} 
-	\caption{Multi-viewshed in raster format - Dest. height (h2) = 200 - degree option}
+	\caption{Multi-viewshed in raster format - Dest. height (h2) = 200 - angular area option}
 	\label{multi_viewshed_raster_deg}
 \end{figure}
 
@@ -575,7 +576,7 @@ In the help screen, elements enclosed in brackets are optional. Therefore, eleme
 \subsection{--help : show help screen}
 Command:
 \begin{Verbatim}
-java -jar pixscape-1.1.jar --help
+java -jar pixscape-1.2.jar --help
 \end{Verbatim}
 Result:
 \begin{Verbatim}
@@ -594,10 +595,10 @@ commands
 Commands list :
 --viewshed [inverse] x y [resfile=raster.tif]
 --viewtan [prec=deg] x y [resname=name]
---multiviewshed format=vector|raster [inverse] [degree] [resname=name]
+--multiviewshed format=vector|raster [inverse] [degree=area|height] [resname=name]
 --planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
---toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
+--toobject [degree=area|height] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
 \end{Verbatim}
 
 \subsection{--metrics : show metrics}
@@ -605,7 +606,7 @@ This command lists all available metrics with their short name and full name.
 
 Commande :
 \begin{Verbatim}
-java -jar pixscape-1.1.jar --metrics
+java -jar pixscape-1.2.jar --metrics
 \end{Verbatim}
 Résultat :
 \begin{Verbatim}
@@ -629,7 +630,7 @@ DL - Depth line
 \subsection{--project : load project}
 This command sets the path to the project xml file.
 \begin{Verbatim}[commandchars=\\\{\}]
-java -jar pixscape-1.0.jar --project \textit{path2myproject/myproject.xml}
+java -jar pixscape-1.2.jar --project \textit{path2myproject/myproject.xml}
 \end{Verbatim}
 This command loads the project \textit{myproject} contained in the \textit{path2myproject} folder.
 
@@ -733,7 +734,7 @@ The second example calculates the tangential view with an angular precision of 0
 
 \subsection{--multiviewshed : multiple viewshed}
 \begin{Verbatim}[commandchars=\\\{\}]
---multiviewshed format=vector|raster [inverse] [degree] [resname=\textit{name}]
+--multiviewshed format=vector|raster [inverse] [degree=area|height] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Required parameter}
@@ -744,7 +745,7 @@ The second example calculates the tangential view with an angular precision of 0
 \subsubsection{Optional parameters}
 \begin{itemize}
 	\item \verb|inverse| : reverse mode, the point O becomes the observed point
-	\item \verb|degree| : for raster format, cumulate visible surface in square degree instead of the number of visible points
+	\item \verb|degree| : for raster format, cumulate visible area or height in degree instead of the number of visible points
 	\item \verb|resname=name| : allow to specify another name for the file storing the result
 \end{itemize}
 
@@ -752,7 +753,7 @@ The second example calculates the tangential view with an angular precision of 0
 The \verb|--multiviewshed| command allows to calculate several viewsheds from a set of observation points. The observation points must be given by the \verb|-sampling| option. 
 The result is stored in a raster file or a shapefile depending on the selected format.
 
-In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel. If the \verb|degree| option is used, each pixel represents the total visible surface in square degree of this pixel seen from all observation point. In reverse mode, each pixel contains the total visible surface in square degree from this pixel to all observation points.
+In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel. If the \verb|degree| option is used, each pixel represents the total visible area or height in degree of this pixel seen from all observation point. In reverse mode, each pixel contains the total visible area or height from this pixel to all observation points.
 
 In vector, the result is a shapefile storing the viewshed of each observation point.
 

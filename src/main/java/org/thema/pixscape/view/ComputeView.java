@@ -127,9 +127,10 @@ public abstract class ComputeView {
      * @param destZ the height of the observed points, -1 if not used
      * @param inverse if false, observer is on cg, else observed point is on cg
      * @param bounds the limits of the viewshed
+     * @param area true if the result is angular surface, false for angular height
      * @return the resulting viewshed
      */
-    public abstract ViewShedResult calcViewShedDeg(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds) ;
+    public abstract ViewShedResult calcViewShedDeg(DirectPosition2D cg, double startZ, double destZ, boolean inverse, Bounds bounds, boolean area) ;
     
     /**
      * Calculates the ray from c0 to c1.
@@ -139,11 +140,12 @@ public abstract class ComputeView {
      * @param startZ the height of the eye
      * @param destZ the height of observed point or -1
      * @param bounds the limits of the view
+     * @param area true if the result is angular surface, false for angular height
      * 
-     * @return the surface of c1 seen from c0 in squared degree
+     * @return the visible height or area of c1 seen from c0 in degree
      */
     public abstract double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
-            final double destZ, Bounds bounds);
+            final double destZ, Bounds bounds, boolean area);
     
     /**
      * Default implementation does nothing

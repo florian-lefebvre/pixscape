@@ -62,12 +62,12 @@ public final class ComputeViewJava extends SimpleComputeView {
     
     @Override
     public double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
-            final double destZ, Bounds bounds) {
-        return calcRay(c0, startZ, c1, destZ, bounds, 1);
+            final double destZ, Bounds bounds, boolean area) {
+        return calcRay(c0, startZ, c1, destZ, bounds, area, 1);
     }
     
     public double calcRay(final GridCoordinates2D c0, final double startZ, final GridCoordinates2D c1, 
-            final double destZ, Bounds bounds, int dd) {
+            final double destZ, Bounds bounds, boolean area, int dd) {
         
         if(bounds.isOrienBounded() && !bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
             return 0;
@@ -90,7 +90,7 @@ public final class ComputeViewJava extends SimpleComputeView {
             if(bounds.getSlopemin() < si) {
                 final double a1 = Math.atan(si);
                 final double a2 = Math.atan(bounds.getSlopemin());
-                return rad2deg2(Math.pow(2*(a1-a2), 2));
+                return area ? rad2deg2(Math.pow(2*(a1-a2), 2)) : rad2deg(2*(a1-a2));
             }
         }
         double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
@@ -136,7 +136,7 @@ public final class ComputeViewJava extends SimpleComputeView {
                 if(slopeView > maxSlope) {
                     final double z1 = Math.atan(Math.min(slopeView, bounds.getSlopemax()));
                     final double z2 = Math.atan(maxSlope);
-                    return Math.abs(rad2deg2((z1-z2) * 2*Math.atan((res/2) / dist)));
+                    return Math.abs(area ? rad2deg2((z1-z2) * 2*Math.atan((res/2) / dist)) : rad2deg(z1-z2));
                 }
                 
             }
@@ -183,11 +183,11 @@ public final class ComputeViewJava extends SimpleComputeView {
      * @return the resulting viewshed in squared degree
      */
     @Override
-    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds)  {
-        return calcViewShedDeg(p, startZ, destZ, inverse, bounds, 1);
+    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds, boolean area)  {
+        return calcViewShedDeg(p, startZ, destZ, inverse, bounds, area, 1);
     }
     
-    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds, int dd)  {
+    public ViewShedResult calcViewShedDeg(DirectPosition2D p, double startZ, double destZ, boolean inverse, Bounds bounds, boolean area, int dd)  {
         long time = System.currentTimeMillis();
         WritableRaster view = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_DOUBLE, dtm.getWidth(), dtm.getHeight(), 1), null);
         double [] viewBuf = ((DataBufferDouble)view.getDataBuffer()).getData();
@@ -195,15 +195,15 @@ public final class ComputeViewJava extends SimpleComputeView {
         GridCoordinates2D c = new GridCoordinates2D();
         for(c.x = 0; c.x < dtm.getWidth(); c.x++) {
             c.y = 0;
-            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, area, dd);
             c.y = dtm.getHeight()-1;
-            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, area, dd);
         }
         for(c.y = 1; c.y < dtm.getHeight()-1; c.y++) {
             c.x = 0;
-            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, area, dd);
             c.x = dtm.getWidth()-1;
-            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, dd);
+            calcRayDeg(inverse, cg, c, startZ, destZ, bounds, viewBuf, area, dd);
         }
         Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         return new SimpleViewShedResult(cg, view, this);
@@ -345,12 +345,12 @@ public final class ComputeViewJava extends SimpleComputeView {
      * @param view the resulting viewshed in squared degree (buffer of the size of dtm data)
      */
     private void calcRayDeg(final boolean inverse, final GridCoordinates2D c0, final GridCoordinates2D c1, 
-            final double startZ, final double destZ, Bounds bounds, final double[] view, int dd) {
+            final double startZ, final double destZ, Bounds bounds, final double[] view, boolean area, int dd) {
         if(!bounds.isOrienBounded() || bounds.isTheta1Included(Math.atan2(c0.y-c1.y, c1.x-c0.x))) {
             if(inverse) {
-                calcRayIndirectDeg(c0, c1, startZ, destZ, bounds, view, dd);
+                calcRayIndirectDeg(c0, c1, startZ, destZ, bounds, view, area, dd);
             } else {
-                calcRayDirectDeg(c0, c1, startZ, destZ, bounds, view, dd);
+                calcRayDirectDeg(c0, c1, startZ, destZ, bounds, view, area, dd);
             }
         }
     }
@@ -366,7 +366,7 @@ public final class ComputeViewJava extends SimpleComputeView {
      * @param view the result view (buffer of the size of dtm data)
      */
     private void calcRayDirectDeg(final GridCoordinates2D c0, final GridCoordinates2D c1, final double startZ, 
-            final double destZ, Bounds bounds, final double[] view, int dd) {
+            final double destZ, Bounds bounds, final double[] view, boolean area, int dd) {
         final double res = getData().getResolution();
         final int w = dtm.getWidth();
         final int dx = Math.abs(c1.x-c0.x);
@@ -385,7 +385,7 @@ public final class ComputeViewJava extends SimpleComputeView {
             if(bounds.getSlopemin() < si) {
                 final double a1 = Math.atan(si);
                 final double a2 = Math.atan(bounds.getSlopemin());
-                view[ind] = rad2deg2(Math.pow(2*(a1-a2), 2));
+                view[ind] = area ? rad2deg2(Math.pow(2*(a1-a2), 2)) : rad2deg(2*(a1-a2));
             }
         }
         double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
@@ -430,7 +430,7 @@ public final class ComputeViewJava extends SimpleComputeView {
                 if(slopeView > maxSlope) {
                     final double z2 = Math.atan(maxSlope);
                     final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeView));
-                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                    view[ind] = Math.abs(area ? rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)) : rad2deg(z2-z1));
                 }
             }
             final double slopeSurf = (zSurf - z0) / (dist-dd*Math.signum(zSurf - z0)*res/2);
@@ -459,7 +459,7 @@ public final class ComputeViewJava extends SimpleComputeView {
      * @param view the result view (buffer of the size of dtm data)
      */
     private void calcRayIndirectDeg(final GridCoordinates2D c0, final GridCoordinates2D c1, 
-            final double startZ, double destZ, Bounds bounds, final double[] view, int dd) {
+            final double startZ, double destZ, Bounds bounds, final double[] view, boolean area, int dd) {
         final double dsmZ = (getData().getDsm()!= null ? getData().getDsm().getSampleDouble(c0.x, c0.y, 0) : 0);
         if(destZ != -1 && destZ < dsmZ) {
             return;
@@ -483,7 +483,7 @@ public final class ComputeViewJava extends SimpleComputeView {
             if(bounds.getSlopemin() < si) {
                 final double a1 = Math.atan(si);
                 final double a2 = Math.atan(bounds.getSlopemin());
-                view[ind] = rad2deg2(Math.pow(2*(a1-a2), 2));
+                view[ind] = area ? rad2deg2(Math.pow(2*(a1-a2), 2)) : rad2deg(2*(a1-a2));
             }
         }
         double dBase = res/2;
@@ -540,7 +540,7 @@ public final class ComputeViewJava extends SimpleComputeView {
                 if(slopeEyeBase >= maxSlopeBase) { // on voit l'élément en entier
                     final double z2 = Math.atan(slopeEyeBase);
                     final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeEye));
-                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                    view[ind] = Math.abs(area ? rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)) : rad2deg(z2-z1));
                 } else {
                     final double zb = zTop + maxSlope * dist;
                     final double zh = zBase + maxSlopeBase * dist;
@@ -551,7 +551,7 @@ public final class ComputeViewJava extends SimpleComputeView {
                     final double zzi = zEye - (zi+zBase);
                     final double z2 = Math.atan(zzi / (dist+dd*Math.signum(zzi)*res/2));
                     final double z1 = Math.atan(Math.min(bounds.getSlopemax(), slopeEye));
-                    view[ind] = Math.abs(rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)));
+                    view[ind] = Math.abs(area ? rad2deg2((z2-z1) * 2*Math.atan((res/2) / dist)) : rad2deg(z2-z1));
                 }
             } 
             final double zDsm = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
@@ -842,5 +842,9 @@ public final class ComputeViewJava extends SimpleComputeView {
     
     public static double rad2deg2(double rad2) {
         return rad2*Math.pow(180/Math.PI, 2);
+    }
+    
+    public static double rad2deg(double rad) {
+        return rad*180/Math.PI;
     }
 }

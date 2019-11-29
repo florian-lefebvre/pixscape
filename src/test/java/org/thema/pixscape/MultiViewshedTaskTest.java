@@ -31,6 +31,7 @@ import org.thema.common.swing.TaskMonitor;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
 import org.thema.parallel.ExecutorService;
+import org.thema.pixscape.MultiViewshedTask.RasterValue;
 import org.thema.pixscape.view.ViewShedResult;
 
 /**
@@ -55,42 +56,42 @@ public class MultiViewshedTaskTest {
         System.out.println("getResult");
         
         Feature f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)));
-        MultiViewshedTask task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        MultiViewshedTask task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         ViewShedResult resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), project.getStartZ(), -1, false, new Bounds());
         assertEquals(resView.getArea(), 50*50, 0);
         cmpRaster(resView.getView(), (Raster)task.getResult(), 1);
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(1));
-        task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), 1, -1, false, new Bounds());
         assertEquals(resView.getArea(), 50*50, 0);
         cmpRaster(resView.getView(), (Raster)task.getResult(), 1);
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(0));
-        task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.singletonList(f), project, false, -1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), 0, -1, false, new Bounds());
         assertEquals(resView.getArea(), 4, 0);
         cmpRaster(resView.getView(), (Raster)task.getResult(), 1);
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(0));
-        task = new MultiViewshedTask(Collections.singletonList(f), project, false, 1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.singletonList(f), project, false, 1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), 0, 1, false, new Bounds());
         assertEquals(resView.getArea(), 50*50, 0);
         cmpRaster(resView.getView(), (Raster)task.getResult(), 1);
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(-1.5));
-        task = new MultiViewshedTask(Collections.singletonList(f), project, false, 5, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.singletonList(f), project, false, 5, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), -1.5, 5, false, new Bounds());
         assertEquals(resView.getArea(), 27, 0);
         cmpRaster(resView.getView(), (Raster)task.getResult(), 1);
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(-1.5));
-        task = new MultiViewshedTask(Collections.singletonList(f), project, true, 1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.singletonList(f), project, true, 1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.execute(task);
         resView = project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), project.getStartZ(), -1.5, true, new Bounds());
         assertEquals(resView.getArea(), 0, 0);
@@ -98,7 +99,7 @@ public class MultiViewshedTaskTest {
         
         
         f = new DefaultFeature("p", new GeometryFactory().createPoint(new Coordinate(0, 0)), Arrays.asList("height"), Arrays.asList(1));
-        task = new MultiViewshedTask(Collections.nCopies(300, f), project, false, -1, new Bounds(), false, false, new TaskMonitor.EmptyMonitor());
+        task = new MultiViewshedTask(Collections.nCopies(300, f), project, false, -1, new Bounds(), false, RasterValue.COUNT, new TaskMonitor.EmptyMonitor());
         ExecutorService.executeSequential(task);
         cmpRaster(project.getDefaultComputeView().calcViewShed(new DirectPosition2D(0, 0), 1, -1, false, new Bounds()).getView(),
                 (Raster)task.getResult(), 300);

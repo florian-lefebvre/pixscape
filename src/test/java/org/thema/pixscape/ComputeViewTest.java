@@ -38,11 +38,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
-import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.pixscape.metric.AreaMetric;
@@ -286,7 +282,7 @@ public class ComputeViewTest {
                     if(compute instanceof ComputeViewJava) {
                         for(int i = 0; i < 5; i++) {
                             for(int j = 0; j < 5; j++) {
-                                double val = ((ComputeViewJava)compute).calcRay(c, startZ, new GridCoordinates2D(j, i), destZ, bounds, 0);
+                                double val = ((ComputeViewJava)compute).calcRay(c, startZ, new GridCoordinates2D(j, i), destZ, bounds, false, 0);
                                 if(val != 0) {
                                     Assert.assertEquals("Ray error on "+j+"-"+i, test[i*5+j], 1);
                                 } else {
@@ -296,7 +292,7 @@ public class ComputeViewTest {
                                 }
                             }
                         }
-                        double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, !direct, bounds, 0).getView().getDataBuffer()).getData();
+                        double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, !direct, bounds, false, 0).getView().getDataBuffer()).getData();
                         for(int i = 0; i < 5; i++) {
                             for(int j = 0; j < 5; j++) {
                                 Assert.assertEquals("Viewshed deg error on "+j+"-"+i, test[i*5+j], res[i*5+j] == 0 ? 0 : 1);
@@ -313,7 +309,7 @@ public class ComputeViewTest {
                             Assert.assertArrayEquals(test, ((DataBufferByte)result.getDataBuffer()).getData());
                         }
                         if(compute instanceof ComputeViewJava) {
-                            double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, direct, bounds, 0).getView().getDataBuffer()).getData();
+                            double [] res = ((DataBufferDouble)((ComputeViewJava)compute).calcViewShedDeg(p, startZ, destZ, direct, bounds, false, 0).getView().getDataBuffer()).getData();
                             for(int i = 0; i < 5; i++) {
                                 for(int j = 0; j < 5; j++) {
                                     Assert.assertEquals("Viewshed deg error on "+j+"-"+i, test[i*5+j], res[i*5+j] == 0 ? 0 : 1);

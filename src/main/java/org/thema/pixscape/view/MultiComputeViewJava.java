@@ -109,12 +109,12 @@ public class MultiComputeViewJava extends ComputeView {
     }
     
     @Override
-    public MultiViewShedResult calcViewShedDeg(DirectPosition2D c, double startZ, double destZ, boolean inverse, Bounds bounds)  {
+    public MultiViewShedResult calcViewShedDeg(DirectPosition2D c, double startZ, double destZ, boolean inverse, Bounds bounds, boolean area)  {
         throw new UnsupportedOperationException("Degree viewshed is not supported on multiscale"); 
     }
 
     @Override
-    public double calcRay(GridCoordinates2D c0, double startZ, GridCoordinates2D c1, double destZ, Bounds bounds) {
+    public double calcRay(GridCoordinates2D c0, double startZ, GridCoordinates2D c1, double destZ, Bounds bounds, boolean area) {
         throw new UnsupportedOperationException("Simple ray calculation is not supported on multiscale"); 
     }
     

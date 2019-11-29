@@ -433,7 +433,7 @@ public class MainFrame extends javax.swing.JFrame {
                 ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
                     List<Feature> points = (List)GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
-                    MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, dlg.degree, progressBar);
+                    MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, dlg.outValue, progressBar);
                     ExecutorService.execute(task);
                     progressBar.setNote("Saving...");
                     String name = dlg.pathFile.getName().replace(".shp", "");

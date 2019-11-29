@@ -29,6 +29,7 @@ import org.thema.common.ProgressBar;
 import org.thema.data.GlobalDataStore;
 import org.thema.data.feature.Feature;
 import org.thema.parallel.AbstractParallelTask;
+import org.thema.pixscape.MultiViewshedTask.RasterValue;
 import org.thema.pixscape.view.SimpleComputeView;
 
 /**
@@ -54,7 +55,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     /** The height of the observed points, -1 if not used */
     private double zDest;
     
-    private boolean degree;
+    private RasterValue outValue;
     
     private Agreg agreg; 
     
@@ -70,7 +71,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     private Bounds bounds;
 
     public Point2PointViewTask(File pointEyeFile, String idEyeField, double zEye, File pointObjFile, String idObjField, double zDest, 
-            boolean degree, Agreg agreg, Bounds bounds, Project project, ProgressBar monitor) {
+            RasterValue outValue, Agreg agreg, Bounds bounds, Project project, ProgressBar monitor) {
         super(monitor);
         this.project = project;
         this.prjFile = project.getProjectFile();
@@ -80,7 +81,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
         this.pointObjFile = pointObjFile;
         this.idObjField = idObjField;
         this.zDest = zDest;
-        this.degree = degree;
+        this.outValue = outValue;
         this.agreg = agreg;
         this.bounds = bounds;
     }
@@ -127,8 +128,8 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
                 }
                 p = (Point) obj.getGeometry();
                 GridCoordinates2D dest = project.getSimpleComputeView().getData().getWorld2Grid(new DirectPosition2D(p.getX(), p.getY()));
-                double val = compute.calcRay(orig, zOrig, dest, zDest, b);
-                if(!degree) {
+                double val = compute.calcRay(orig, zOrig, dest, zDest, b, outValue == RasterValue.AREA);
+                if(outValue == RasterValue.COUNT) {
                     val = val > 0 ? 1.0 : 0.0;
                 }
                 

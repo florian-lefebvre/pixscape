@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>1.1.5</version>
+    <version>1.2</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <description>Software for analysing landscape visibility</description>
@@ -100,7 +100,7 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>drawshape</artifactId>
-            <version>1.6</version>
+            <version>1.7.3</version>
         </dependency>        
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -132,8 +132,8 @@
     </dependencies>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.7</maven.compiler.source>
-        <maven.compiler.target>1.7</maven.compiler.target>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
     </properties>
     <repositories>
         <repository>
@@ -160,15 +160,18 @@
         </license>
     </licenses>
     <distributionManagement>
-        <site>
+        <repository>
             <id>sourcesup</id>
-            <url>dav:https://sourcesup.renater.fr/${project.artifactId}/maven</url>
+            <url>https://sourcesup.renater.fr/nexus/content/repositories/${project.artifactId}-releases</url>
+        </repository>
+        <site>
+            <id>sourcesup-dav</id>
+            <url>dav:https://sourcesup.renater.fr/authmain/jenkins/www/${project.artifactId}/maven</url>
         </site>
     </distributionManagement>
     <scm>
-        <connection>scm:git:https://git.renater.fr/${project.artifactId}.git</connection>
-        <developerConnection>scm:git:git+ssh://git@git.renater.fr:2222/${project.artifactId}.git</developerConnection>
-        <url>https://sourcesup.renater.fr/scm/browser.php?group_id=2262</url>
+        <connection>scm:git:https://git.renater.fr/anonscm/git/${project.artifactId}/${project.artifactId}.git</connection>
+        <url>https://sourcesup.renater.fr/scm/browser.php?group_id=2262&amp;scm_plugin=scmgit</url>
     </scm>
     <reporting>
         <plugins>

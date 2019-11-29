@@ -39,6 +39,7 @@ import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
+import org.thema.common.Config;
 import org.thema.common.swing.TaskMonitor;
 import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
@@ -47,6 +48,7 @@ import org.thema.data.feature.Feature;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
+import org.thema.pixscape.MultiViewshedTask.RasterValue;
 import org.thema.pixscape.Point2PointViewTask.Agreg;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
@@ -90,10 +92,10 @@ public class CLITools {
                     "Commands list :\n" +
                     "--viewshed [inverse] x y [resfile=raster.tif]\n" +
                     "--viewtan [prec=deg] x y [resname=name]\n" +
-                    "--multiviewshed format=vector|raster [inverse] [degree] [resname=name]\n" +
+                    "--multiviewshed format=vector|raster [inverse] [degree=height|area] [resname=name]\n" +
                     "--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
                     "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
-                    "--toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]");
+                    "--toobject [degree=height|area] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]");
             return;
         }
         
@@ -312,34 +314,26 @@ public class CLITools {
     }
 
     private void multiViewShed(List<String> args) throws IOException, SchemaException {   
-        if(args.size() < 1) {
-            throw new IllegalArgumentException("multiviewshed command needs at least 1 parameter");
-        }
+        Map<String, String> params = extractAndCheckParams(args, Arrays.asList("format"), Arrays.asList("inverse", "degree", "resname"));
+        
         if(pointFile == null) {
             throw new IllegalArgumentException("-sampling points option is mandatory for --multiviewshed");
         }
         
-        boolean vectorOutput = args.remove(0).equals("format=vector");
-        
-        boolean inverse = false;
-        if(!args.isEmpty() && args.get(0).equals("inverse")) {
-            inverse = true;
-            args.remove(0);
-        }
-        
-        boolean degree = false;
-        if(!args.isEmpty() && args.get(0).equals("degree")) {
-            degree = true;
-            args.remove(0);
+        boolean vectorOutput = params.get("format").equals("vector");
+        boolean inverse = params.containsKey("inverse");
+        RasterValue outValue = RasterValue.COUNT;
+        if(params.containsKey("degree")) {
+            outValue = params.get("degree").equals("area") ? RasterValue.AREA : RasterValue.HEIGHT;
         }
 
         String name = "multiviewshed" + (inverse ? "-inverse" : "");
-        if(!args.isEmpty() && args.get(0).startsWith("resname=")) {
-            name = args.remove(0).split("=")[1];
+        if(params.containsKey("resname")) {
+            name = params.get("resname");
         }
         
         List<Feature> points = (List)GlobalDataStore.getFeatures(pointFile, idField, null);
-        MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, degree, null);
+        MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, outValue, Config.getProgressBar("MultiViewshed"));
         
         ExecutorService.execute(task);
         
@@ -403,9 +397,12 @@ public class CLITools {
             throw new IllegalArgumentException("-sampling points option is mandatory for --toobject command");
         }
         
-        Map<String, String> params = extractAndCheckParams(args, Arrays.asList("objects", "id"), Arrays.asList("degree", "agreg"));
+        Map<String, String> params = extractAndCheckParams(args, Arrays.asList("objects", "id"), Arrays.asList("degree", "agreg", "resname"));
         
-        boolean degree = params.containsKey("degree");
+        RasterValue outValue = RasterValue.COUNT;
+        if(params.containsKey("degree")) {
+            outValue = params.get("degree").equals("area") ? RasterValue.AREA : RasterValue.HEIGHT;
+        }
         Agreg agreg = null;
         if(params.containsKey("agreg")) {
             if(params.get("agreg").equals("eye")) {
@@ -421,7 +418,8 @@ public class CLITools {
         File objFile = new File(params.get("objects"));
         String objId = params.get("id");
 
-        Point2PointViewTask task = new Point2PointViewTask(pointFile, idField, zEye, objFile, objId, zDest, degree, agreg, bounds, project, new TaskMonitor.EmptyMonitor());
+        Point2PointViewTask task = new Point2PointViewTask(pointFile, idField, zEye, objFile, objId, zDest, 
+                outValue, agreg, bounds, project, Config.getProgressBar("ToObject"));
         ExecutorService.execute(task);
         
         Map result = task.getResult();
@@ -429,13 +427,13 @@ public class CLITools {
         if(agreg == null) {
             File f = new File(resDir, resname + ".csv");
             try (CSVWriter w = new CSVWriter(new FileWriter(f))) {
-                w.writeNext(new String[]{"IdEye", "IdObj", "SurfView"});
+                w.writeNext(new String[]{"IdEye", "IdObj", "View"});
                 for(Object idEye : result.keySet()) {
                     Map objs = (Map)result.get(idEye);
                     for(Object idObj : objs.keySet()) {
-                        double surf = (double) objs.get(idObj);
-                        if(surf > 0) {
-                            w.writeNext(new String[]{idEye.toString(), idObj.toString(), String.valueOf(surf)});
+                        double view = (double) objs.get(idObj);
+                        if(view > 0) {
+                            w.writeNext(new String[]{idEye.toString(), idObj.toString(), String.valueOf(view)});
                         }
                     }
                 }
@@ -444,9 +442,9 @@ public class CLITools {
             File f = new File(resDir, resname + ".shp");
             List<DefaultFeature> points = agreg == Agreg.EYE ? (List)GlobalDataStore.getFeatures(pointFile, idField, null) : 
                     GlobalDataStore.getFeatures(objFile, objId, null);
-            DefaultFeature.addAttribute("SurfView", points, 0.0);
+            DefaultFeature.addAttribute("TotView", points, 0.0);
             for(DefaultFeature point : points) {
-                point.setAttribute("SurfView", result.get(point.getId()));
+                point.setAttribute("TotView", result.get(point.getId()));
             }
             DefaultFeature.saveFeatures(points, f);
         }

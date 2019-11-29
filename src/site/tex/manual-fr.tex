@@ -44,7 +44,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.1.5\\
+		PixScape 1.2\\
 		\bigskip
 		Manuel d’utilisation\\
 	}
@@ -57,7 +57,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui et Jean-Christophe Foltête\\
 		\bigskip
-		19/04/2019\\
+		29/11/2019\\
 	}
 	
 \end{titlepage}
@@ -88,7 +88,7 @@ Sahraoui Y., Vuidel G., Foltête J-C. et Joly D. (2016), \href{http://cybergeo.r
 
 \section{Configuration requise}
 
-PixScape fonctionne sur n'importe quel ordinateur supportant Java 7 ou supérieur (PC sous Linux, Windows, Mac...). Toutefois, lorsqu'il s'agit de données très volumineuses, la quantité de mémoire vive (RAM) de l’ordinateur peut limiter la taille des zones d'étude. De plus, la puissance du processeur va déterminer la vitesse de leur calcul. Vous trouverez plus de détails à ce sujet dans le chapitre \nameref{perf}. 
+PixScape fonctionne sur n'importe quel ordinateur supportant Java 8 ou supérieur (PC sous Linux, Windows, Mac...). Toutefois, lorsqu'il s'agit de données très volumineuses, la quantité de mémoire vive (RAM) de l’ordinateur peut limiter la taille des zones d'étude. De plus, la puissance du processeur va déterminer la vitesse de leur calcul. Vous trouverez plus de détails à ce sujet dans le chapitre \nameref{perf}. 
 
 Pour l'utilisation de l'accélération GPU, l'ordinateur doit être équipé d'une carte graphique Nvidia supportant CUDA. Par défaut, PixScape est compilé avec la version 6.5 de CUDA. Si vous ne pouvez pas installer la version 6.5 de CUDA, il faudra installer la bibliothèque JCuda correspondant à votre version de CUDA et lancer le programme en ligne de commande (voir \nameref{cuda}). Les binaires sont téléchargeables à l'adresse \href{http://www.jcuda.org/downloads/downloads.html}{www.jcuda.org/downloads/downloads.html}
 
@@ -97,9 +97,9 @@ Pour l'utilisation de l'accélération GPU, l'ordinateur doit être équipé d'u
 PixScape est téléchargeable à cette adresse : \url{http://sourcesup.renater.fr/pixscape}.
 
 \begin{itemize}
-	\item Télécharger et installer Java 7 ou + (\href{http://www.java.com}{java.com}). Installer de préférence la version 64 bits de Java.
-	\item Télécharger pixscape-1.1.jar
-	\item Lancer pixscape-1.1.jar
+	\item Télécharger et installer Java 8 ou + (\href{http://www.java.com}{java.com}). Installer de préférence la version 64 bits de Java.
+	\item Télécharger pixscape-1.2.jar
+	\item Lancer pixscape-1.2.jar
 \end{itemize}
 
 PixScape peut être utilisé par deux interfaces : une interface graphique et une interface en ligne de commande.
@@ -303,13 +303,13 @@ Le menu Visibilité / Bassins multiples permet de calculer plusieurs bassins de 
 	\item Hauteur dest. (h2) : hauteur en mètre du ou des points observés. Si il est défini à -1, la hauteur du MNE est utilisée. Dans le cas où le projet ne contient pas de MNE la hauteur est nulle.
 	\item Limites : cette fenêtre permet de restreindre le champ de vision de l'observateur dans les 3 dimensions pour tous les points d'observation (voir \nameref{bounds}). Si le shapefile contient les attributs (dmin, dmax, zmin, zmax, orien et amp), ils seront utilisés à la place.
 	\item Sortie : choix du format de la couche résultat : vecteur ou raster.
-	\item Raster : en raster, le résultat peut être le nombre de points visibles (nombre) ou bien la surface angulaire totale visible (surface en degré carré).
+	\item Raster : en raster, le résultat peut être le nombre de points visibles (nombre), la surface angulaire totale visible (en degré carré) ou bien la hauteur angulaire totale visible (en degré).
 \end{itemize}
 
 Le paramétrage de la hauteur de l'observateur ainsi que l'utilisation d'une base multi-résolution n'est pas accessible dans cette fenêtre mais uniquement dans la fenêtre des Options (voir \nameref{options}).
 
 \subsubsection{Résultat}
-Les bassins de visibilité peuvent être affichés sur la carte en raster ou en vectoriel selon le choix effectué dans le panneau Sortie. Dans les deux cas, la couche de résultat peut être exportée par un clic droit sur la couche.
+Les bassins de visibilité peuvent être affichés sur la carte en raster ou en vectoriel selon le choix effectué dans le panneau Sortie. Dans les deux cas, la couche résultante est enregistrée automatiquement dans le répertoire du projet sous le nom \verb|multiviewshed|.
 
 En vectoriel, la couche contient un polygone multiple pour chaque bassin de visibilité (figure \ref{multi_viewshed_vector}). Chaque multi-polygone a un attribut Id permettant de faire le lien avec l'identifiant du point d'observation correspondant.
 
@@ -319,7 +319,7 @@ En vectoriel, la couche contient un polygone multiple pour chaque bassin de visi
 	\label{multi_viewshed_vector}
 \end{figure}
 
-En raster, la valeur du pixel correspond au nombre de fois où le pixel est contenu dans un bassin de visibilité \textit{ie.} le nombre de points d'observation voyant le pixel ou bien, en mode inverse, le nombre de points d'observation vus par le pixel (figure \ref{multi_viewshed_raster}). Si l'option "surface en degré carré" est sélectionnée, la valeur du pixel n'est plus un nombre de points visibles mais la surface angulaire totale visible en degré carré (figure \ref{multi_viewshed_raster_deg}).
+En raster, la valeur du pixel correspond au nombre de fois où le pixel est contenu dans un bassin de visibilité \textit{ie.} le nombre de points d'observation voyant le pixel ou bien, en mode inverse, le nombre de points d'observation vus par le pixel (figure \ref{multi_viewshed_raster}). Si l'option "surface angulaire" ou "hauteur angulaire" est sélectionnée, la valeur du pixel n'est plus un nombre de points visibles mais la surface (ou la hauteur) angulaire totale visible en degré (figure \ref{multi_viewshed_raster_deg}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster-fr.png} 
@@ -329,7 +329,7 @@ En raster, la valeur du pixel correspond au nombre de fois où le pixel est cont
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed_raster_deg-fr.png} 
-	\caption{Résultat raster du calcul de bassins multiples - Hauteur dest. (h2) = 200 - surface en degré}
+	\caption{Résultat raster du calcul de bassins multiples - Hauteur dest. (h2) = 200 - surface angulaire}
 	\label{multi_viewshed_raster_deg}
 \end{figure}
 
@@ -568,7 +568,7 @@ Dans l'écran d'aide, les éléments entourés de crochets sont optionnels, et d
 \subsection{--help : affichage de l'aide}
 Commande :
 \begin{Verbatim}
-java -jar pixscape-1.1.jar --help
+java -jar pixscape-1.2.jar --help
 \end{Verbatim}
 Résultat :
 \begin{Verbatim}
@@ -587,10 +587,10 @@ commands
 Commands list :
 --viewshed [inverse] x y [resfile=raster.tif]
 --viewtan [prec=deg] x y [resname=name]
---multiviewshed format=vector|raster [inverse] [degree] [resname=name]
+--multiviewshed format=vector|raster [inverse] [degree=area|height] [resname=name]
 --planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
---toobject [degree] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
+--toobject [degree=area|height] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
 \end{Verbatim}
 
 \subsection{--metrics : affichage des métriques}
@@ -622,7 +622,7 @@ DL - Profondeur de vue
 \subsection{--project : chargement d'un projet}
 Cette commande définit le chemin vers le fichier xml du projet à charger.
 \begin{Verbatim}[commandchars=\\\{\}]
-java -jar pixscape-1.1.jar --project \textit{path2myproject/myproject.xml}
+java -jar pixscape-1.2.jar --project \textit{path2myproject/myproject.xml}
 \end{Verbatim}
 Charge le projet \textit{myproject} contenu dans le répertoire \textit{path2myproject}.
 
@@ -725,7 +725,7 @@ Le second exemple calcule la vue tangentielle avec une précision angulaire de 0
 
 \subsection{--multiviewshed : bassin de visibilité multiple}
 \begin{Verbatim}[commandchars=\\\{\}]
---multiviewshed format=vector|raster [inverse] [degree] [resname=\textit{name}]
+--multiviewshed format=vector|raster [inverse] [degree=area|height] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Paramètre obligatoire}
@@ -736,14 +736,14 @@ Le second exemple calcule la vue tangentielle avec une précision angulaire de 0
 \subsubsection{Paramètres optionnels}
 \begin{itemize}
 	\item \verb|inverse| : passe en mode inverse, le point O devient le point observé
-	\item \verb|degree| : pour le format raster, cumule les surfaces visibles en degré carré au lieu du nombre de points visibles. Cette option ne fonctionne qu'en format raster
+	\item \verb|degree| : pour le format raster, cumule les surfaces (\verb|area|) ou hauteur (\verb|height|) visibles en degré au lieu du nombre de points visibles. Cette option ne fonctionne qu'en format raster
 	\item \verb|resname=name| : permet de spécifier un autre nom pour le fichier stockant le résultat
 \end{itemize}
 
 \subsubsection{Description}
 La commande \verb|--multiviewshed| permet de calculer les bassins de visibilité à partir d'un ensemble de points d'observation. Les points d'observation doivent être donnés par l'option \verb|-sampling|. Le résultat est stocké dans un fichier raster ou vecteur selon le format choisi. 
 
-En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel. Si l'option \verb|degree| est utilisée, chaque pixel représente la surface totale en degré carré de ce pixel visible depuis chaque point d'observation. En mode inverse, chaque pixel contient la surface visible en degré carré depuis ce pixel vers tous les points d'observation.
+En raster, l'image est de la même taille que le MNT, au format Tiff. Dans ce raster, chaque pixel recense le nombre de fois qu'il est vu depuis les points d'observation et en mode inverse le nombre de points vu à partir de ce pixel. Si l'option \verb|degree| est utilisée, chaque pixel représente la surface ou la hauteur totale en degré de ce pixel, visible depuis chaque point d'observation. En mode inverse, chaque pixel contient la surface ou hauteur visible depuis ce pixel vers tous les points d'observation.
 
 En vectoriel, le résultat est un shapefile contenant le bassin de visibilité de chaque point d'observation.
 
