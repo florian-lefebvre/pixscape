@@ -84,10 +84,10 @@ public class PointAttributeDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         boundsButton = new javax.swing.JButton();
-        pointShpPanel = new org.thema.pixscape.PointShpPanel();
         pathOrienCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         outputNameTextField = new javax.swing.JTextField();
+        selectVectorLayerPanel1 = new org.thema.data.ui.SelectVectorLayerPanel();
 
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
         setTitle(bundle.getString("PointAttributeDialog.title")); // NOI18N
@@ -123,6 +123,9 @@ public class PointAttributeDialog extends javax.swing.JDialog {
         jLabel1.setText(bundle.getString("PointAttributeDialog.jLabel1.text")); // NOI18N
 
         outputNameTextField.setText(bundle.getString("PointAttributeDialog.outputNameTextField.text")); // NOI18N
+        outputNameTextField.setToolTipText(bundle.getString("PointAttributeDialog.outputNameTextField.toolTipText")); // NOI18N
+
+        selectVectorLayerPanel1.setDescription(bundle.getString("PointAttributeDialog.selectVectorLayerPanel1.description")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -131,7 +134,6 @@ public class PointAttributeDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 378, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(pathOrienCheckBox)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -144,7 +146,10 @@ public class PointAttributeDialog extends javax.swing.JDialog {
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(outputNameTextField)))
+                        .add(outputNameTextField))
+                    .add(layout.createSequentialGroup()
+                        .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
 
@@ -154,7 +159,7 @@ public class PointAttributeDialog extends javax.swing.JDialog {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(pointShpPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(boundsButton)
@@ -176,8 +181,8 @@ public class PointAttributeDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        pathFile = pointShpPanel.getPointFile();
-        idField = pointShpPanel.getIdField();
+        pathFile = selectVectorLayerPanel1.getSelectedFile();
+        idField = selectVectorLayerPanel1.getIdField();
         setPathOrien = pathOrienCheckBox.isSelected();
         if(bounds == null) {
             bounds = new Bounds();
@@ -220,7 +225,7 @@ public class PointAttributeDialog extends javax.swing.JDialog {
     private javax.swing.JButton okButton;
     private javax.swing.JTextField outputNameTextField;
     private javax.swing.JCheckBox pathOrienCheckBox;
-    private org.thema.pixscape.PointShpPanel pointShpPanel;
+    private org.thema.data.ui.SelectVectorLayerPanel selectVectorLayerPanel1;
     // End of variables declaration//GEN-END:variables
 
 }

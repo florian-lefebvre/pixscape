@@ -95,7 +95,6 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
         boundsButton = new javax.swing.JButton();
-        pointShpPanel = new org.thema.pixscape.PointShpPanel();
         inverseCheckBox = new javax.swing.JCheckBox();
         jPanel1 = new javax.swing.JPanel();
         vectorRadioButton = new javax.swing.JRadioButton();
@@ -105,6 +104,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
         areaRadioButton = new javax.swing.JRadioButton();
         jLabel3 = new javax.swing.JLabel();
         zDestTextField = new javax.swing.JTextField();
+        selectVectorLayerPanel = new org.thema.data.ui.SelectVectorLayerPanel();
 
         java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
         setTitle(bundle.getString("MultiViewshedDialog.title")); // NOI18N
@@ -202,6 +202,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
 
         zDestTextField.setText(bundle.getString("MultiViewshedDialog.zDestTextField.text")); // NOI18N
 
+        selectVectorLayerPanel.setDescription(bundle.getString("MultiViewshedDialog.selectVectorLayerPanel.description")); // NOI18N
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -209,7 +211,7 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .add(selectVectorLayerPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
                         .add(inverseCheckBox)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -234,8 +236,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(pointShpPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .add(18, 18, 18)
+                .add(selectVectorLayerPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
                         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -263,8 +265,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        pathFile = pointShpPanel.getPointFile();
-        idField = pointShpPanel.getIdField();
+        pathFile = selectVectorLayerPanel.getSelectedFile();
+        idField = selectVectorLayerPanel.getIdField();
         inverse = inverseCheckBox.isSelected();
         zDest = Double.parseDouble(zDestTextField.getText());
         vectorOutput = vectorRadioButton.isSelected();
@@ -314,8 +316,8 @@ public class MultiViewshedDialog extends javax.swing.JDialog {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JButton okButton;
-    private org.thema.pixscape.PointShpPanel pointShpPanel;
     private javax.swing.JRadioButton rasterRadioButton;
+    private org.thema.data.ui.SelectVectorLayerPanel selectVectorLayerPanel;
     private javax.swing.JRadioButton vectorRadioButton;
     private javax.swing.JTextField zDestTextField;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;

@@ -37,7 +37,6 @@ import java.util.EventObject;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -47,7 +46,6 @@ import javax.swing.JPopupMenu;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
-import org.geotools.feature.SchemaException;
 import org.geotools.geometry.Envelope2D;
 import org.thema.common.Config;
 import org.thema.common.JavaLoader;
@@ -55,10 +53,10 @@ import org.thema.common.ProgressBar;
 import org.thema.common.Util;
 import org.thema.common.swing.LoggingDialog;
 import org.thema.common.swing.PreferencesDialog;
-import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
+import org.thema.data.IOFeature;
 import org.thema.drawshape.image.CoverageShape;
 import org.thema.drawshape.image.RasterShape;
 import org.thema.drawshape.layer.DefaultGroupLayer;
@@ -367,8 +365,7 @@ public class MainFrame extends javax.swing.JFrame {
         try {
             GridCoverage2D cov = IOImage.loadCoverage(file);
             project.setLandUse(cov);
-            rootLayer.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), new CoverageShape(cov, new RasterStyle(
-                    new UniqueColorTable((Map)project.getLandColors())))));
+            rootLayer.addLayerFirst(getLandUseLayer(project.getDefaultScaleData()));
         } catch (IOException ex) {
             Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
             JOptionPane.showMessageDialog(this, "Error : " + ex.getLocalizedMessage());
@@ -432,11 +429,11 @@ public class MainFrame extends javax.swing.JFrame {
             public void run() {
                 ProgressBar progressBar = Config.getProgressBar("Multi viewshed...");
                 try {
-                    List<Feature> points = (List)GlobalDataStore.getFeatures(dlg.pathFile, dlg.idField, null);
+                    List<Feature> points = (List)IOFeature.loadFeatures(dlg.pathFile, dlg.idField);
                     MultiViewshedTask task = new MultiViewshedTask(points, project, dlg.inverse, dlg.zDest, dlg.bounds, dlg.vectorOutput, dlg.outValue, progressBar);
                     ExecutorService.execute(task);
                     progressBar.setNote("Saving...");
-                    String name = dlg.pathFile.getName().replace(".shp", "");
+                    String name = "multiviewshed-" + dlg.pathFile.getName().substring(0, dlg.pathFile.getName().lastIndexOf("."));
                     task.saveResult(project.getDirectory(), name);
                     Layer l;
                     if(dlg.vectorOutput) {
@@ -657,8 +654,7 @@ public class MainFrame extends javax.swing.JFrame {
             return;
         }
         try {
-            Map<Object, DefaultFeature> pointMap = GlobalDataStore.createDataStore(dlg.pathFile.getParentFile()).getMapFeatures(dlg.pathFile.getName(), dlg.idField);
-            List<DefaultFeature> points = new ArrayList<>(new TreeMap<>(pointMap).values());
+            List<DefaultFeature> points = IOFeature.loadFeatures(dlg.pathFile, dlg.idField);
             List<DefaultFeature> result = new ArrayList<>();
             if(dlg.setPathOrien) {
                 for(int i = 0; i < points.size()-1; i++) {
@@ -673,7 +669,7 @@ public class MainFrame extends javax.swing.JFrame {
                     result.add(dlg.bounds.createFeatureWithBoundAttr(p.getId(), p.getGeometry()));
                 }
             }
-            DefaultFeature.saveFeatures(result, new File(project.getDirectory(), dlg.outputName), GlobalDataStore.getCRS(dlg.pathFile));
+            IOFeature.saveFeatures(result, new File(project.getDirectory(), dlg.outputName), IOFeature.getCRS(dlg.pathFile));
             FeatureLayer l = new FeatureLayer(dlg.outputName, result);
             l.setRemovable(true);
             rootLayer.addLayerFirst(l);
@@ -827,26 +823,33 @@ public class MainFrame extends javax.swing.JFrame {
                     new RasterStyle(ColorRamp.RAMP_TEMP), true)));
         }
         if(project.hasLandUse()) {
-            final UniqueColorTable colorTable = new UniqueColorTable((Map)project.getLandColors());
-            RasterLayer l = new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
-                    new RasterStyle(colorTable, false), true));
-            l.addLayerListener(new LayerListener() {
-                @Override
-                public void layerVisibilityChanged(EventObject e) {                    
-                }
-                @Override
-                public void layerStyleChanged(EventObject e) {
-                    for(Double code : project.getLandColors().keySet()) {
-                        project.getLandColors().put(code, colorTable.getColor(code));
-                    }
-                    
-                }
-            });
-            gl.addLayerFirst(l);
+            gl.addLayerFirst(getLandUseLayer(data));
         }
         gl.setLayersVisible(false);
         return gl;
     } 
+    
+    private RasterLayer getLandUseLayer(ScaleData data) {
+        final UniqueColorTable colorTable = new UniqueColorTable((Map)project.getLandColors());
+        RasterLayer l = new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), 
+                new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
+                new RasterStyle(colorTable, false), true));
+        l.addLayerListener(new LayerListener() {
+            @Override
+            public void layerVisibilityChanged(EventObject e) {                    
+            }
+            @Override
+            public void layerStyleChanged(EventObject e) {
+                for(Double code : project.getLandColors().keySet()) {
+                    if(colorTable.getColorMapping().containsKey(code)) {
+                        project.getLandColors().put(code, colorTable.getColor(code));
+                    }
+                }
+            }
+        });
+        
+        return l;
+    }
     
     /**
      * Main program entry point.

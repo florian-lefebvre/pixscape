@@ -42,7 +42,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.2\\
+		PixScape 1.2.1\\
 		\bigskip
 		User manual\\
 	}
@@ -55,7 +55,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2019-11-29\\
+		2020-11-26\\
 	}
 	
 \end{titlepage}
@@ -132,6 +132,7 @@ The DTM is sufficient to perform visibility calculations, but it can be more int
 For importing raster data, PixScape supports 2 file formats : Tiff and AsciiGrid.
 For Tiff format, the coordinate system can be given by 2 ways : directly in the Tiff file with the GeoTiff extension, or an additional text file with the same name and extension .tfw.
 
+For vector data, Pixscape supports 2 file formats : geopackage (.gpkg) by default or shapefile (.shp)
 
 \subsection{Additional layers}
 Two additional raster layers can be added to an existing project: the DSM (Digital Surface Model) and the land use.
@@ -289,7 +290,7 @@ After modifying a parameter, simply click on the Update button to update the vie
 
 \subsection{Multi-viewshed}
 \label{multi_viewshed}
-The Visibility / Multi Viewshed menu allows you to calculate several viewsheds from a shapefile containing observation points.
+The Visibility / Multi Viewshed menu allows you to calculate several viewsheds from a point layer containing observation points.
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/multi_viewshed-en.png} 
@@ -300,11 +301,11 @@ The Visibility / Multi Viewshed menu allows you to calculate several viewsheds f
 \subsubsection{Parameters}
 
 \begin{itemize}
-	\item Shapefile : shapefile containing observation points.
-	\item Id : shapefile attribute used as identifier. This parameter is useful only for vectorial result.
-	\item Inverse: unchecked by default, the shapefile points represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the shapefile points becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
+	\item Point layer : layer containing observation points.
+	\item Id : layer attribute used as identifier. This parameter is useful only for vectorial result.
+	\item Inverse: unchecked by default, the points layer represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the points layer becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
 	\item Dest. height (h2): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
-	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the layer contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.
 	\item Output : format of the result layer : vector or raster.
 	\item Raster : for raster output, the result may be the number of visible points (count), the total visible area (angular area) or the total visible height(angular height).
 \end{itemize}
@@ -341,7 +342,7 @@ If "angular area" or "angular height" is selected, the pixel value is the total 
 \label{bounds_ui}
 For all visibility calculations into PixScape, the eyesight can be restricted in all 3 dimensions. Details are described in the section \nameref{bounds}.
 
-These bounds can be set from the Bounds window (figure \ref{bounds_dlg}). When the observation points come from a shapefile, the setting of the eyesight can be differentiated for each point by adding the 6 parameters (dmin, dmax, zmin, zmax, orien, amp) in the shapefile attributes table. The "Set point attributes" menu allows you to automatically add them to an existing shapefile (see \nameref{add_attributes}).
+These bounds can be set from the Bounds window (figure \ref{bounds_dlg}). When the observation points come from a point layer, the setting of the eyesight can be differentiated for each point by adding the 6 parameters (dmin, dmax, zmin, zmax, orien, amp) in the layer attributes table. The "Set point attributes" menu allows you to automatically add them to an existing layer (see \nameref{add_attributes}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/bounds-en.png} 
@@ -368,9 +369,9 @@ The Metric menu allows you to launch a visibility calculation (planimetric or ta
 View-specific parameters are displayed at the top of the window (figure \ref{metrics_dlg}) and depend on the type of view selected in the Metric menu: planimetric (for viewshed) or tangential.
 
 \begin{itemize}
-	\item Inverse (planimetric only): unchecked by default, the shapefile points represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the shapefile points becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
+	\item Inverse (planimetric only): unchecked by default, the points layer represent the observation points \textit{ie.} the eye of the observer. Conversely, if the box is checked, the points layer becomes the observed points. For details see the viewshed \nameref{viewshed_param}.
 	\item Dest. height (h2) (planimetric only): height in meters of observed point(s). If set to -1, the height of the DSM is used. If the project does not contain a DSM, the height is zero.
-	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the selected sampling is Points and the shapefile contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.	
+	\item Bounds: this window allows you to restrict the eyesight of the observer in the 3 dimensions for all observation points (see \nameref{bounds}). If the selected sampling is Points and the layer contains the attributes (dmin, dmax, zmin, zmax, orien et amp), they will be used in place of these settings.	
 \end{itemize}
 
 The other parameters for the view (\textit {eg.} eye height, angular resolution, ...) must be set before in the Options window (see \nameref{options}).
@@ -397,9 +398,9 @@ The result will be one or more raster layers. It will contain one layer for each
 
 
 \subsubsection{Points sampling (vector)}
-Instead of using the raster grid sampling, you can provide a set of points from a shapefile.
+Instead of using the raster grid sampling, you can provide a set of points from a point layer.
 
-The result will be in the form of a point layer corresponding to the input shapefile. The result of the metrics will be stored in the attribute table of the shapefile.
+The result will be in the form of a point layer corresponding to the input layer. The result of the metrics will be stored in the attribute table of the layer.
 
 
 \subsection{Metric parameters}
@@ -453,7 +454,7 @@ In vector, the result is a point layer containing the metrics values in the attr
 	\label{metric_result_vect}
 \end{figure}
 
-The layer "Metric point result" can be exported in shapefile or text format by right clicking on the layers name and the menu "Export ...".
+The layer "Metric point result" can be exported in geopackage, shapefile or text format by right clicking on the layers name and the menu "Export ...".
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/metric_result_attr-en.png} 
@@ -469,12 +470,12 @@ The attribute table of the result layer is accessible by right clicking on the l
 \subsection{Add eyesight attributes}
 \label{add_attributes}
 For all visibility calculations, the eyesight can be restricted by the Bounds window (figure \ref{bounds_dlg}). This solution is useful if each observation point has the same limitations of the eyesight.
-The Tools / Set point attributes menu is useful for specifying different restrictions for each observation point. This function adds the 6 attributes to a shapefile with the default values defined by the Bounds window. You can then with your favorite GIS modify the restriction values for each observation point.
-The output shapefile can be used for calculation of metrics (\ref{calc_metrics}) or multi viewshed (\ref{multi_viewshed}).
+The Tools / Set point attributes menu is useful for specifying different restrictions for each observation point. This function adds the 6 attributes to a layer with the default values defined by the Bounds window. You can then with your favorite GIS modify the restriction values for each observation point.
+The output layer can be used for calculation of metrics (\ref{calc_metrics}) or multi viewshed (\ref{multi_viewshed}).
 
 \begin{figure}[H]
 	\includegraphics[scale=0.5]{img/add_attributes-en.png} 
-	\caption{Add eyesight bound attributes to a shapefile}
+	\caption{Add eyesight bound attributes to a layer}
 	\label{add_attributes_dlg}
 \end{figure}
 
@@ -581,23 +582,24 @@ Result:
 \begin{Verbatim}
 Usage :
 java -jar pixscape.jar --metrics
-java -jar pixscape.jar [-mpi | -proc n | -cuda n]
---project project_file.xml
-[--landmod zone=filezones.shp id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]
+java -jar pixscape.jar --create prj_name dtm_raster_file [dsm=raster_file] [landuse=raster_file] [dir=path]
+java -jar pixscape.jar [-mpi | -proc n | -cuda n] --project project_file.xml
+[--landmod zone=filezones.gpkg id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]
 [-zeye val] [-zdest val] [-resdir path]
 [-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]
-[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]
+[-sampling n=val | land=code1,..,coden | points=pointfile.gpkg id=fieldname]
 [-multi dmin=val | -mono]
 [-earth flat|curved [refrac=val]]
 commands
 
 Commands list :
---viewshed [inverse] x y [resfile=raster.tif]
---viewtan [prec=deg] x y [resname=name]
---multiviewshed format=vector|raster [inverse] [degree=area|height] [resname=name]
+--viewshed [inverse] [point=coord_x,coord_y] [resname=name]
+--viewtan [prec=deg] [point=coord_x,coord_y] [resname=name]
+--multiviewshed format=vector|raster [inverse] [degree=height|area] [resname=name]
 --planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
 --tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]
---toobject [degree=area|height] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]
+--toobject [degree=height|area] [agreg=eye|object] objects=pointfile.gpkg id=fieldname [resname=name]
+--addscale dtm_raster_file [dsm=raster_file] [landuse=raster_file]
 \end{Verbatim}
 
 \subsection{--metrics : show metrics}
@@ -626,6 +628,46 @@ SD - Shannon depth
 DL - Depth line
 \end{Verbatim}
 
+\subsection{--create : create project}
+\begin{Verbatim}[commandchars=\\\{\}]
+java -jar pixscape-1.2.jar --create \textit{prj_name} \textit{dtm_raster_file} [dsm=\textit{raster_file}] [landuse=\textit{raster_file}] [dir=\textit{path}]
+\end{Verbatim}
+
+\subsubsection{Required parameters}
+\begin{itemize}
+	\item \verb|prj_name| : name of the new project
+	\item \verb|dtm_raster_file| : DTM raster layer
+\end{itemize}
+
+\subsubsection{Optional parameters}
+\begin{itemize}
+	\item \verb|dsm=raster_file| : 
+	\item \verb|landuse=raster_file| : 
+	\item \verb|dir=path| : 
+\end{itemize}
+
+\subsubsection{Description}
+
+
+\subsection{--addscale : add scale data}
+\begin{Verbatim}[commandchars=\\\{\}]
+--addscale \textit{dtm_raster_file} [dsm=\textit{raster_file}] [landuse=\textit{raster_file}]
+\end{Verbatim}
+
+\subsubsection{Required parameters}
+\begin{itemize}
+	\item \verb|dtm_raster_file| : 
+\end{itemize}
+
+\subsubsection{Optional parameters}
+\begin{itemize}
+	\item \verb|dsm=raster_file| : 
+	\item \verb|landuse=raster_file| : 
+\end{itemize}
+
+\subsubsection{Description}
+
+
 \subsection{--project : load project}
 This command sets the path to the project xml file.
 \begin{Verbatim}[commandchars=\\\{\}]
@@ -638,40 +680,38 @@ The \verb|--project| command can be used only once and must be the first command
 \subsection{--landmod : land use changes}
 
 \begin{Verbatim}[commandchars=\\\{\}]
---landmod zone=\textit{filezones.shp} id=\textit{fieldname} code=\textit{fieldname} dsm=\textit{file.tif} [selid=\textit{id1,...,idn}]
+--landmod zone=\textit{filezones.gpkg} id=\textit{fieldname} code=\textit{fieldname} dsm=\textit{file.tif} [selid=\textit{id1,...,idn}]
 \end{Verbatim}
 
 \subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|zone=filezones.shp| : polygon shapefile containing land use changes.
-	\item \verb|id=fieldname| : field name of the shapefile used for identifying polygons. If values are not unique, polygons with the same identifier will be applied in a single change.
-	\item \verb|code=fieldname| : field name of the shapefile storing the new land use category of the polygon.
+	\item \verb|zone=filezones.gpkg| : polygon layer containing land use changes.
+	\item \verb|id=fieldname| : field name of the layer used for identifying polygons. If values are not unique, polygons with the same identifier will be applied in a single change.
+	\item \verb|code=fieldname| : field name of the layer storing the new land use category of the polygon.
 	\item \verb|dsm=file.tif| : raster storing the new values of the DSM used for each land use change. The geometry of the raster must be exactly the same as the project DEM.
 \end{itemize}
 
 \subsubsection{Optional parameter}
 \begin{itemize}
-	\item \verb|selid=id1,...,idn| : list of polygon identifiers to process. If this parameter is not set, all polygons of the shapefile are processed.
+	\item \verb|selid=id1,...,idn| : list of polygon identifiers to process. If this parameter is not set, all polygons of the layer are processed.
 \end{itemize}
 
 \subsubsection{Description}
-This command must be placed before the visibility calculation commands. It will duplicate the project for each polygon of the shapefile and change the landuse covered by the polygon and the DSM. The commands following this one, will be executed on each modified project.
+This command must be placed before the visibility calculation commands. It will duplicate the project for each polygon of the layer and change the landuse covered by the polygon and the DSM. The commands following this one, will be executed on each modified project.
 
 The newly created projects will be named by the identifier of the polygon(s) and stored in the project directory.
 
 \subsection{--viewshed : planimetric view or viewshed}
 \begin{Verbatim}[commandchars=\\\{\}]
---viewshed [inverse] \textit{x} \textit{y} [resfile=\textit{raster.tif}]
+--viewshed [inverse] [point=\textit{x},\textit{y}] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Required parameters}
-\begin{itemize}
-	\item \verb|x| : abscissa of the observation point in the coordinate system of the DTM
-	\item \verb|y| : ordinate of the observation point in the coordinate system of the DTM
-\end{itemize}
+None
 
 \subsubsection{Optional parameters}
 \begin{itemize}
+	\item \verb|point| : coordinates of the observation point in the coordinate system of the DTM. If this parameter is not set, the observation points will correspond to the sampling layer from the \verb|-sampling| parameter.
 	\item \verb|inverse| : reverse mode, the point O becomes the observed point
 	\item \verb|resfile=raster.tif| : allow to specify another name for the file storing the result
 \end{itemize}
@@ -684,50 +724,49 @@ In this raster, all pixels set to 1 represents the viewshed, other pixels are se
 \subsubsection{Examples}
 The example below calculates the viewshed for an observer located at the point (925560, 6702495). The result is stored in the projet folder in a file named : \verb|viewshed-925560,6702495.tif|.
 \begin{Verbatim}
-	--viewshed 925560 6702495
+	--viewshed point=925560,6702495
 \end{Verbatim}
 
 This second example calculates the viewshed in reverse mode (ie. the given coordinates represent the observed point) and stored the result in the file \verb|bassin1.tif|.
 \begin{Verbatim}
-	--viewshed inverse 925560 6702495 resfile=bassin1.tif
+	--viewshed inverse point=925560,6702495 resname=bassin1
 \end{Verbatim}
 
 \subsection{--viewtan : tangential view}
 \begin{Verbatim}[commandchars=\\\{\}]
---viewtan [prec=\textit{deg}] \textit{x} \textit{y} [resname=\textit{name}]
+--viewtan [prec=\textit{deg}] [point=\textit{x},\textit{y}] [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Required parameters}
-\begin{itemize}
-	\item \verb|x| : abscissa of the observation point in the coordinate system of the DTM
-	\item \verb|y| : ordinate of the observation point in the coordinate system of the DTM
-\end{itemize}
+None
 
 \subsubsection{Optional parameters}
 \begin{itemize}
+	\item \verb|point| : coordinates of the observation point in the coordinate system of the DTM. If this parameter is not set, the observation points will correspond to the sampling layer from the \verb|-sampling| parameter.
 	\item \verb|prec=deg| : angular precision in degrees. If this parameter is not set, the angular precision stored in the project will be used.
 	\item \verb|resname=name| : allow to specify another name for the files storing the result
 \end{itemize}
 
 \subsubsection{Description}
-The \verb|--viewtan| command allows to calculate the tangential view from an observation point. Results are stored in 2 or 3 raster files in Tiff format depending on whether the project contains a land use layer.
+The \verb|--viewtan| command allows to calculate the tangential view from an observation point. Results are stored in 2 or 3 raster files in Tiff format depending on whether the project contains a land use layer, and 
+ainsi qu'un fichier au format png pour un rendu visuel plus claire reprenant les codes couleurs des classes d'occupation du sol.
 \begin{itemize}
 	\item \verb|elev| : elevation of the DTM
 	\item \verb|dist| : 2D distance from the observation point
-	\item \verb|land| : land use, if present in the project
+	\item \verb|land| : land use, if present in the project, in tiff and png formats
 \end{itemize}
 
 The rasters size depends on the angular precision. For a precision of 0.1° and an amplitude of 360°, the rasters size will be 3600x1800 pixels. Their coordinate system unit is set in degrees.
 
 \subsubsection{Examples}
-The example below calculates the tangential view for an observer located at the point (925560, 6702495). The result is stored in the projet folder in a files named: \verb|viewtan-925560,6702495-elev.tif|, \verb|viewtan-925560,6702495-dist.tif| and \verb|viewtan-925560,6702495-land.tif| if the project contains a land use layer.
+The example below calculates the tangential view for an observer located at the point (925560, 6702495). The result is stored in the projet folder in a files named: \verb|viewtan-925560,6702495-elev.tif|, \verb|viewtan-925560,6702495-dist.tif|, \verb|viewtan-925560,6702495-land.tif| and \verb|viewtan-925560,6702495-land.png| if the project contains a land use layer.
 \begin{Verbatim}
-	--viewtan 925560 6702495
+	--viewtan point=925560,6702495
 \end{Verbatim}
 
 The second example calculates the tangential view with an angular precision of 0.05° and stored the result in the files \verb|view1-elev.tif|, \verb|view1-dist.tif| and \verb|view1-land.tif| if the project contains a land use layer.
 \begin{Verbatim}
-	--viewtan prec=0.05 925560 6702495 resname=view1
+	--viewtan prec=0.05 point=925560,6702495 resname=view1
 \end{Verbatim}
 
 
@@ -738,7 +777,7 @@ The second example calculates the tangential view with an angular precision of 0
 
 \subsubsection{Required parameter}
 \begin{itemize}
-	\item \verb/format=vector|raster/ : result format (shapefile or tiff)
+	\item \verb/format=vector|raster/ : result format (geopackage or tif)
 \end{itemize}
 
 \subsubsection{Optional parameters}
@@ -750,16 +789,16 @@ The second example calculates the tangential view with an angular precision of 0
 
 \subsubsection{Description}
 The \verb|--multiviewshed| command allows to calculate several viewsheds from a set of observation points. The observation points must be given by the \verb|-sampling| option. 
-The result is stored in a raster file or a shapefile depending on the selected format.
+The result is stored in a raster file or a vector layer depending on the selected format.
 
 In raster, the image has the same size as the DTM in Tiff format. In the raster, each pixel counts the number of times it is seen from the observation points and in reverse mode the number of points seen from this pixel. If the \verb|degree| option is used, each pixel represents the total visible area or height in degree of this pixel seen from all observation point. In reverse mode, each pixel contains the total visible area or height from this pixel to all observation points.
 
-In vector, the result is a shapefile storing the viewshed of each observation point.
+In vector, the result is a geopackage layer storing the viewshed of each observation point.
 
 \subsubsection{Example}
-The example below calculates the viewsheds of the observation points from the shapefile points.shp and stores the result in a shapefile in the project folder named: \verb|multiviewshed.shp|.
+The example below calculates the viewsheds of the observation points from the layer points.gpkg and stores the result in a geopackage file in the project folder named: \verb|multiviewshed.gpkg|.
 \begin{Verbatim}
--sampling points=points.shp id=fid --multiviewshed format=vector
+-sampling points=points.gpkg id=fid --multiviewshed format=vector
 \end{Verbatim}
 
 
@@ -785,7 +824,7 @@ The \verb|--planmetric| command allows to calculate a set of metrics in planimet
 The observation points are defined before with the global option \verb|-sampling|. 
 If this global option is not set, the default sampling is used, corresponding to all the pixels of the DTM ($n=1$).
 
-Results are stored in several rasters for a grid sampling and in one shapefile for a vector sampling.
+Results are stored in several rasters for a grid sampling and in one layer for a vector sampling.
 
 \subsubsection{Examples}
 The example below calculates the A metric without parameter. If the sampling is on the grid, the result will be stored in the file \verb|A-.tif|.
@@ -819,7 +858,7 @@ The example below calculates the A metric in reverse mode for the land use categ
 The \verb|--tanmetric| command allows to calculate a set of metrics in tangential view. The observation points are defined before with the global option \verb|-sampling|. 
 If this global option is not set, the default sampling is used, corresponding to all the pixels of the DTM ($n=1$).
 
-Results are stored in several rasters for a grid sampling and in one shapefile for a vector sampling.
+Results are stored in several rasters for a grid sampling and in one layer for a vector sampling.
 
 
 \subsubsection{Examples}
@@ -836,31 +875,31 @@ The example below calculates the tangential views with an angular precision of 0
 
 \subsection{--toobject : point to point visibility}
 \begin{Verbatim}[commandchars=\\\{\}]
---toobject [degree] [agreg=eye|object] objects=\textit{pointfile.shp} id=\textit{fieldname} [resname=\textit{name}]
+--toobject [degree=height|area] [agreg=eye|object] objects=\textit{pointfile.gpkg} id=\textit{fieldname} [resname=\textit{name}]
 \end{Verbatim}
 
 \subsubsection{Required parameters}
 \begin{itemize}
-	\item \verb|objects=pointfile.shp| : shapefile of observed points
-	\item \verb|id=fieldname| : shapefile field containing an identifier
+	\item \verb|objects=pointfile.gpkg| : layer of observed points
+	\item \verb|id=fieldname| : layer field containing an identifier
 \end{itemize}
 
 \subsubsection{Optional parameters}
 \begin{itemize}
-	\item \verb|degree| : angular result
+	\item \verb/degree=height|area/ : angular height or surface result
 	\item \verb/agreg=eye|object/ : aggregate results by observation point (\verb|eye|) or by observed point (\verb|object|)
 	\item \verb|resname=name| : allow to specify another name for the file storing the result
 \end{itemize}
 
 \subsubsection{Description}
 This command calculates the visibility between 2 sets of points. The observation points must be defined by the genral option \verb|-sampling points=...|. The observed points are defined by the parameter \verb|object|. The result is stored by default in the file \verb|toobject.csv|.\\
-Without verb|agreg| parameter, the result contains the list of points couples (observer, observed) where observer sees the observed point. If the \verb|degree| option is used, the column \verb|SurfView| of the result file contains the angular surface.\\
-With \verb|agreg| parameter, the result is aggregated by observer or observed point and the column \verb|SurfView| contains the sum of the grouped values.
+Without verb|agreg| parameter, the result contains the list of points couples (observer, observed) where observer sees the observed point. If the \verb|degree| option is used, the column \verb|View| of the result file contains the angular height or surface.\\
+With \verb|agreg| parameter, the result is aggregated by observer or observed point and the column \verb|View| contains the sum of the grouped values.
 
 \subsubsection{Example}
-This example calculates the intervisibility of the points given in points.shp and stores the result in the file \verb|toobject.csv| in project directory. In this example, observation and observed points are the same.
+This example calculates the intervisibility of the points given in points.gpkg and stores the result in the file \verb|toobject.csv| in project directory. In this example, observation and observed points are the same.
 \begin{Verbatim}
--sampling points=points.shp id=id --toobject objects=points.shp id=id
+-sampling points=points.gpkg id=id --toobject objects=points.gpkg id=id
 \end{Verbatim}
 
 
@@ -940,7 +979,7 @@ If this option is not set, the settings recorded in the project will be used ins
 
 \subsection{Sampling : -sampling}
 \begin{Verbatim}[commandchars=\\\{\}]
--sampling n=\textit{val} | land=\textit{code1,..,coden} | points=\textit{pointfile.shp} id=\textit{fieldname}
+-sampling n=\textit{val} | land=\textit{code1,..,coden} | points=\textit{pointfile.gpkg} id=\textit{fieldname}
 \end{Verbatim}
 The sampling defining the observation points can be given in raster (grid sampling) or in vector form (point sampling). For more details on how sampling works, see \nameref{sampling}.
 
@@ -956,10 +995,10 @@ The grid sampling can be used only by \verb|--planmetric| and \verb|--tanmetric|
 
 \subsubsection{Point sampling (vector)}
 \begin{Verbatim}[commandchars=\\\{\}]
--sampling points=\textit{pointfile.shp} id=\textit{fieldname}
+-sampling points=\textit{pointfile.gpkg} id=\textit{fieldname}
 \end{Verbatim}
-Point sampling needs a shapefile of points with an identifier field.
-The result of \verb|--planmetric| and \verb|--tanmetric| commands is stored in a shapefile named \verb|metrics-pointfile.shp|.
+Point sampling needs a layer of points with an identifier field.
+The result of \verb|--planmetric| and \verb|--tanmetric| commands is stored in a layer named \verb|metrics-pointfile.gpkg|.
 
 The point sampling can be used by \verb|--planmetric|, \verb|--tanmetric| and \verb|--multiviewshed| commands.
 
@@ -991,16 +1030,16 @@ In this section, some examples of complete command lines are shown.
 \subsubsection{Simple example}
 \begin{Verbatim}
 java -jar pixscape-1.0.jar --project Project1/Project1.xml 
-	-sampling points=Points_IDF.shp id=Id 
+	-sampling points=Points_IDF.gpkg id=Id 
 	--tanmetric A SL DL
 \end{Verbatim}
 
-The example above loads the project \verb|Project1/Project1.xml| and calculates several tangential metrics (\verb|--tanmetric A SL DL|) from a set of observation points defined in the shapefile \verb|Points_IDF.shp|. The result will be saved in a shapefile named \verb|metrics-Points_IDF.shp|, containing the observation points, and the values of the 3 metrics.
+The example above loads the project \verb|Project1/Project1.xml| and calculates several tangential metrics (\verb|--tanmetric A SL DL|) from a set of observation points defined in the layer \verb|Points_IDF.gpkg|. The result will be saved in a layer named \verb|metrics-Points_IDF.gpkg|, containing the observation points, and the values of the 3 metrics.
 
 \subsubsection{Complete example}
 \begin{Verbatim}
 java -Xmx4g -jar  pixscape-1.0.jar -proc 8 --project Project1/Project1.xml -zeye 1.75
-	-resdir res_tan -bounds zmin=-20 zmax=30 -sampling points=Points_IDF.shp 
+	-resdir res_tan -bounds zmin=-20 zmax=30 -sampling points=Points_IDF.gpkg 
 	id=Id --tanmetric prec=0.01 A_0,100,1000,+Infinity A[5] A[6] SL DL
 \end{Verbatim}
 

@@ -31,9 +31,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.common.ProgressBar;
-import org.thema.data.GlobalDataStore;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
+import org.thema.data.IOFeature;
 import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
@@ -131,7 +131,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
     public void init() {
         try {
             // needed for getSplitRange
-            points = GlobalDataStore.getFeatures(pointFile, idField, null);
+            points = IOFeature.loadFeatures(pointFile, idField);
             super.init(); 
             // useful for MPI only, because project is not serializable
             if(project == null) {
@@ -218,7 +218,7 @@ public class PointMetricTask extends AbstractParallelTask<List<DefaultFeature>, 
         super.finish(); 
         if(isSaved()) {
             try {
-                DefaultFeature.saveFeatures(getResult(), getResultFile());
+                IOFeature.saveFeatures(getResult(), getResultFile(), project.getCRS());
             } catch (IOException ex) {
                 Logger.getLogger(PointMetricTask.class.getName()).log(Level.SEVERE, null, ex);
             } 

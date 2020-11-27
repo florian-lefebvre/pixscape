@@ -136,8 +136,8 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         landCodeRadioButton = new javax.swing.JRadioButton();
         sampleSpinner = new javax.swing.JSpinner();
         landCodesTextField = new javax.swing.JTextField();
-        pointShpPanel = new org.thema.pixscape.PointShpPanel();
         jLabel1 = new javax.swing.JLabel();
+        selectVectorLayerPanel1 = new org.thema.data.ui.SelectVectorLayerPanel();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         metricList = new javax.swing.JList();
@@ -200,7 +200,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, gridRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), landCodeRadioButton, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        sampleSpinner.setModel(new javax.swing.SpinnerNumberModel(Integer.valueOf(1), Integer.valueOf(1), null, Integer.valueOf(1)));
+        sampleSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, gridRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), sampleSpinner, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
@@ -208,10 +208,10 @@ public class ViewMetricDialog extends javax.swing.JDialog {
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, gridRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), landCodesTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, pointRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), pointShpPanel, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
-        bindingGroup.addBinding(binding);
-
         jLabel1.setText(bundle.getString("ViewMetricDialog.jLabel1.text")); // NOI18N
+
+        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, pointRadioButton, org.jdesktop.beansbinding.ELProperty.create("${selected}"), selectVectorLayerPanel1, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
+        bindingGroup.addBinding(binding);
 
         org.jdesktop.layout.GroupLayout jPanel2Layout = new org.jdesktop.layout.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -221,26 +221,31 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                 .addContainerGap()
                 .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(jPanel2Layout.createSequentialGroup()
-                        .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(gridRadioButton)
-                            .add(pointRadioButton))
-                        .add(0, 0, Short.MAX_VALUE))
-                    .add(jPanel2Layout.createSequentialGroup()
                         .add(12, 12, 12)
+                        .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .add(jPanel2Layout.createSequentialGroup()
                         .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                             .add(jPanel2Layout.createSequentialGroup()
-                                .add(landCodeRadioButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(landCodesTextField))
-                            .add(jPanel2Layout.createSequentialGroup()
-                                .add(sampingRadioButton)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(sampleSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 66, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(jLabel1)
+                                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(gridRadioButton)
+                                    .add(pointRadioButton))
                                 .add(0, 0, Short.MAX_VALUE))
-                            .add(pointShpPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addContainerGap())
+                            .add(jPanel2Layout.createSequentialGroup()
+                                .add(12, 12, 12)
+                                .add(jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                    .add(jPanel2Layout.createSequentialGroup()
+                                        .add(landCodeRadioButton)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                        .add(landCodesTextField))
+                                    .add(jPanel2Layout.createSequentialGroup()
+                                        .add(sampingRadioButton)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                        .add(sampleSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 66, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                                        .add(jLabel1)
+                                        .add(0, 0, Short.MAX_VALUE)))))
+                        .addContainerGap())))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -259,7 +264,7 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                 .add(18, 18, 18)
                 .add(pointRadioButton)
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .add(pointShpPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
         );
 
         jPanel1.setBorder(javax.swing.BorderFactory.createTitledBorder(bundle.getString("ViewMetricDialog.jPanel1.border.title"))); // NOI18N
@@ -397,8 +402,8 @@ public class ViewMetricDialog extends javax.swing.JDialog {
                 sample = (int) sampleSpinner.getValue();
             }
         } else {
-            pointFile = pointShpPanel.getPointFile();
-            idField = pointShpPanel.getIdField();
+            pointFile = selectVectorLayerPanel1.getSelectedFile();
+            idField = selectVectorLayerPanel1.getIdField();
         }
         zDest = Double.parseDouble(zDestTextField.getText());
         metrics = (List)Arrays.asList(((DefaultListModel)metricList.getModel()).toArray());
@@ -486,10 +491,10 @@ public class ViewMetricDialog extends javax.swing.JDialog {
     private javax.swing.JList metricList;
     private javax.swing.JButton okButton;
     private javax.swing.JRadioButton pointRadioButton;
-    private org.thema.pixscape.PointShpPanel pointShpPanel;
     private javax.swing.JButton removeButton;
     private javax.swing.JRadioButton sampingRadioButton;
     private javax.swing.JSpinner sampleSpinner;
+    private org.thema.data.ui.SelectVectorLayerPanel selectVectorLayerPanel1;
     private javax.swing.JLabel zDestLabel;
     private javax.swing.JTextField zDestTextField;
     private org.jdesktop.beansbinding.BindingGroup bindingGroup;

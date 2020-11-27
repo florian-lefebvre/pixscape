@@ -1,5 +1,16 @@
 ## Changelog
 
+##### version 1.2.1
+ - UI : Multiviewshed in vector are empty
+ - Geopackage format is used by default for vectorial data
+ - Bug (IndeOutOfBoundsException) while exporting metrics in shapefile or geopackage when metrics name contains several land codes
+ - CLI : --toobject several optimizations
+ - CLI : add command --create for creating a new project
+ - CLI : add command --addscale for adding new scale data to a project
+ - CLI : --viewshed and --viewtan command can be used whith point sampling to calculate several views
+ - CLI : --viewtan command exports the land view also in png
+ - CLI : --toobject add distance and azimuth to result when no agreg
+
 ##### version 1.2 (29/11/2019)
 - Multiviewshed can also store the angular height in raster
 - CLI : --toobject command may store angular height or angular area (degree option)

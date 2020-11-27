@@ -59,6 +59,8 @@ public final class ScaleData {
     private transient Raster land, dsm;
     private transient Double maxZ;
     
+    private transient GridGeometry2D gridGeom;
+    
     private SortedSet<Integer> codes;
     
 
@@ -217,7 +219,10 @@ public final class ScaleData {
      * @return grid geometry of the coverage
      */
     public final GridGeometry2D getGridGeometry() {
-        return dtmCov.getGridGeometry();
+        if(gridGeom == null) {
+            gridGeom = dtmCov.getGridGeometry();
+        }
+        return gridGeom;
     }
     
     /**

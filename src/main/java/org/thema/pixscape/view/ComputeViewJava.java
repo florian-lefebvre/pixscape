@@ -93,8 +93,20 @@ public final class ComputeViewJava extends SimpleComputeView {
                 return area ? rad2deg2(Math.pow(2*(a1-a2), 2)) : rad2deg(2*(a1-a2));
             }
         }
+        // max slope at end point
+        double zEnd = dtmBuf[ind1] + (destZ == -1 ? (dsmBuf != null ? dsmBuf.getElemDouble(ind1) : 0) : destZ);
+        double dTot = c0.distance(c1) * res;
+        if(isEarthCurv()) {
+            zEnd -= (1 - getCoefRefraction()) * dTot*dTot / EARTH_DIAM;
+        }
+        double zzEnd = zEnd - z0;
+        double maxSlopeBound = Math.min(zzEnd / (dTot-dd*Math.signum(zzEnd)*res/2), bounds.getSlopemax());
+        
         double maxSlope = Math.max(-startZ / (res/2), bounds.getSlopemin());
-        while(ind != ind1) {           
+        while(ind != ind1) {   
+            if(maxSlope > maxSlopeBound) {
+                return 0;
+            }
             final int e2 = (err << 1);
             if(e2 > -dy) {
                 err -= dy;
@@ -122,15 +134,9 @@ public final class ComputeViewJava extends SimpleComputeView {
                 z -= (1 - getCoefRefraction()) * dist*dist / EARTH_DIAM;
             }
             final double zSurf = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
-            final double zView = destZ == -1 ? zSurf : (z + destZ);
-
-            final double zzSurf = (zSurf - z0);
-            final double slopeSurf = zzSurf / (dist-dd*Math.signum(zzSurf)*res/2);
-            if(slopeSurf > bounds.getSlopemax()) {
-                return 0;
-            }
 
             if(ind == ind1 && dist >= bounds.getDmin()) {
+                final double zView = destZ == -1 ? zSurf : (z + destZ);
                 final double zzView = (zView - z0);
                 final double slopeView = zzView / (dist-dd*Math.signum(zzView)*res/2);
                 if(slopeView > maxSlope) {
@@ -140,6 +146,9 @@ public final class ComputeViewJava extends SimpleComputeView {
                 }
                 
             }
+            
+            final double zzSurf = (zSurf - z0);
+            final double slopeSurf = zzSurf / (dist-dd*Math.signum(zzSurf)*res/2);
             if(slopeSurf > maxSlope) {
                 maxSlope = slopeSurf;
             }

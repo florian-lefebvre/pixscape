@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,16 +35,22 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.feature.SchemaException;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
+import org.locationtech.jts.geom.Coordinate;
 import org.thema.common.Config;
 import org.thema.common.ConsoleProgress;
-import org.thema.data.GlobalDataStore;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
+import org.thema.data.IOFeature;
+import org.thema.drawshape.PanelMap;
+import org.thema.drawshape.image.RasterShape;
+import org.thema.drawshape.style.RasterStyle;
+import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
 import org.thema.parallel.ParallelExecutor;
 import org.thema.parallel.ParallelTask;
@@ -52,6 +59,7 @@ import org.thema.pixscape.Point2PointViewTask.Agreg;
 import org.thema.pixscape.metric.Metric;
 import org.thema.pixscape.metric.ViewShedMetric;
 import org.thema.pixscape.metric.ViewTanMetric;
+import org.thema.pixscape.view.MultiViewTanResult;
 import org.thema.pixscape.view.ViewTanResult;
 
 /**
@@ -76,40 +84,41 @@ public class CLITools {
      * @throws IOException
      * @throws SchemaException
      */
-    public void execute(String [] arg) throws IOException, SchemaException {
-        if(arg[0].equals("--help")) {
+    public void execute(String [] argarr) throws IOException, SchemaException {
+        if(argarr[0].equals("--help")) {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
-                    "java -jar pixscape.jar [-mpi | -proc n | -cuda n]\n"  +
-                    "--project project_file.xml\n" +
-                    "[--landmod zone=filezones.shp id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]\n" +
+                    "java -jar pixscape.jar --create prj_name dtm_raster_file [dsm=raster_file] [landuse=raster_file] [dir=path]\n" +
+                    "java -jar pixscape.jar [-mpi | -proc n | -cuda n] --project project_file.xml\n" +
+                    "[--landmod zone=filezones.gpkg id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
-                    "[-sampling n=val | land=code1,..,coden | points=pointfile.shp id=fieldname]\n" +
+                    "[-sampling n=val | land=code1,..,coden | points=pointfile.gpkg id=fieldname]\n" +
                     "[-multi dmin=val | -mono]\n" +
                     "[-earth flat|curved [refrac=val]]\n" +
                     " commands\n\n" +
                     "Commands list :\n" +
-                    "--viewshed [inverse] x y [resfile=raster.tif]\n" +
-                    "--viewtan [prec=deg] x y [resname=name]\n" +
+                    "--viewshed [inverse] [point=coord_x,coord_y] [resname=name]\n" +
+                    "--viewtan [prec=deg] [point=coord_x,coord_y] [resname=name]\n" +
                     "--multiviewshed format=vector|raster [inverse] [degree=height|area] [resname=name]\n" +
                     "--planmetric [inverse] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
                     "--tanmetric [prec=deg] metric1[[code1,...,coden]][_d1,...,dm] ... metricn[[code1,...,coden]][_d1,...,dm]\n" +
-                    "--toobject [degree=height|area] [agreg=eye|object] objects=pointfile.shp id=fieldname [resname=name]");
+                    "--toobject [degree=height|area] [agreg=eye|object] objects=pointfile.gpkg id=fieldname [resname=name]\n" +
+                    "--addscale dtm_raster_file [dsm=raster_file] [landuse=raster_file]\n");
             return;
         }
         
-        if(arg[0].equals("--metrics")) {
+        if(argarr[0].equals("--metrics")) {
             showMetrics();
             return;
         }
         
         Config.setProgressBar(new ConsoleProgress());
 
-        List<String> args = new ArrayList<>(Arrays.asList(arg));
+        List<String> args = new ArrayList<>(Arrays.asList(argarr));
         int useCUDA = 0;
         
         // parallel options
-        while(!args.isEmpty() && !args.get(0).startsWith("--project")) {
+        while(!args.isEmpty() && !args.get(0).startsWith("--")) {
             String p = args.remove(0);
             switch (p) {
                 case "-proc":
@@ -124,11 +133,14 @@ public class CLITools {
             }
         }
         if(args.isEmpty()) {
-            throw new IllegalArgumentException("Need --project");
+            throw new IllegalArgumentException("Need --project command");
         }
-        
-        args.remove(0);
-        project = Project.load(new File(args.remove(0)));
+        String arg = args.remove(0);
+        if(arg.equals("--create")) {
+            project = createProject(args);
+        } else {
+            project = Project.load(new File(args.remove(0)));
+        }
         project.setUseCUDA(useCUDA);
         resDir = project.getDirectory();
         zEye = project.getStartZ();
@@ -246,6 +258,9 @@ public class CLITools {
                     case "--toobject":
                         toObject(args);
                         break;   
+                    case "--addscale":
+                        addScale(args);
+                        break;   
                     default:
                         throw new IllegalArgumentException("Unknown command " + p);
                 }
@@ -258,56 +273,105 @@ public class CLITools {
     }
 
     private void viewShed(List<String> args) throws IOException {   
-        if(args.size() < 2) {
-            throw new IllegalArgumentException("viewshed command needs at least 2 parameters");
-        }
-        boolean inverse = false;
-        if(args.get(0).equals("inverse")) {
-            inverse = true;
-            args.remove(0);
-        }
+        Map<String, String> params = extractAndCheckParams(args, Collections.EMPTY_LIST, Arrays.asList("inverse", "resname", "coord"));
+        boolean inverse = params.containsKey("inverse");
         
-        DirectPosition2D c = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
-        
-        File f = new File(resDir, "viewshed-" + c.x + "," + c.y + (inverse ? "-inverse" : "") + ".tif");
-        if(!args.isEmpty() && args.get(0).startsWith("resfile=")) {
-            f = new File(resDir, args.remove(0).split("=")[1]);
+        String name = null;
+        if(params.containsKey("resname")) {
+            name = params.get("resname");
         }
         
-        Raster view = project.getDefaultComputeView().calcViewShed(c, zEye, zDest, inverse, bounds).getView();
-        IOImage.saveTiffCoverage(f,
-                new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()));
+        if(params.containsKey("coord")) {
+            String[] coords = params.get("coord").split(",");
+            DirectPosition2D p = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+            Raster view = project.getDefaultComputeView().calcViewShed(p, zEye, zDest, inverse, bounds).getView();
+            IOImage.saveTiffCoverage(new File(resDir, (name == null ? "viewshed-" + p.x + "," + p.y : name) + ".tif"),
+                    new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()));
+        } else {
+            if(name == null) {
+                name = "viewshed"+ (inverse ? "-inverse" : "");
+            }
+            List<DefaultFeature> points = IOFeature.loadFeatures(pointFile, idField);
+            for(Feature p : points) {
+                Bounds b = bounds.updateBounds(p);
+                double zE = zEye;
+                double zD = zDest;
+                if(p.getAttributeNames().contains("height")) {
+                    if(inverse) {
+                        zD = ((Number)p.getAttribute("height")).doubleValue();
+                    } else {
+                        zE = ((Number)p.getAttribute("height")).doubleValue();
+                    }
+                }
+                Raster view = project.getDefaultComputeView().calcViewShed(
+                        new DirectPosition2D(p.getGeometry().getCoordinate().x, p.getGeometry().getCoordinate().y),
+                        zE, zD, inverse, b).getView();
+                IOImage.saveTiffCoverage(new File(resDir, name + "_" + p.getId() + ".tif"),
+                        new GridCoverageFactory().create("view", (WritableRaster)view, project.getDtmCov().getEnvelope2D()));
+                
+            }
+        } 
 
     }
     
     private void viewTan(List<String> args) throws IOException {
-        
-        if(args.size() < 2) {
-            throw new IllegalArgumentException("viewtan command needs at least 2 parameters");
-        }
+        Map<String, String> params = extractAndCheckParams(args, Collections.EMPTY_LIST, Arrays.asList("prec", "resname", "coord"));
 
-        if(args.get(0).startsWith("prec=")) {
-            double aPrec = Double.parseDouble(args.remove(0).split("=")[1]);
+        if(params.containsKey("prec")) {
+            double aPrec = Double.parseDouble(params.get("prec"));
             project.setAlphaPrec(aPrec);
         }
-   
-        DirectPosition2D p = new DirectPosition2D(Double.parseDouble(args.remove(0)), Double.parseDouble(args.remove(0)));
         
-        String name = "viewtan-" + p.x + "," + p.y;
-        if(!args.isEmpty() && args.get(0).startsWith("resname=")) {
-            name = args.remove(0).split("=")[1];
+        String name = null;
+        if(params.containsKey("resname")) {
+            name = params.get("resname");
         }
         
-        ViewTanResult result = project.getDefaultComputeView().calcViewTan(p, zEye, bounds);
-
-        Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, -90, bounds.getAmplitude(), 180);
-        IOImage.saveTiffCoverage(new File(resDir, name + "-elev.tif"),
-                new GridCoverageFactory().create("view", (WritableRaster)result.getElevationView(), env));
-        IOImage.saveTiffCoverage(new File(resDir, name + "-dist.tif"),
-                new GridCoverageFactory().create("view", (WritableRaster)result.getDistanceView(), env));
+        if(params.containsKey("coord")) {
+            String[] coords = params.get("coord").split(",");
+            DirectPosition2D p = new DirectPosition2D(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
+            calcViewTan(p, zEye, bounds, name == null ? "viewtan-" + p.x + "," + p.y : name);
+        } else {
+            if(name == null) {
+                name = "viewtan";
+            }
+            List<DefaultFeature> points = IOFeature.loadFeatures(pointFile, idField);
+            for(Feature p : points) {
+                Bounds b = bounds.updateBounds(p);
+                double height = zEye;
+                if(p.getAttributeNames().contains("height")) {
+                    height = ((Number)p.getAttribute("height")).doubleValue();
+                }
+                calcViewTan(new DirectPosition2D(p.getGeometry().getCoordinate().x, p.getGeometry().getCoordinate().y), height, b, name + "_" + p.getId());
+            }
+        }
+    }
+        
+    private void calcViewTan(DirectPosition2D p, double height, Bounds bounds, String name) throws IOException {
+        ViewTanResult result = project.getDefaultComputeView().calcViewTan(p, height, bounds);
+        int yMin = (int) ((90-bounds.getZMax()) / project.getAlphaPrec());
+        int yMax = (int) ((90-bounds.getZMin()) / project.getAlphaPrec());
+        Envelope2D env = new Envelope2D(null, bounds.getOrientation()-bounds.getAmplitude()/2, bounds.getZMin(), bounds.getAmplitude(), bounds.getZMax()-bounds.getZMin());
+        if(!(result instanceof MultiViewTanResult)) {
+            IOImage.saveTiffCoverage(new File(resDir, name + "-elev.tif"),
+                    new GridCoverageFactory().create("view", ((WritableRaster)result.getElevationView())
+                            .createWritableChild(0, yMin, result.getThetaWidth(), yMax-yMin, 0, 0, null), env));
+            IOImage.saveTiffCoverage(new File(resDir, name + "-dist.tif"),
+                    new GridCoverageFactory().create("view", ((WritableRaster)result.getDistanceView())
+                            .createWritableChild(0, yMin, result.getThetaWidth(), yMax-yMin, 0, 0, null), env));
+        }
         if(project.hasLandUse()) {
-            IOImage.saveTiffCoverage(new File(resDir, name + "-land.tif"),
-                    new GridCoverageFactory().create("view", (WritableRaster)result.getLanduseView(), env));
+            GridCoverage2D cov = new GridCoverageFactory().create("view", ((WritableRaster)result.getLanduseView())
+                    .createWritableChild(0, yMin, result.getThetaWidth(), yMax-yMin, 0, 0, null), env);
+            IOImage.saveTiffCoverage(new File(resDir, name + "-land.tif"), cov);
+
+            PanelMap map = new PanelMap();
+            RasterStyle s = new RasterStyle(new UniqueColorTable((Map)project.getLandColors()), false, false);
+            s.setNoDataValue(-1);
+            map.addShape(new RasterShape(((WritableRaster)result.getLanduseView())
+                    .createWritableChild(0, yMin, result.getThetaWidth(), yMax-yMin, 0, 0, null), env, s, true));
+            map.exportPng(new File(resDir, name + "-land.png"), result.getThetaWidth());
+           
         }
 
     }
@@ -331,7 +395,7 @@ public class CLITools {
             name = params.get("resname");
         }
         
-        List<Feature> points = (List)GlobalDataStore.getFeatures(pointFile, idField, null);
+        List<Feature> points = (List)IOFeature.loadFeatures(pointFile, idField);
         MultiViewshedTask task = new MultiViewshedTask(points, project, inverse, zDest, bounds, vectorOutput, outValue, Config.getProgressBar("MultiViewshed"));
         
         ExecutorService.execute(task);
@@ -424,28 +488,36 @@ public class CLITools {
         Map result = task.getResult();
         
         if(agreg == null) {
+            List<DefaultFeature> eyePoints = IOFeature.loadFeatures(pointFile, idField);
+            List<DefaultFeature> objPoints = IOFeature.loadFeatures(objFile, objId);
             File f = new File(resDir, resname + ".csv");
             try (CSVWriter w = new CSVWriter(new FileWriter(f))) {
-                w.writeNext(new String[]{"IdEye", "IdObj", "View"});
-                for(Object idEye : result.keySet()) {
-                    Map objs = (Map)result.get(idEye);
-                    for(Object idObj : objs.keySet()) {
-                        double view = (double) objs.get(idObj);
-                        if(view > 0) {
-                            w.writeNext(new String[]{idEye.toString(), idObj.toString(), String.valueOf(view)});
+                w.writeNext(new String[]{"IdEye", "IdObj", "View", "Dist", "Azimuth"});
+                for(Feature eye : eyePoints) {
+                    if(result.containsKey(eye.getId())) {
+                        Map objs = (Map)result.get(eye.getId());
+                        for(Feature obj : objPoints) {
+                            if(objs.containsKey(obj.getId())) {
+                                double view = (double) objs.get(obj.getId());
+                                Coordinate c0 = eye.getGeometry().getCoordinate();
+                                Coordinate c1 = obj.getGeometry().getCoordinate();
+                                w.writeNext(new String[]{eye.getId().toString(), obj.getId().toString(), String.valueOf(view),
+                                    String.valueOf(c0.distance(c1)), 
+                                    String.valueOf(Bounds.rad2deg(Math.atan2(c0.y-c1.y, c1.x-c0.x)))});
+                            }
                         }
                     }
                 }
             }
         } else {
-            File f = new File(resDir, resname + ".shp");
-            List<DefaultFeature> points = agreg == Agreg.EYE ? (List)GlobalDataStore.getFeatures(pointFile, idField, null) : 
-                    GlobalDataStore.getFeatures(objFile, objId, null);
+            List<DefaultFeature> points = agreg == Agreg.EYE ? (List)IOFeature.loadFeatures(pointFile, idField) : 
+                    IOFeature.loadFeatures(objFile, objId);
             DefaultFeature.addAttribute("TotView", points, 0.0);
             for(DefaultFeature point : points) {
                 point.setAttribute("TotView", result.get(point.getId()));
             }
-            DefaultFeature.saveFeatures(points, f);
+            File f = new File(resDir, resname + ".gpkg");
+            IOFeature.saveFeatures(points, f);
         }
     }
     
@@ -465,6 +537,41 @@ public class CLITools {
         args.clear();
     }
     
+    
+    private Project createProject(List<String> args) throws IOException {
+        String name = args.remove(0);
+        File dtm = new File(args.remove(0));
+        Map<String, String> params = extractAndCheckParams(args, Collections.EMPTY_LIST, Arrays.asList("landuse", "dsm", "dir"));
+        File dir = new File(params.containsKey("dir") ? params.get("dir") : name);
+        
+        GridCoverage2D dtmCov = IOImage.loadCoverage(dtm);
+        Project prj = new Project(name, dir, dtmCov, 1);
+        if(params.containsKey("dsm")) {
+            prj.setDSM(IOImage.loadCoverage(new File(params.get("dsm"))));
+        }
+        if(params.containsKey("landuse")) {
+            prj.setLandUse(IOImage.loadCoverage(new File(params.get("landuse"))));
+        }
+        
+        return prj;
+    }
+    
+    private void addScale(List<String> args) throws IOException {
+        File dtm = new File(args.remove(0));
+        Map<String, String> params = extractAndCheckParams(args, Collections.EMPTY_LIST, Arrays.asList("landuse", "dsm"));
+        GridCoverage2D dtmCov = IOImage.loadCoverage(dtm);
+        Raster land = null, dsm = null;
+        if(params.containsKey("dsm")) {
+            dsm = IOImage.loadCoverage(new File(params.get("dsm"))).getRenderedImage().getData();
+        }
+        if(params.containsKey("landuse")) {
+            land = IOImage.loadCoverage(new File(params.get("landuse"))).getRenderedImage().getData();
+        }
+        
+        project.addScaleData(new ScaleData(dtmCov, land, dsm));
+    }
+
+     
     private void showMetrics() {
         System.out.println("===== Metrics =====");
         for(Metric indice : Project.getMetrics(Metric.class)) {
@@ -476,7 +583,7 @@ public class CLITools {
     private static Map<String, String> extractAndCheckParams(List<String> args, List<String> mandatoryParams, List<String> optionalParams) {
         Map<String, String> params = new LinkedHashMap<>();
                 
-        while(!args.isEmpty() && !args.get(0).startsWith("--")) {
+        while(!args.isEmpty() && !args.get(0).startsWith("-")) {
             String arg = args.remove(0);
             if(arg.contains("=")) {
                 String[] tok = arg.split("=");
@@ -505,5 +612,5 @@ public class CLITools {
         
         return params;
     }
-    
+
 }

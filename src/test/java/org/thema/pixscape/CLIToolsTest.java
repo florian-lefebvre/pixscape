@@ -112,7 +112,7 @@ public class CLIToolsTest {
                     params.addAll(Arrays.asList("--project", project.getProjectFile().getAbsolutePath()));
                     params.addAll(opt2);
                     params.addAll(Arrays.asList(tokens));
-                    params.add("resfile=viewshed.tif");
+                    params.add("resname=viewshed");
                     new CLITools().execute(params.toArray(new String[0]));
                     
                     // compare

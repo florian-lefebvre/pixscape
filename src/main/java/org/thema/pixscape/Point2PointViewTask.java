@@ -26,8 +26,8 @@ import java.util.Map;
 import org.geotools.coverage.grid.GridCoordinates2D;
 import org.geotools.geometry.DirectPosition2D;
 import org.thema.common.ProgressBar;
-import org.thema.data.GlobalDataStore;
 import org.thema.data.feature.Feature;
+import org.thema.data.IOFeature;
 import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.MultiViewshedTask.RasterValue;
 import org.thema.pixscape.view.SimpleComputeView;
@@ -89,8 +89,8 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     @Override
     public void init() {
         try {
-            eyePoints = GlobalDataStore.getFeatures(pointEyeFile, idEyeField, null);
-            objPoints = GlobalDataStore.getFeatures(pointObjFile, idObjField, null);
+            eyePoints = IOFeature.loadFeatures(pointEyeFile, idEyeField);
+            objPoints = IOFeature.loadFeatures(pointObjFile, idObjField);
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -110,6 +110,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     @Override
     public Map execute(int start, int end) {
         Map map = new HashMap();
+        SimpleComputeView compute = project.getSimpleComputeView();
         for(Feature point : eyePoints.subList(start, end)) {
             Point p = (Point) point.getGeometry();
             Bounds b = bounds.updateBounds(point);
@@ -117,7 +118,6 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
             if(point.getAttributeNames().contains("height")) {
                 zOrig = ((Number)point.getAttribute("height")).doubleValue();
             }
-            SimpleComputeView compute = project.getSimpleComputeView();
             GridCoordinates2D orig = compute.getData().getWorld2Grid(new DirectPosition2D(p.getX(), p.getY()));
             Map<Object, Double> objs = agreg == null ? new HashMap<>() : map;
             double sum = 0; // for agreg == eye
@@ -127,14 +127,16 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
                     zDest = ((Number)obj.getAttribute("height")).doubleValue();
                 }
                 p = (Point) obj.getGeometry();
-                GridCoordinates2D dest = project.getSimpleComputeView().getData().getWorld2Grid(new DirectPosition2D(p.getX(), p.getY()));
+                GridCoordinates2D dest = compute.getData().getWorld2Grid(new DirectPosition2D(p.getX(), p.getY()));
                 double val = compute.calcRay(orig, zOrig, dest, zDest, b, outValue == RasterValue.AREA);
                 if(outValue == RasterValue.COUNT) {
                     val = val > 0 ? 1.0 : 0.0;
                 }
                 
                 if(agreg == null) {
-                    objs.put(obj.getId(), val);
+                    if(val > 0) {
+                        objs.put(obj.getId(), val);
+                    }
                 } else if(agreg == Agreg.EYE) {
                     sum += val;
                 } else {
@@ -152,6 +154,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
                 // does nothing cause map = objs
             }
             
+            incProgress(1);
         }
         
         return map;

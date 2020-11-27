@@ -6,7 +6,7 @@
 0.034681793 2.4250631 1.5052851 2.6933558 3.8262992 
 3.8077042 0.33008903 4.6950197 1.4341137 2.3362474 
 
--zeye 2 --viewshed 1 5
+-zeye 2 --viewshed coord=1,5
 1 1 1 1 1 
 1 1 1 1 1 
 1 0 1 1 1 
@@ -21,49 +21,49 @@
 0 0 0 0 0
 0 0 0 0 0
 
--zeye 1 -earth flat --viewshed 2 3
+-zeye 1 -earth flat --viewshed coord=2,3
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 
--zeye 1 --viewshed inverse 2 3
+-zeye 1 --viewshed inverse coord=2,3
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 
--zeye 1 -bounds dmin=0 dmax=10 orien=0 amp=360 zmin=-90 zmax=90 --viewshed 2 3
+-zeye 1 -bounds dmin=0 dmax=10 orien=0 amp=360 zmin=-90 zmax=90 --viewshed coord=2,3
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 
--zeye 1 -bounds dmin=1 dmax=2 orien=0 amp=91 --viewshed 2 3
+-zeye 1 -bounds dmin=1 dmax=2 orien=0 amp=91 --viewshed coord=2,3
 0 0 0 0 0
 0 1 1 1 0
 0 0 0 0 0
 0 0 0 0 0
 0 0 0 0 0
 
--zeye 1 -bounds orien=0 amp=180 zmin=-45 zmax=0 --viewshed 2 3
+-zeye 1 -bounds orien=0 amp=180 zmin=-45 zmax=0 --viewshed coord=2,3
 1 1 1 1 1
 1 1 0 1 1
 1 0 0 0 1
 0 0 0 0 0
 0 0 0 0 0
 
--zeye 0 --viewshed 2 3
+-zeye 0 --viewshed coord=2,3
 0 0 0 0 0
 0 1 1 1 0
 0 1 1 1 0
 0 1 1 1 0
 0 0 0 0 0
 
--zeye 0 --viewshed inverse 2 3
+-zeye 0 --viewshed inverse coord=2,3
 0 0 0 0 0
 0 1 1 1 0
 0 1 1 1 0
@@ -78,21 +78,21 @@
 0 1 2 3 0
 0 0 0 0 0
 
--zeye 3 --viewshed 2 3
+-zeye 3 --viewshed coord=2,3
 1 0 0 0 0
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 0 0 0 0
 
--zeye 1 -zdest 3.5 --viewshed 2 3
+-zeye 1 -zdest 3.5 --viewshed coord=2,3
 1 1 1 1 0
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 1
 1 1 1 1 0
 
--zeye 1 -zdest 3.5 --viewshed inverse 2 3
+-zeye 1 -zdest 3.5 --viewshed inverse coord=2,3
 1 1 1 1 0
 1 1 1 1 1
 1 1 1 1 1
@@ -112,7 +112,7 @@
 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0
 
--zeye 0.000001 -earth curved refrac=0 --viewshed  4 5
+-zeye 0.000001 -earth curved refrac=0 --viewshed coord=4,5
 0 0 0 0 0 0 0 0 0 0 
 0 0 0 0 1 0 0 0 0 0 
 0 1 1 1 1 1 1 1 0 0 
@@ -124,7 +124,7 @@
 0 1 1 1 1 1 1 1 0 0 
 0 0 0 0 1 0 0 0 0 0
 
--zeye 0.000001 -earth curved refrac=0 --viewshed inverse 4 5
+-zeye 0.000001 -earth curved refrac=0 --viewshed inverse coord=4,5
 0 0 0 0 0 0 0 0 0 0 
 0 0 0 0 1 0 0 0 0 0 
 0 1 1 1 1 1 1 1 0 0 
@@ -136,7 +136,7 @@
 0 1 1 1 1 1 1 1 0 0 
 0 0 0 0 1 0 0 0 0 0
 
--zeye 0.0000005 -earth curved refrac=0.1 --viewshed  4 5
+-zeye 0.0000005 -earth curved refrac=0.1 --viewshed  coord=4,5
 0 0 0 0 0 0 0 0 0 0 
 0 0 0 0 0 0 0 0 0 0 
 0 0 0 1 1 1 0 0 0 0 

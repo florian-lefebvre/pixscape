@@ -34,6 +34,7 @@ import org.thema.common.ProgressBar;
 import org.thema.data.IOImage;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
+import org.thema.data.IOFeature;
 import org.thema.parallel.AbstractParallelTask;
 import org.thema.pixscape.view.ViewShedResult;
 
@@ -178,7 +179,7 @@ public class MultiViewshedTask extends AbstractParallelTask<Object, Object> {
             if(name == null) {
                 name = "multiviewshed" + (inverse ? "-inverse" : "");
             }
-            DefaultFeature.saveFeatures(viewSheds, new File(dir, name + ".shp"), project.getCRS());
+            IOFeature.saveFeatures(viewSheds, new File(dir, name + ".gpkg"), project.getCRS());
         } else {
             Envelope2D env = project.getDtmCov().getEnvelope2D();
             env.setCoordinateReferenceSystem(project.getCRS());
@@ -191,6 +192,6 @@ public class MultiViewshedTask extends AbstractParallelTask<Object, Object> {
     }
     
     private boolean isDegree() {
-        return outValue != RasterValue.COUNT;
+        return outValue != RasterValue.COUNT && !vectorOutput;
     }
 }

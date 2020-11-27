@@ -370,20 +370,39 @@ public final class Bounds implements Serializable {
         if(f.getAttributeNames().contains(ZMIN)) {
             b.setZMin(((Number)f.getAttribute(ZMIN)).doubleValue());
         }
+        if(f.getAttributeNames().contains(ZMIN.toUpperCase())) {
+            b.setZMin(((Number)f.getAttribute(ZMIN.toUpperCase())).doubleValue());
+        }
         if(f.getAttributeNames().contains(ZMAX)) {
             b.setZMax(((Number)f.getAttribute(ZMAX)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(ZMAX.toUpperCase())) {
+            b.setZMax(((Number)f.getAttribute(ZMAX.toUpperCase())).doubleValue());
         }
         if(f.getAttributeNames().contains(DMIN)) {
             b.setDmin(((Number)f.getAttribute(DMIN)).doubleValue());
         }
+        if(f.getAttributeNames().contains(DMIN.toUpperCase())) {
+            b.setDmin(((Number)f.getAttribute(DMIN.toUpperCase())).doubleValue());
+        }
         if(f.getAttributeNames().contains(DMAX)) {
             b.setDmax(((Number)f.getAttribute(DMAX)).doubleValue());
+        }
+        if(f.getAttributeNames().contains(DMAX.toUpperCase())) {
+            b.setDmax(((Number)f.getAttribute(DMAX.toUpperCase())).doubleValue());
         }
         if(f.getAttributeNames().contains(ORIEN)) {
             if(f.getAttributeNames().contains(AMP)) {
                 b = b.createBounds(((Number)f.getAttribute(ORIEN)).doubleValue(), ((Number)f.getAttribute(AMP)).doubleValue());
             } else {
                 b = b.createBounds(((Number)f.getAttribute(ORIEN)).doubleValue());
+            }
+        }
+        if(f.getAttributeNames().contains(ORIEN.toUpperCase())) {
+            if(f.getAttributeNames().contains(AMP.toUpperCase())) {
+                b = b.createBounds(((Number)f.getAttribute(ORIEN.toUpperCase())).doubleValue(), ((Number)f.getAttribute(AMP.toUpperCase())).doubleValue());
+            } else {
+                b = b.createBounds(((Number)f.getAttribute(ORIEN.toUpperCase())).doubleValue());
             }
         }
         return b;
