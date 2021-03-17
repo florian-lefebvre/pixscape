@@ -102,6 +102,11 @@ public final class Project {
     private double coefRefraction = 0.13;
     private double minDistMS = -1;
 
+    
+    private Project() {
+        
+    }
+    
     /**
      * Creates a new project and saves it in prjPath
      * @param name the name of the project
@@ -148,6 +153,41 @@ public final class Project {
         }
 
         save();
+    }
+    
+    /**
+     * Creates a new project based on this one and saves it in prjPath
+     * @param name the name of the project
+     * @param prjPath the project directory, it will be created if it does not exist
+     * @param scaleData the default scale data containing dtm, dsm and landuse for the finest 2D resolution
+     * @throws IOException 
+     */
+    public Project dupProject(String name, File prjPath, ScaleData scaleData) throws IOException {
+        Project prj = new Project();
+        prj.name = name;
+        prj.wktCRS = wktCRS;
+        prj.codes = codes;
+        prj.colors = colors;
+        prj.nbGPU = nbGPU;
+        prj.startZ = startZ;
+        prj.aPrec = aPrec;
+        prj.earthCurv = earthCurv;
+        prj.coefRefraction = coefRefraction;
+        prj.minDistMS = -1;
+        
+        prj.dir = prjPath;
+        prj.scaleDatas = new TreeMap<>();
+        prj.scaleDatas.put(scaleData.getResolution(), scaleData);
+        prjPath.mkdirs();
+        scaleData.save(prjPath);
+        
+        CoordinateReferenceSystem crs = scaleData.getDtmCov().getCoordinateReferenceSystem2D();
+        if(crs != null) {
+            prj.wktCRS = crs.toWKT();
+        }
+
+        prj.save();
+        return prj;
     }
 
     /**

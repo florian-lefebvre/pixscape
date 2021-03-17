@@ -54,7 +54,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
     private File prjFile;
     private File fileZone;
     private String idField;
-    private String codeField;
+    private String codeField, heightField;
     private List<String> zoneIds;
     private List<String> args;
     private File fileDsm;
@@ -79,8 +79,30 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
         this.fileZone = fileZone;
         this.idField = idField;
         this.codeField = codeField;
+        this.heightField = null;
         this.zoneIds = selIds;
         this.fileDsm = fileDsm;
+        this.args = args;
+    }
+    /**
+     * Creates a new LandmodTask
+     * @param project the initial project (must be saved for MPI mode)
+     * @param fileZone the shapefile containing polygons of land modifications
+     * @param idField the shapefile field containing identifier
+     * @param codeField the shapefile field containing the new land code
+     * @param heightField the shapefile field containing the new height for DSM
+     * @param selIds a list of zone ids or null for calculating for all zones
+     * @param args the CLI commands to execute after creating each project
+     */
+    public LandModTask(Project project, File fileZone, String idField, String codeField, String heightField, List<String> selIds, List<String> args) {
+        this.project = project;
+        this.prjFile = project.getProjectFile();
+        this.fileZone = fileZone;
+        this.idField = idField;
+        this.codeField = codeField;
+        this.heightField = heightField;
+        this.zoneIds = selIds;
+        this.fileDsm = null;
         this.args = args;
     }
 
@@ -115,7 +137,9 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
                     throw new IllegalArgumentException("Unknown ids : " + Arrays.deepToString(zoneIds.toArray()));
                 }
             }
-            finalDsm = IOImage.loadCoverage(fileDsm).getRenderedImage().getData();
+            if(fileDsm != null) {
+                finalDsm = IOImage.loadCoverage(fileDsm).getRenderedImage().getData();
+            }
             
             super.init();
         } catch (IOException ex) {
@@ -180,6 +204,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
         // update land map
         for(DefaultFeature zone : zones) {
             int code = ((Number)zone.getAttribute(codeField)).intValue();
+            int height = heightField != null ? ((Number)zone.getAttribute(heightField)).intValue() : 0;
             Geometry trGeom = trans.transform(zone.getGeometry());
             for(int i = 0; i < trGeom.getNumGeometries(); i++) {
                 Geometry transGeom = trGeom.getGeometryN(i);
@@ -196,7 +221,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
                             final int x = (int)c.x;
                             final int y = (int)c.y;
                             land.setSample(x, y, 0, code);
-                            dsm.setSample(x, y, 0, finalDsm.getSampleDouble(x, y, 0));
+                            dsm.setSample(x, y, 0, heightField != null ? height : finalDsm.getSampleDouble(x, y, 0));
                         }
                     }
                 }
@@ -205,7 +230,7 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
         }
         
         // create project
-        File dir = new File(project.getDirectory(), id);       
-        return new Project(project.getName() + "-" + id, dir, new ScaleData(project.getDtmCov(), land, dsm));
+        File dir = new File(project.getDirectory(), id);   
+        return project.dupProject(project.getName() + "-" + id, dir, new ScaleData(project.getDtmCov(), land, dsm));
     }
 }

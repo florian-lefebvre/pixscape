@@ -42,7 +42,7 @@
 	\bigskip	
 	{\Huge
 		\bfseries
-		PixScape 1.2.1\\
+		PixScape 1.2.2\\
 		\bigskip
 		User manual\\
 	}
@@ -55,7 +55,7 @@
 	{\Large		
 		Gilles Vuidel, Yohan Sahraoui and Jean-Christophe Foltête\\
 		\bigskip
-		2020-11-26\\
+		2021-03-17\\
 	}
 	
 \end{titlepage}
@@ -584,7 +584,7 @@ Usage :
 java -jar pixscape.jar --metrics
 java -jar pixscape.jar --create prj_name dtm_raster_file [dsm=raster_file] [landuse=raster_file] [dir=path]
 java -jar pixscape.jar [-mpi | -proc n | -cuda n] --project project_file.xml
-[--landmod zone=filezones.gpkg id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]
+[--landmod zone=filezones.gpkg id=fieldname code=fieldname [height=fieldname | dsm=file.tif] [selid=id1,...,idn]]
 [-zeye val] [-zdest val] [-resdir path]
 [-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]
 [-sampling n=val | land=code1,..,coden | points=pointfile.gpkg id=fieldname]
@@ -680,7 +680,9 @@ The \verb|--project| command can be used only once and must be the first command
 \subsection{--landmod : land use changes}
 
 \begin{Verbatim}[commandchars=\\\{\}]
---landmod zone=\textit{filezones.gpkg} id=\textit{fieldname} code=\textit{fieldname} dsm=\textit{file.tif} [selid=\textit{id1,...,idn}]
+--landmod zone=\textit{filezones.gpkg} id=\textit{fieldname} code=\textit{fieldname} 
+height=\textit{fieldname} | dsm=\textit{file.tif}
+[selid=\textit{id1,...,idn}]
 \end{Verbatim}
 
 \subsubsection{Required parameters}
@@ -688,7 +690,7 @@ The \verb|--project| command can be used only once and must be the first command
 	\item \verb|zone=filezones.gpkg| : polygon layer containing land use changes.
 	\item \verb|id=fieldname| : field name of the layer used for identifying polygons. If values are not unique, polygons with the same identifier will be applied in a single change.
 	\item \verb|code=fieldname| : field name of the layer storing the new land use category of the polygon.
-	\item \verb|dsm=file.tif| : raster storing the new values of the DSM used for each land use change. The geometry of the raster must be exactly the same as the project DEM.
+	\item \verb+height=fieldname | dsm=file.tif+ : the new values of the DSM used for each land use change may be given from a field of the polygon layer (\verb|height| parameter) or from a raster (\verb|dsm| parameter). In the latter case, the geometry of the raster must be exactly the same as the project DEM.
 \end{itemize}
 
 \subsubsection{Optional parameter}

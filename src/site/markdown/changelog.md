@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.2.2 (16/03/2021)
+- land use import raster may be float type but the values must be integer between 0 and 255
+- CLI : --landmod add height parameter
+
 ##### version 1.2.1
  - UI : Multiviewshed in vector are empty
  - Geopackage format is used by default for vectorial data

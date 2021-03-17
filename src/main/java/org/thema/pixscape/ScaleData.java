@@ -127,17 +127,14 @@ public final class ScaleData {
             if(land.getWidth() != r.getWidth() || land.getHeight() != r.getHeight()) {
                 throw new IllegalArgumentException("Land use raster size does not correspond to DTM raster size");
             }
-            int type = land.getSampleModel().getDataType();
-            if(type == DataBuffer.TYPE_FLOAT || type == DataBuffer.TYPE_DOUBLE) {
-                throw new IllegalArgumentException("Float types are not supported for land use");
-            }
+           
             this.land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, land.getWidth(), land.getHeight(), 1), null);
             codes = new TreeSet<>();
             for(int yi = 0; yi < land.getHeight(); yi++) {
                 for(int xi = 0; xi < land.getWidth(); xi++) {
-                    int val = land.getSample(xi, yi, 0) & 0xFF;
+                    int val = land.getSample(xi, yi, 0);
                     if(val < 0 || val > 255) {
-                        throw new IllegalArgumentException("Land codes must be in [0-255]");
+                        throw new IllegalArgumentException("Land codes must be integer between 0 and 255");
                     }
                     codes.add(val);
                     ((WritableRaster)this.land).setSample(xi, yi, 0, val);

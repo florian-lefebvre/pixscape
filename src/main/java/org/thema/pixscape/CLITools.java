@@ -89,7 +89,7 @@ public class CLITools {
             System.out.println("Usage :\njava -jar pixscape.jar --metrics\n" +
                     "java -jar pixscape.jar --create prj_name dtm_raster_file [dsm=raster_file] [landuse=raster_file] [dir=path]\n" +
                     "java -jar pixscape.jar [-mpi | -proc n | -cuda n] --project project_file.xml\n" +
-                    "[--landmod zone=filezones.gpkg id=fieldname code=fieldname dsm=file.tif [selid=id1,...,idn]]\n" +
+                    "[--landmod zone=filezones.gpkg id=fieldname code=fieldname [height=fieldname | dsm=file.tif] [selid=id1,...,idn]]\n" +
                     "[-zeye val] [-zdest val] [-resdir path]\n" +
                     "[-bounds [dmin=val] [dmax=val] [orien=val] [amp=val] [zmin=val] [zmax=val]]\n" +
                     "[-sampling n=val | land=code1,..,coden | points=pointfile.gpkg id=fieldname]\n" +
@@ -525,13 +525,21 @@ public class CLITools {
         File fileZone = new File(args.remove(0).split("=")[1]);
         String idZoneField = args.remove(0).split("=")[1];
         String codeField = args.remove(0).split("=")[1];
-        File dsmFile = new File(args.remove(0).split("=")[1]);
+        File dsmFile = null;
+        String heightField = null;
+        String arg = args.remove(0);
+        if(arg.startsWith("height=")) {
+            heightField = arg.split("=")[1];
+        } else {
+            dsmFile = new File(arg.split("=")[1]);
+        }
         List<String> selIds = null;
         if(!args.isEmpty() && args.get(0).startsWith("selid=")) {
             selIds = Arrays.asList(args.remove(0).split("=")[1].split(","));
         }
         
-        LandModTask task = new LandModTask(project, fileZone, idZoneField, codeField, dsmFile, selIds, args);
+        LandModTask task = heightField != null ? new LandModTask(project, fileZone, idZoneField, codeField, heightField, selIds, args)
+                : new LandModTask(project, fileZone, idZoneField, codeField, dsmFile, selIds, args);
         ExecutorService.executeSequential(task);
 
         args.clear();
