@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.2.3 (07/09/2021)
+- Update libs
+
 ##### version 1.2.2 (16/03/2021)
 - land use import raster may be float type but the values must be integer between 0 and 255
 - CLI : --landmod add height parameter
