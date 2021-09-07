@@ -9,6 +9,9 @@
         <name>${project.name}</name>
     </bannerLeft>
     <body>
+        <head>
+            <meta name="robots" content="noindex, nofollow"/>
+        </head>
         <menu name="Project">
             <item name="Home" href="index.html"/>
         </menu>
