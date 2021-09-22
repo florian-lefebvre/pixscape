@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.2.4 (22/09/2021)
+- Java 16 compatibility (XML project loading)
+
 ##### version 1.2.3 (07/09/2021)
 - Update libs
 

@@ -46,6 +46,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.referencing.CRS;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.crs.CoordinateReferenceSystem;
+import org.thema.common.Util;
 import org.thema.data.IOImage;
 import org.thema.drawshape.style.SimpleStyle;
 import org.thema.pixscape.metric.AbstractDistMetric;
@@ -569,7 +570,7 @@ public final class Project {
      * @throws IOException 
      */
     public static synchronized Project load(File file) throws IOException {       
-        XStream xstream = new XStream();
+        XStream xstream = Util.getXStream();
         xstream.alias("Project", Project.class);
         
         Project prj;
@@ -591,7 +592,7 @@ public final class Project {
      * @throws IOException 
      */
     public void save() throws IOException {
-        XStream xstream = new XStream();
+        XStream xstream = Util.getXStream();
         xstream.alias("Project", Project.class);
         try (FileWriter fw = new FileWriter(getProjectFile())) {
             xstream.toXML(this, fw);

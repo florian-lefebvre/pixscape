@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thema</groupId>
     <artifactId>pixscape</artifactId>
-    <version>1.2.3</version>
+    <version>1.2.4</version>
     <packaging>jar</packaging>
     <name>PixScape</name>
     <description>Software for analysing landscape visibility</description>
@@ -100,12 +100,12 @@
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>common</artifactId>
-            <version>1.8.2</version>
+            <version>1.8.3</version>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>drawshape</artifactId>
-            <version>1.8.1</version>
+            <version>1.8.2</version>
         </dependency>        
         <dependency>
             <groupId>${project.groupId}</groupId>
