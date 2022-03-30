@@ -1,5 +1,8 @@
 ## Changelog
 
+##### version 1.2.5 (30/03/2022)
+- Get correctly the nodata parameter from DTM coverage at project creation
+
 ##### version 1.2.4 (22/09/2021)
 - Java 16 compatibility (XML project loading)
 

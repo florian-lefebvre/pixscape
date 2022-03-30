@@ -19,6 +19,7 @@
 
 package org.thema.pixscape;
 
+import it.geosolutions.jaiext.range.NoDataContainer;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.BufferedImage;
@@ -37,6 +38,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.coverage.grid.GridEnvelope2D;
 import org.geotools.coverage.grid.GridGeometry2D;
+import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.operation.TransformException;
@@ -78,9 +80,11 @@ public final class ScaleData {
      */
     public ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm, double resZ) {
         double noData = Double.NaN;
-        if(dtmCov.getProperty("GC_NODATA") != null && (dtmCov.getProperty("GC_NODATA") instanceof Number)) {
-            noData = ((Number)dtmCov.getProperty("GC_NODATA")).doubleValue();
+        NoDataContainer noDataProp = CoverageUtilities.getNoDataProperty(dtmCov);
+        if(noDataProp != null) {
+            noData = noDataProp.getAsSingleValue();
         }
+        
         RenderedImage img = dtmCov.getRenderedImage();
         if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 || !Double.isNaN(noData)) {
             RandomIter r = RandomIterFactory.create(img, null);
