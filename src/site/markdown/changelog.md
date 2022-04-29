@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.2.6 (29/04/2022)
+- Correct 2 bugs on geopackage IO
+- GUI : add entry Geometries to point in Tools menu
+
 ##### version 1.2.5 (30/03/2022)
 - Get correctly the nodata parameter from DTM coverage at project creation
 

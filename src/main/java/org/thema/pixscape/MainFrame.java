@@ -19,6 +19,8 @@
 
 package org.thema.pixscape;
 
+import org.thema.pixscape.tools.PointAttributeDialog;
+import org.thema.pixscape.tools.OptionDialog;
 import org.locationtech.jts.geom.Point;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -73,6 +75,8 @@ import org.thema.drawshape.style.table.FeatureAttributeCollection;
 import org.thema.drawshape.style.table.StrokeRamp;
 import org.thema.drawshape.style.table.UniqueColorTable;
 import org.thema.parallel.ExecutorService;
+import org.thema.pixscape.tools.Interpolate;
+import org.thema.pixscape.tools.InterpolateDialog;
 
 /**
  * The main frame and main entry point of PixScape.
@@ -134,6 +138,7 @@ public class MainFrame extends javax.swing.JFrame {
         tanMetricMenuItem = new javax.swing.JMenuItem();
         toolMenu = new javax.swing.JMenu();
         pathOrienMenuItem = new javax.swing.JMenuItem();
+        interpGeomMenuItem = new javax.swing.JMenuItem();
         optionsMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -293,6 +298,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         toolMenu.add(pathOrienMenuItem);
+
+        interpGeomMenuItem.setText(bundle.getString("MainFrame.interpGeomMenuItem.text")); // NOI18N
+        interpGeomMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                interpGeomMenuItemActionPerformed(evt);
+            }
+        });
+        toolMenu.add(interpGeomMenuItem);
 
         optionsMenuItem.setText(bundle.getString("MainFrame.optionsMenuItem.text")); // NOI18N
         optionsMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -699,6 +712,21 @@ public class MainFrame extends javax.swing.JFrame {
         logFrame.setAlwaysOnTop(false);
     }//GEN-LAST:event_formWindowDeactivated
 
+    private void interpGeomMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_interpGeomMenuItemActionPerformed
+        InterpolateDialog dlg = new InterpolateDialog(this, project.getDefaultScaleData());
+        dlg.setVisible(true);
+        if(!dlg.isOk) {
+            return;
+        }
+        try {
+            List<? extends Feature> features = IOFeature.loadFeatures(dlg.pathFile);
+            features = new Interpolate(project.getDefaultScaleData()).interpolate(features, dlg.ratio);
+            IOFeature.saveFeatures(features, new File(dlg.pathFile.getParentFile(), dlg.outputName));
+        } catch (IOException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_interpGeomMenuItemActionPerformed
+
     private WritableRaster samplingDEM(Raster dtm, int scale) {
         WritableRaster raster = dtm.createCompatibleWritableRaster(
                 (int)Math.ceil(dtm.getWidth()/(double)scale), 
@@ -885,6 +913,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem exitMenuItem;
     private javax.swing.JMenu fileMenu;
     private javax.swing.JMenuItem genMSMenuItem;
+    private javax.swing.JMenuItem interpGeomMenuItem;
     private javax.swing.JMenuItem loadDSMMenuItem;
     private javax.swing.JMenuItem loadLandUseMenuItem;
     private javax.swing.JMenuItem loadProjectMenuItem;

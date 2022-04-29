@@ -17,7 +17,7 @@
  */
 
 
-package org.thema.pixscape;
+package org.thema.pixscape.tools;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -28,6 +28,7 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import org.thema.pixscape.Project;
 import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
 /**
@@ -112,47 +113,48 @@ public class OptionDialog extends javax.swing.JDialog {
             }
         });
 
-        okButton.setText(bundle.getString("OptionDialog.okButton.text")); // NOI18N
+        java.util.ResourceBundle bundle1 = java.util.ResourceBundle.getBundle("org/thema/pixscape/tools/Bundle"); // NOI18N
+        okButton.setText(bundle1.getString("OptionDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(bundle.getString("OptionDialog.cancelButton.text")); // NOI18N
+        cancelButton.setText(bundle1.getString("OptionDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        jLabel2.setText(bundle.getString("OptionDialog.jLabel2.text")); // NOI18N
+        jLabel2.setText(bundle1.getString("OptionDialog.jLabel2.text")); // NOI18N
 
-        zEyeTextField.setText(bundle.getString("OptionDialog.zEyeTextField.text")); // NOI18N
+        zEyeTextField.setText(bundle1.getString("OptionDialog.zEyeTextField.text")); // NOI18N
 
-        multiScaleCheckBox.setText(bundle.getString("OptionDialog.multiScaleCheckBox.text")); // NOI18N
+        multiScaleCheckBox.setText(bundle1.getString("OptionDialog.multiScaleCheckBox.text")); // NOI18N
 
-        minDistTextField.setText(bundle.getString("OptionDialog.minDistTextField.text")); // NOI18N
+        minDistTextField.setText(bundle1.getString("OptionDialog.minDistTextField.text")); // NOI18N
 
         org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, multiScaleCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), minDistTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        gpuCheckBox.setText(bundle.getString("OptionDialog.gpuCheckBox.text")); // NOI18N
+        gpuCheckBox.setText(bundle1.getString("OptionDialog.gpuCheckBox.text")); // NOI18N
 
-        jLabel1.setText(bundle.getString("OptionDialog.jLabel1.text")); // NOI18N
+        jLabel1.setText(bundle1.getString("OptionDialog.jLabel1.text")); // NOI18N
 
-        aPrecjTextField.setText(bundle.getString("OptionDialog.aPrecjTextField.text")); // NOI18N
+        aPrecjTextField.setText(bundle1.getString("OptionDialog.aPrecjTextField.text")); // NOI18N
 
-        jLabel3.setText(bundle.getString("OptionDialog.jLabel3.text")); // NOI18N
+        jLabel3.setText(bundle1.getString("OptionDialog.jLabel3.text")); // NOI18N
 
-        earthCurvCheckBox.setText(bundle.getString("OptionDialog.earthCurvCheckBox.text")); // NOI18N
+        earthCurvCheckBox.setText(bundle1.getString("OptionDialog.earthCurvCheckBox.text")); // NOI18N
 
-        coefRefracTextField.setText(bundle.getString("OptionDialog.coefRefracTextField.text")); // NOI18N
+        coefRefracTextField.setText(bundle1.getString("OptionDialog.coefRefracTextField.text")); // NOI18N
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), coefRefracTextField, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);
 
-        jLabel4.setText(bundle.getString("OptionDialog.jLabel4.text")); // NOI18N
+        jLabel4.setText(bundle1.getString("OptionDialog.jLabel4.text")); // NOI18N
 
         binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, earthCurvCheckBox, org.jdesktop.beansbinding.ELProperty.create("${selected}"), jLabel4, org.jdesktop.beansbinding.BeanProperty.create("enabled"));
         bindingGroup.addBinding(binding);

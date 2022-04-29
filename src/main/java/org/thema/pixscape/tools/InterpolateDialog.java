@@ -17,7 +17,7 @@
  */
 
 
-package org.thema.pixscape;
+package org.thema.pixscape.tools;
 
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
@@ -28,34 +28,35 @@ import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
+import org.thema.pixscape.Bounds;
+import org.thema.pixscape.ScaleData;
 
 /**
  * Dialog form for creating bounds attributes in a shapefile.
  * 
  * @author Gilles Vuidel
  */
-public class PointAttributeDialog extends javax.swing.JDialog {
+public class InterpolateDialog extends javax.swing.JDialog {
 
     /** Does user have validated the form ? */
     public boolean isOk = false;
     /** The input shapefile */
     public File pathFile;
-    /** the identifier field name in the shapefile */
-    public String idField;
-    /** change orientation of each point depending on the next ? */
-    public boolean setPathOrien;
-    /** The bounds paramaters to set in attributes of the ouput shapefile */
-    public Bounds bounds;
+    /** interpolation ratio 1 : data resolution, 2 : 2*resolution, etc.*/
+    public int ratio;
     /** The name of the output shapefile */
     public String outputName;
+    
+    private ScaleData scale;
     
     /** 
      * Creates new form PathViewDialog 
      * @param parent the parent frame
      */
-    public PointAttributeDialog(java.awt.Frame parent) {
+    public InterpolateDialog(java.awt.Frame parent, ScaleData scale) {
         super(parent, true);
         initComponents();
+        this.scale = scale;
         setLocationRelativeTo(parent);
         getRootPane().setDefaultButton(okButton);
         // Close the dialog when Esc is pressed
@@ -69,6 +70,8 @@ public class PointAttributeDialog extends javax.swing.JDialog {
                 doClose();
             }
         });
+        
+        ratioSpinnerStateChanged(null);
     }
 
 
@@ -83,49 +86,54 @@ public class PointAttributeDialog extends javax.swing.JDialog {
 
         okButton = new javax.swing.JButton();
         cancelButton = new javax.swing.JButton();
-        boundsButton = new javax.swing.JButton();
-        pathOrienCheckBox = new javax.swing.JCheckBox();
         jLabel1 = new javax.swing.JLabel();
         outputNameTextField = new javax.swing.JTextField();
-        selectVectorLayerPanel1 = new org.thema.data.ui.SelectVectorLayerPanel();
+        jLabel2 = new javax.swing.JLabel();
+        ratioSpinner = new javax.swing.JSpinner();
+        resLabel = new javax.swing.JLabel();
+        selectFilePanel = new org.thema.common.swing.SelectFilePanel();
 
-        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle"); // NOI18N
-        setTitle(bundle.getString("PointAttributeDialog.title")); // NOI18N
+        java.util.ResourceBundle bundle = java.util.ResourceBundle.getBundle("org/thema/pixscape/tools/Bundle"); // NOI18N
+        setTitle(bundle.getString("InterpolateDialog.title")); // NOI18N
         addWindowListener(new java.awt.event.WindowAdapter() {
             public void windowClosing(java.awt.event.WindowEvent evt) {
                 closeDialog(evt);
             }
         });
 
-        okButton.setText(bundle.getString("PointAttributeDialog.okButton.text")); // NOI18N
+        okButton.setText(bundle.getString("InterpolateDialog.okButton.text")); // NOI18N
         okButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 okButtonActionPerformed(evt);
             }
         });
 
-        cancelButton.setText(bundle.getString("PointAttributeDialog.cancelButton.text")); // NOI18N
+        cancelButton.setText(bundle.getString("InterpolateDialog.cancelButton.text")); // NOI18N
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButtonActionPerformed(evt);
             }
         });
 
-        boundsButton.setText(bundle.getString("PointAttributeDialog.boundsButton.text")); // NOI18N
-        boundsButton.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                boundsButtonActionPerformed(evt);
+        jLabel1.setText(bundle.getString("InterpolateDialog.jLabel1.text")); // NOI18N
+
+        outputNameTextField.setText(bundle.getString("InterpolateDialog.outputNameTextField.text")); // NOI18N
+        outputNameTextField.setToolTipText(bundle.getString("InterpolateDialog.outputNameTextField.toolTipText")); // NOI18N
+
+        jLabel2.setText(bundle.getString("InterpolateDialog.jLabel2.text")); // NOI18N
+
+        ratioSpinner.setModel(new javax.swing.SpinnerNumberModel(1, 1, null, 1));
+        ratioSpinner.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(javax.swing.event.ChangeEvent evt) {
+                ratioSpinnerStateChanged(evt);
             }
         });
 
-        pathOrienCheckBox.setText(bundle.getString("PointAttributeDialog.pathOrienCheckBox.text")); // NOI18N
+        resLabel.setText(bundle.getString("InterpolateDialog.resLabel.text")); // NOI18N
 
-        jLabel1.setText(bundle.getString("PointAttributeDialog.jLabel1.text")); // NOI18N
-
-        outputNameTextField.setText(bundle.getString("PointAttributeDialog.outputNameTextField.text")); // NOI18N
-        outputNameTextField.setToolTipText(bundle.getString("PointAttributeDialog.outputNameTextField.toolTipText")); // NOI18N
-
-        selectVectorLayerPanel1.setDescription(bundle.getString("PointAttributeDialog.selectVectorLayerPanel1.description")); // NOI18N
+        selectFilePanel.setDescription(bundle.getString("InterpolateDialog.selectFilePanel.description")); // NOI18N
+        selectFilePanel.setFileDesc(bundle.getString("InterpolateDialog.selectFilePanel.fileDesc")); // NOI18N
+        selectFilePanel.setFileExts(bundle.getString("InterpolateDialog.selectFilePanel.fileExts")); // NOI18N
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -134,21 +142,22 @@ public class PointAttributeDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                    .add(selectFilePanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 368, Short.MAX_VALUE)
                     .add(layout.createSequentialGroup()
-                        .add(pathOrienCheckBox)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                                .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                                .add(cancelButton))
-                            .add(org.jdesktop.layout.GroupLayout.TRAILING, boundsButton)))
+                        .add(0, 0, Short.MAX_VALUE)
+                        .add(okButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 67, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(cancelButton))
                     .add(layout.createSequentialGroup()
                         .add(jLabel1)
                         .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                         .add(outputNameTextField))
                     .add(layout.createSequentialGroup()
-                        .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(jLabel2)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(ratioSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 60, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                        .add(resLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 91, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
@@ -159,12 +168,13 @@ public class PointAttributeDialog extends javax.swing.JDialog {
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .add(selectVectorLayerPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(selectFilePanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                 .add(18, 18, 18)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                    .add(boundsButton)
-                    .add(pathOrienCheckBox))
-                .add(18, 18, 18)
+                    .add(jLabel2)
+                    .add(ratioSpinner, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                    .add(resLabel))
+                .add(19, 19, 19)
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                     .add(jLabel1)
                     .add(outputNameTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -181,15 +191,11 @@ public class PointAttributeDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
-        pathFile = selectVectorLayerPanel1.getSelectedFile();
-        idField = selectVectorLayerPanel1.getIdField();
-        setPathOrien = pathOrienCheckBox.isSelected();
-        if(bounds == null) {
-            bounds = new Bounds();
-        }
+        pathFile = selectFilePanel.getSelectedFile();
+        ratio = (Integer)ratioSpinner.getValue();
         outputName = outputNameTextField.getText();
-        if(!outputName.endsWith(".shp")) {
-            outputName += ".shp";
+        if(!outputName.endsWith(".shp") && !outputName.endsWith(".gpkg")) {
+            outputName += ".gpkg";
         }
         isOk = true;
         doClose();
@@ -204,13 +210,10 @@ public class PointAttributeDialog extends javax.swing.JDialog {
         doClose();
     }//GEN-LAST:event_closeDialog
 
-    private void boundsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_boundsButtonActionPerformed
-        BoundsDialog dlg = new BoundsDialog((Frame) this.getParent(), bounds == null ? new Bounds() : bounds);
-        dlg.setVisible(true);
-        if(dlg.isOk) {
-            bounds = dlg.bounds;
-        }
-    }//GEN-LAST:event_boundsButtonActionPerformed
+    private void ratioSpinnerStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_ratioSpinnerStateChanged
+        ratio = (Integer)ratioSpinner.getValue();
+        resLabel.setText("-> " + scale.getResolution()*ratio + "m");
+    }//GEN-LAST:event_ratioSpinnerStateChanged
 
     private void doClose() {
         setVisible(false);
@@ -219,13 +222,14 @@ public class PointAttributeDialog extends javax.swing.JDialog {
 
    
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton boundsButton;
     private javax.swing.JButton cancelButton;
     private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JButton okButton;
     private javax.swing.JTextField outputNameTextField;
-    private javax.swing.JCheckBox pathOrienCheckBox;
-    private org.thema.data.ui.SelectVectorLayerPanel selectVectorLayerPanel1;
+    private javax.swing.JSpinner ratioSpinner;
+    private javax.swing.JLabel resLabel;
+    private org.thema.common.swing.SelectFilePanel selectFilePanel;
     // End of variables declaration//GEN-END:variables
 
 }
