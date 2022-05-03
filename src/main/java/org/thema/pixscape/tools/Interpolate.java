@@ -24,14 +24,11 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateFilter;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Lineal;
 import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.geom.Puntal;
 import org.locationtech.jts.linearref.LengthIndexedLine;
-import org.locationtech.jts.linearref.LinearIterator;
-import org.locationtech.jts.linearref.LinearLocation;
 import org.thema.common.JTS;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.data.feature.Feature;
@@ -42,9 +39,7 @@ import org.thema.pixscape.ScaleData;
  * @author gvuidel
  */
 public class Interpolate {
-    
-    private static final List<String> ATTR_NAMES = Arrays.asList("featureId");
-    
+
     private ScaleData grid;
     
     public Interpolate(ScaleData grid) {
@@ -73,7 +68,7 @@ public class Interpolate {
                     HashSet<Coordinate> coords = new HashSet<>();
                     LengthIndexedLine indexedLine = new LengthIndexedLine(g);
                     for(int ind = 0; ind < g.getLength(); ind+=ratio) {
-                        Coordinate c = indexedLine.extractPoint(ind);
+                        Coordinate c = new Coordinate(indexedLine.extractPoint(ind));
                         filter.filter(c);
                         coords.add(c);
                     }

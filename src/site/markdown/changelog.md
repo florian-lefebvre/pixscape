@@ -1,5 +1,9 @@
 ## Changelog
 
+##### version 1.2.7 (03/05/2022)
+- GUI : Geometries to point doesn't work with lineal geometries
+- Correct an error in geopackage saving while layer has several id fields
+
 ##### version 1.2.6 (29/04/2022)
 - Correct 2 bugs on geopackage IO
 - GUI : add entry Geometries to point in Tools menu
