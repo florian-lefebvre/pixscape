@@ -21,7 +21,6 @@ package org.thema.pixscape.view;
 
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
-import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.awt.image.DataBufferShort;
 import java.awt.image.Raster;
@@ -150,7 +149,7 @@ public class SimpleViewTanResult extends SimpleViewResult implements ViewTanResu
         if(ind == -1) {
             return -1;
         }
-        return compute.getData().getLand().getSample(ind%getW(), ind/getW(), 0) & 0xff;
+        return compute.getData().getLandRaster().getSample(ind%getW(), ind/getW(), 0) & 0xff;
     }
 
     @Override

@@ -60,8 +60,8 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
      * @param zones the zone where viewshed has been calculated for each scale
      * @param compute the compute view used
      */
-    MultiViewShedResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
-        super(cg, zones, compute);
+    MultiViewShedResult(GridCoordinates2D cg, TreeMap<Double, Raster> views, TreeMap<Double, GridEnvelope2D> zones, TreeMap<Double, ScaleData> datas) {
+        super(cg, zones, datas);
         this.views = views;
     }
 
@@ -113,7 +113,7 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
             }
             final double res2 = res*res;
             final Raster v = getViews().get(res);     
-            final Raster land = getDatas().get(res).getLand();
+            final Raster land = getDatas().get(res).getLandRaster();
             final Point2D p = getCoords().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {
@@ -145,7 +145,7 @@ public class MultiViewShedResult extends MultiViewResult implements ViewShedResu
             int[] tab = new int[0];
             GridGeometry2D grid = getDatas().get(res).getGridGeometry();
             Raster v = getViews().get(res);
-            Raster l = getDatas().get(res).getLand();
+            Raster l = land != null ? getDatas().get(res).getLandRaster() : null;
             GridEnvelope2D zone = getZones().get(res);
             for(int y = zone.y; y < zone.getMaxY(); y++) {
                 for(int x = zone.x; x < zone.getMaxX(); x++) {

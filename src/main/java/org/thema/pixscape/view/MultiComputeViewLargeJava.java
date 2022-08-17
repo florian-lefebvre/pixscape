@@ -22,6 +22,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferFloat;
 import java.awt.image.DataBufferInt;
 import java.awt.image.Raster;
 import java.awt.image.WritableRaster;
@@ -38,11 +39,12 @@ import org.thema.pixscape.Bounds;
 import org.thema.pixscape.ScaleData;
 
 /**
- * ComputeView using multiscale datas in Java.
+ * ComputeView using multiscale datas in Java without loading raster.
+ * This version is very memory efficient
  * 
  * @author Gilles Vuidel
  */
-public class MultiComputeViewJava extends MultiComputeView {
+public class MultiComputeViewLargeJava extends MultiComputeView {
     
     
     /**
@@ -53,10 +55,10 @@ public class MultiComputeViewJava extends MultiComputeView {
      * @param earthCurv take into account earth curvature ?
      * @param coefRefraction refraction correction, 0 for no correction
      */
-    public MultiComputeViewJava(TreeMap<Double, ScaleData> datas, int distMin, double aPrec, boolean earthCurv, double coefRefraction) {
+    public MultiComputeViewLargeJava(TreeMap<Double, ScaleData> datas, int distMin, double aPrec, boolean earthCurv, double coefRefraction) {
         super(datas, distMin, aPrec, earthCurv, coefRefraction);
     }
-
+    
     @Override
     public MultiViewShedResult calcViewShedDeg(DirectPosition2D c, double startZ, double destZ, boolean inverse, Bounds bounds, boolean area)  {
         throw new UnsupportedOperationException("Degree viewshed is not supported on multiscale"); 
@@ -72,6 +74,10 @@ public class MultiComputeViewJava extends MultiComputeView {
 //        long t1 = System.currentTimeMillis();
         TreeMap<Double, byte[]> viewBufs = new TreeMap<>();
         TreeMap<Double, Raster> viewRasters = new TreeMap<>();
+        TreeMap<Double, ScaleData> subData = new TreeMap<>();
+        TreeMap<Double, float[]> dtmBufs = new TreeMap<>();
+        TreeMap<Double, float[]> dsmBufs = new TreeMap<>();
+        TreeMap<Double, Rectangle> dtmRect = new TreeMap<>();
         try {
             TreeMap<Double, GridEnvelope2D> viewZones = new TreeMap<>();
             Rectangle largestZone = calcZones(c, viewZones);
@@ -85,32 +91,39 @@ public class MultiComputeViewJava extends MultiComputeView {
                 byte[] buf = ((DataBufferByte)view.getDataBuffer()).getData();
                 viewBufs.put(data.getResolution(), buf);
                 Arrays.fill(buf, (byte)-1);
+                ScaleData d = data.getSubData(env);
+                subData.put(d.getResolution(), d);
+                dtmBufs.put(data.getResolution(), ((DataBufferFloat)d.getDtmRaster().getDataBuffer()).getData());
+                dtmRect.put(data.getResolution(), d.getDtmRaster().getBounds());
+                if(d.getDsm() != null) {
+                    dsmBufs.put(data.getResolution(), ((DataBufferFloat)d.getDsmRaster().getDataBuffer()).getData());
+                }
             }
 //            long t3 = System.currentTimeMillis();
             for(int x = largestZone.x; x < largestZone.getMaxX(); x++) {
                 double a = Math.atan2(-largestZone.getMinY(), x);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones, dtmBufs, dsmBufs, dtmRect);
                 }
                 a = Math.atan2(-(largestZone.getMaxY()-1), x);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones, dtmBufs, dsmBufs, dtmRect);
                 }
             }
             for(int y = largestZone.y+1; y < largestZone.getMaxY()-1; y++) {
                 double a = Math.atan2(-y, largestZone.getMinX());
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones, dtmBufs, dsmBufs, dtmRect);
                 }
                 a = Math.atan2(-y, largestZone.getMaxX()-1);
                 if(bounds.isTheta1Included(a)) {
-                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones);
+                    calcRay(inverse, c, startZ, destZ, bounds, viewBufs, a, viewZones, dtmBufs, dsmBufs, dtmRect);
                 }
             }
 //            long t4 = System.currentTimeMillis();
 //            System.out.println("init " + (t3-t1) + " rays " + (t4-t3));
 //            Logger.getLogger(MultiComputeViewJava.class.getName()).fine((t3-t1) + " ms");
-            return new MultiViewShedResult(getDatas().firstEntry().getValue().getGridGeometry().worldToGrid(c), viewRasters, viewZones, getDatas());
+            return new MultiViewShedResult(getDatas().firstEntry().getValue().getGridGeometry().worldToGrid(c), viewRasters, viewZones, subData);
         } catch(TransformException ex) {
             throw new IllegalArgumentException(ex);
         }
@@ -131,17 +144,19 @@ public class MultiComputeViewJava extends MultiComputeView {
      */
     private void calcRay(final boolean inverse, final DirectPosition2D p0, final double startZ, 
             final double destZ, Bounds bounds, final TreeMap<Double, byte[]> views, double a, 
-            final TreeMap<Double, GridEnvelope2D> zones) throws TransformException {
+            final TreeMap<Double, GridEnvelope2D> zones, final TreeMap<Double, float[]> dtms, final TreeMap<Double, float[]> dsms, TreeMap<Double, Rectangle> dtmRects) throws TransformException {
 //        long t1 = System.nanoTime();
 //        long totRay = 0;
         ScaleData dataInit = getDatas().firstEntry().getValue();
         GridCoordinates2D c0 = dataInit.getDtmCov().getGridGeometry().worldToGrid(p0);
-        double z0 = dataInit.getDtmRaster().getSampleDouble(c0.x, c0.y, 0);
+        Rectangle r = dtmRects.firstEntry().getValue();
+        int ind0 = (c0.y-r.y) * r.width + c0.x-r.x;
+        double z0 = dtms.firstEntry().getValue()[ind0];
         if(!inverse) {
              z0 += startZ;
         } else {
             // for indirect
-            double dsmZ = (dataInit.getDsm() != null ? dataInit.getDsmRaster().getSampleDouble(c0.x, c0.y, 0) : 0);
+            double dsmZ = (dataInit.getDsm() != null ? dsms.firstEntry().getValue()[ind0] : 0);
             if(destZ != -1 && destZ < dsmZ) {
                 return;
             }
@@ -154,7 +169,6 @@ public class MultiComputeViewJava extends MultiComputeView {
         for(ScaleData data : getDatas().values()) {
             GridGeometry2D grid = data.getDtmCov().getGridGeometry();
             c0 = grid.worldToGrid(p0);
-//            Point2D d0 = grid.getCRSToGrid2D().transform((Point2D)p0, null);
             GridEnvelope2D rect = zones.get(data.getResolution());
             calcIntersects(c0, a, rect, c1);
             double dist = 0;
@@ -168,9 +182,11 @@ public class MultiComputeViewJava extends MultiComputeView {
             }
 //            long t2 = System.nanoTime();
             if(!inverse) {
-                slopeMin2 = calcRayDirect(c0, c1, destZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2);
+                slopeMin2 = calcRayDirect(c0, c1, destZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2, 
+                        dtms.get(data.getResolution()), dsms.get(data.getResolution()), dtmRects.get(data.getResolution()));
             } else {
-                slopeMin2 = calcRayIndirect(c0, c1, startZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2);
+                slopeMin2 = calcRayIndirect(c0, c1, startZ, bounds, data, views.get(data.getResolution()), rect, z0, dist, slopeMin2, 
+                        dtms.get(data.getResolution()), dsms.get(data.getResolution()), dtmRects.get(data.getResolution()));
             }
             if(Double.isNaN(slopeMin2)) {
                 break;
@@ -197,16 +213,12 @@ public class MultiComputeViewJava extends MultiComputeView {
      * @return the new slope^2
      */
     private double calcRayDirect(final GridCoordinates2D c0, final GridCoordinates2D c1, 
-            final double destZ, Bounds bounds, ScaleData data, final byte[] view, final Rectangle viewRect, double z0, double startDist, double startSlope2) {
-        final Raster dtm = data.getDtmRaster();
-        final DataBuffer dtmBuf = dtm.getDataBuffer();
-        DataBuffer dsmBuf = null;
-        if(data.getDsm() != null) {
-            dsmBuf = data.getDsmRaster().getDataBuffer();
-        }
+            final double destZ, Bounds bounds, ScaleData data, final byte[] view, final Rectangle viewRect, 
+            double z0, double startDist, double startSlope2, float[] dtm, float[] dsm, Rectangle dtmRect) {
+
         final double res2D2 = data.getResolution()*data.getResolution();
         
-        final int w = dtm.getWidth();
+        final int w = dtmRect.width;
         final int wv = viewRect.width;
         final int dx = Math.abs(c1.x-c0.x);
         final int dy = Math.abs(c1.y-c0.y);
@@ -215,9 +227,9 @@ public class MultiComputeViewJava extends MultiComputeView {
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = c0.x + c0.y*w;
+        int ind = c0.x - dtmRect.x + (c0.y - dtmRect.y)*w;
         int indv = c0.x - viewRect.x + (c0.y - viewRect.y)*wv;
-        final int ind1 = c1.x + c1.y*w;
+        final int ind1 = c1.x - dtmRect.x + (c1.y - dtmRect.y)*w;
         
         if(startSlope2 == Double.NEGATIVE_INFINITY && bounds.getDmin() == 0) {
             view[indv] = 1;
@@ -242,7 +254,7 @@ public class MultiComputeViewJava extends MultiComputeView {
                 indv += sy*wv;
             }
             
-            double z = dtmBuf.getElemDouble(ind);
+            double z = dtm[ind];
             if(Double.isNaN(z)) {
                 return Double.NaN;
             }
@@ -265,7 +277,7 @@ public class MultiComputeViewJava extends MultiComputeView {
             if(isEarthCurv()) {
                 z -= (1 - getCoefRefraction()) * d2 / EARTH_DIAM;
             }
-            final double zSurf = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double zSurf = z + (dsm != null ? dsm[ind] : 0);
             final double zView = destZ == -1 ? zSurf : (z + destZ);
             if(maxSlope >= 0 && zSurf <= maxZ && zView <= maxZ) {
                 continue;
@@ -315,16 +327,12 @@ public class MultiComputeViewJava extends MultiComputeView {
      * @return the new slope^2
      */
     private double calcRayIndirect(final GridCoordinates2D c0, final GridCoordinates2D c1, 
-            final double startZ, Bounds bounds, ScaleData data, final byte[] view, final Rectangle viewRect, double z0, double startDist, double startSlope2) {
-        final Raster dtm = data.getDtmRaster();
-        final DataBuffer dtmBuf = dtm.getDataBuffer();
-        DataBuffer dsmBuf = null;
-        if(data.getDsm() != null) {
-            dsmBuf = data.getDsmRaster().getDataBuffer();
-        }
+            final double startZ, Bounds bounds, ScaleData data, final byte[] view, final Rectangle viewRect, 
+            double z0, double startDist, double startSlope2, float[] dtm, float[] dsm, Rectangle dtmRect) {
+
         final double res2D = data.getResolution();
         
-        final int w = dtm.getWidth();
+        final int w = dtmRect.width;
         final int wv = viewRect.width;        
         final int dx = Math.abs(c1.x-c0.x);
         final int dy = Math.abs(c1.y-c0.y);
@@ -333,9 +341,9 @@ public class MultiComputeViewJava extends MultiComputeView {
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = c0.x + c0.y*w;
+        int ind = c0.x - dtmRect.x + (c0.y - dtmRect.y)*w;
         int indv = c0.x - viewRect.x + (c0.y - viewRect.y)*wv;
-        final int ind1 = c1.x + c1.y*w;
+        final int ind1 = c1.x - dtmRect.x + (c1.y - dtmRect.y)*w;
         
         if(startSlope2 == Double.NEGATIVE_INFINITY && bounds.getDmin() == 0) {
             view[indv] = 1;
@@ -360,7 +368,7 @@ public class MultiComputeViewJava extends MultiComputeView {
                 indv += sy*wv;
             }
             
-            double z = dtmBuf.getElemDouble(ind);
+            double z = dtm[ind];
             if(Double.isNaN(z)) {
                 return Double.NaN;
             }
@@ -385,7 +393,7 @@ public class MultiComputeViewJava extends MultiComputeView {
                     view[indv] = 1;
                 }
             } 
-            final double ztot = z + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            final double ztot = z + (dsm != null ? dsm[ind] : 0);
             zz = ztot - z0;
             final double slope = zz*Math.abs(zz) / d2;
             if(slope > maxSlope) {
@@ -401,7 +409,7 @@ public class MultiComputeViewJava extends MultiComputeView {
    
         return maxSlope;
     }
-    
+
     @Override
     public ViewTanResult calcViewTan(DirectPosition2D p, double startZ, Bounds bounds)  {
         try {
@@ -409,6 +417,21 @@ public class MultiComputeViewJava extends MultiComputeView {
             
             TreeMap<Double, GridEnvelope2D> viewZones = new TreeMap<>();
             calcZones(p, viewZones);
+            
+            TreeMap<Double, ScaleData> subData = new TreeMap<>();
+            TreeMap<Double, float[]> dtmBufs = new TreeMap<>();
+            TreeMap<Double, float[]> dsmBufs = new TreeMap<>();
+            TreeMap<Double, Rectangle> dtmRect = new TreeMap<>();
+            for(ScaleData data : getDatas().values()) {
+                GridEnvelope2D env = viewZones.get(data.getResolution());
+                ScaleData d = data.getSubData(env);
+                subData.put(d.getResolution(), d);
+                dtmBufs.put(data.getResolution(), ((DataBufferFloat)d.getDtmRaster().getDataBuffer()).getData());
+                dtmRect.put(data.getResolution(), d.getDtmRaster().getBounds());
+                if(d.getDsm() != null) {
+                    dsmBufs.put(data.getResolution(), ((DataBufferFloat)d.getDsmRaster().getDataBuffer()).getData());
+                }
+            }
 
             int n = (int)Math.ceil(bounds.getAmplitudeRad()/getRadaPrec());
             WritableRaster view = Raster.createBandedRaster(DataBuffer.TYPE_INT, n, (int)Math.ceil(Math.PI/getRadaPrec()), 1, null);
@@ -422,13 +445,13 @@ public class MultiComputeViewJava extends MultiComputeView {
             for(int ax = 0; ax < n; ax++) {
                 double a = (aStart - ax*getRadaPrec() + 2*Math.PI) % (2*Math.PI);
                 if(bounds.isTheta1Included(a)) {
-                    calcRayTan(p, startZ, bounds, viewBuf, scaleBuf, a, n, ax, getRadaPrec(), viewZones);
+                    calcRayTan(p, startZ, bounds, viewBuf, scaleBuf, a, n, ax, getRadaPrec(), viewZones, dtmBufs, dsmBufs, dtmRect);
                 }
             }
 
             Logger.getLogger(ComputeViewJava.class.getName()).fine((System.currentTimeMillis()-time) + " ms");
         
-            return new MultiViewTanResult(getDatas().firstEntry().getValue().getGridGeometry().worldToGrid(p), view, scale, viewZones, getDatas(), this);
+            return new MultiViewTanResult(getDatas().firstEntry().getValue().getGridGeometry().worldToGrid(p), view, scale, viewZones, subData, this);
         } catch(TransformException ex) {
             throw new IllegalArgumentException(ex);
         }
@@ -450,19 +473,21 @@ public class MultiComputeViewJava extends MultiComputeView {
      * @throws TransformException 
      */
     private void calcRayTan(final DirectPosition2D p0, final double startZ, Bounds bounds, int[] view, byte[] scale, double a, 
-            final int wa, final int ax, final double ares, final TreeMap<Double, GridEnvelope2D> zones) throws TransformException {
+            final int wa, final int ax, final double ares, final TreeMap<Double, GridEnvelope2D> zones,
+            final TreeMap<Double, float[]> dtms, final TreeMap<Double, float[]> dsms, TreeMap<Double, Rectangle> dtmRects) throws TransformException {
 
         ScaleData dataInit = getDatas().firstEntry().getValue();
         GridCoordinates2D c0 = dataInit.getDtmCov().getGridGeometry().worldToGrid(p0);
-        double z0 = dataInit.getDtmRaster().getSampleDouble(c0.x, c0.y, 0) + startZ;
+        Rectangle r = dtmRects.firstEntry().getValue();
+        int ind0 = (c0.y-r.y) * r.width + c0.x-r.x;
+        double z0 = dtms.firstEntry().getValue()[ind0] + startZ;
         
         if(bounds.getDmin() == 0) {
             final double si = Math.min(-startZ / (dataInit.getResolution()/2), bounds.getSlopemax());
             final int zi1 = (int) ((Math.PI/2 - Math.atan(si)) / ares);
             final int zi2 = (int) ((Math.PI/2 - Math.atan(bounds.getSlopemin())) / ares);
-            final int ind = c0.x + c0.y*dataInit.getDtm().getWidth();
             for(int yz = zi1; yz < zi2; yz++) {
-                view[yz*wa + ax] = (int) ind;
+                view[yz*wa + ax] = (int) ind0;
                 scale[yz*wa + ax] = 0; // first scale : 0
             }
         }
@@ -487,7 +512,8 @@ public class MultiComputeViewJava extends MultiComputeView {
                 c0.y = c.y;
             }
 
-            slopeMin = calcRayTan(c0, c1, bounds, data, view, scale, indScale, wa, ax, ares, z0, dist, slopeMin);
+            slopeMin = calcRayTan(c0, c1, bounds, data, view, scale, indScale, wa, ax, ares, z0, dist, slopeMin, 
+                        dtms.get(data.getResolution()), dsms.get(data.getResolution()), dtmRects.get(data.getResolution()));
             
             if(Double.isNaN(slopeMin)) {
                 break;
@@ -515,16 +541,12 @@ public class MultiComputeViewJava extends MultiComputeView {
      * @param startSlope the current max slope
      * @return the new slope
      */
-    private double calcRayTan(final GridCoordinates2D c0, final GridCoordinates2D c1, final Bounds bounds, final ScaleData data, final int[] view, 
-            final byte[] scale, final byte indScale, final int wa, final int ax, final double ares, final double z0, final double startDist, final double startSlope) {
+    private double calcRayTan(final GridCoordinates2D c0, final GridCoordinates2D c1, final Bounds bounds, 
+            final ScaleData data, final int[] view, final byte[] scale, final byte indScale, final int wa, final int ax, 
+            final double ares, final double z0, final double startDist, final double startSlope, float[] dtm, float[] dsm, Rectangle dtmRect) {
 
-        final DataBuffer dtmBuf = data.getDtmRaster().getDataBuffer();
-        DataBuffer dsmBuf = null;
-        if(data.getDsm() != null) {
-            dsmBuf = data.getDsmRaster().getDataBuffer();
-        }
         final double res = data.getResolution();
-        final int w = data.getDtm().getWidth();
+        final int w = dtmRect.width;
         final int dx = Math.abs(c1.x-c0.x);
         final int dy = Math.abs(c1.y-c0.y);
         final int sx = c0.x < c1.x ? 1 : -1;
@@ -532,8 +554,8 @@ public class MultiComputeViewJava extends MultiComputeView {
         int err = dx-dy;
         int xx = 0;
         int yy = 0;
-        int ind = c0.x + c0.y*w;
-        final int ind1 = c1.x + c1.y*w;
+        int ind = c0.x - dtmRect.x + (c0.y - dtmRect.y)*w;
+        final int ind1 = c1.x - dtmRect.x + (c1.y - dtmRect.y)*w;
 
         double maxSlope = startSlope;
         double maxZ = -Double.MAX_VALUE;
@@ -550,7 +572,7 @@ public class MultiComputeViewJava extends MultiComputeView {
                 ind += sy*w;
             }
 
-            double z = dtmBuf.getElemDouble(ind) + (dsmBuf != null ? dsmBuf.getElemDouble(ind) : 0);
+            double z = dtm[ind] + (dsm != null ? dsm[ind] : 0);
             if(Double.isNaN(z)) {
                 return Double.NaN;
             }

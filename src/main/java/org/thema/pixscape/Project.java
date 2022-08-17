@@ -21,8 +21,7 @@ package org.thema.pixscape;
 import com.thoughtworks.xstream.XStream;
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
-import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
@@ -67,7 +66,8 @@ import org.thema.pixscape.metric.ShannonMetric;
 import org.thema.pixscape.metric.SkyLineMetric;
 import org.thema.pixscape.view.ComputeView;
 import org.thema.pixscape.view.ComputeViewJava;
-import org.thema.pixscape.view.MultiComputeViewJava;
+import org.thema.pixscape.view.MultiComputeView;
+import org.thema.pixscape.view.MultiComputeViewLargeJava;
 import org.thema.pixscape.view.SimpleComputeView;
 import org.thema.pixscape.view.cuda.ComputeViewCUDA;
 
@@ -205,14 +205,8 @@ public final class Project {
         if(!getDtmCov().getEnvelope2D().boundsEquals(landCov.getEnvelope2D(), 0, 1, 0.1)) {
             throw new IllegalArgumentException("Land use bounds does not correspond to DTM bounds");
         }
-        Raster land;
-        if(landCov.getRenderedImage() instanceof BufferedImage) {
-            land = ((BufferedImage)landCov.getRenderedImage()).getRaster();
-        } else {
-            land = landCov.getRenderedImage().getData();
-        }
         
-        ScaleData newData = new ScaleData(getDtmCov(), land, getDefaultScaleData().getDsm());
+        ScaleData newData = new ScaleData(getDtmCov(), landCov.getRenderedImage(), getDefaultScaleData().getDsm());
         scaleDatas.put(newData.getResolution(), newData);
         simpleComputeView = null;
         
@@ -246,14 +240,8 @@ public final class Project {
         if(!getDtmCov().getEnvelope2D().boundsEquals(dsmCov.getEnvelope2D(), 0, 1, 0.1)) {
             throw new IllegalArgumentException("DSM bounds does not correspond to DTM bounds");
         }
-        Raster dsm;
-        if(dsmCov.getRenderedImage() instanceof BufferedImage) {
-            dsm = ((BufferedImage)dsmCov.getRenderedImage()).getRaster();
-        } else {
-            dsm = dsmCov.getRenderedImage().getData();
-        }
         
-        ScaleData newData = new ScaleData(getDtmCov(), getLandUse(), dsm);
+        ScaleData newData = new ScaleData(getDtmCov(), getLandUse(), dsmCov.getRenderedImage());
         scaleDatas.put(newData.getResolution(), newData);
         simpleComputeView = null;
         
@@ -322,7 +310,7 @@ public final class Project {
     /**
      * @return the DTM raster at the finest resolution
      */
-    public Raster getDtm() {
+    public RenderedImage getDtm() {
         return getDefaultScaleData().getDtm();
     }
 
@@ -336,7 +324,7 @@ public final class Project {
     /**
      * @return the land use raster at the finest resolution
      */
-    public Raster getLandUse() {
+    public RenderedImage getLandUse() {
         return getDefaultScaleData().getLand();
     }
     
@@ -546,12 +534,12 @@ public final class Project {
      * @return a new multi scale computation class
      * @throws IllegalStateException if the project does not contain muti scale data
      */
-    public MultiComputeViewJava getMultiComputeView(double distMin) {
+    public MultiComputeView getMultiComputeView(double distMin) {
         if(!hasMultiScale()) {
             throw new IllegalStateException("Project has no multi scale data.");
         }
         
-        MultiComputeViewJava compute = new MultiComputeViewJava(scaleDatas, 
+        MultiComputeView compute = new MultiComputeViewLargeJava(scaleDatas, 
             (int) Math.ceil(distMin/getDefaultScaleData().getResolution()), aPrec, earthCurv, coefRefraction);
 
         return compute;

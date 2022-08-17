@@ -27,6 +27,7 @@ import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.DataBufferFloat;
 import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -44,6 +45,8 @@ import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.FileImageOutputStream;
+import javax.media.jai.iterator.RandomIter;
+import javax.media.jai.iterator.RandomIterFactory;
 import javax.media.jai.remote.SerializableState;
 import javax.media.jai.remote.SerializerFactory;
 import org.geotools.coverage.grid.GridCoordinates2D;
@@ -91,7 +94,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
     private transient Project project;
     private transient GridGeometry2D grid;
     private transient ComputeView compute;
-    private transient Raster dtm, land;
+    private transient RenderedImage dtm, land;
     private transient Map<String, WritableRaster> result;
     private transient Map<String, ImageWriter> writers;
 
@@ -184,6 +187,8 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
             }
         }
         final int w = dtm.getWidth()/sample;
+        RandomIter rDtm = RandomIterFactory.create(dtm, null);
+        RandomIter rLand = from != null ? RandomIterFactory.create(land, null) : null;
         for(int y = y0; y < y1; y++) {
             if(isCanceled()) {
                 break;
@@ -191,7 +196,7 @@ public class GridMetricTask extends AbstractParallelTask<Map<String, WritableRas
             for(int x = 0; x < w; x++) {
                 GridCoordinates2D c = new GridCoordinates2D(x*sample+sample/2, y*sample+sample/2);
                 
-                if(from != null && !from.contains(land.getSample(c.x, c.y, 0)) || Float.isNaN(dtm.getSampleFloat(c.x, c.y, 0))) {
+                if(from != null && !from.contains(rLand.getSample(c.x, c.y, 0)) || Float.isNaN(rDtm.getSampleFloat(c.x, c.y, 0))) {
                     continue;
                 }
                 long time = System.currentTimeMillis();

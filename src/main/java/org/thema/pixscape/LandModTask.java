@@ -25,7 +25,6 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import java.awt.image.Raster;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,6 +33,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeSet;
+import javax.media.jai.TiledImage;
 import org.geotools.feature.SchemaException;
 import org.thema.common.collection.HashMapList;
 import org.thema.data.IOImage;
@@ -192,12 +192,8 @@ public class LandModTask extends AbstractParallelTask<Void, Void> implements Ser
      * @throws SchemaException 
      */
     private Project createProject(String id, List<DefaultFeature> zones) throws IOException, SchemaException {
-        Raster src = project.getDefaultScaleData().getLand();
-        WritableRaster land = src.createCompatibleWritableRaster();
-        land.setRect(src);
-        src = project.getDefaultScaleData().getDsm();
-        WritableRaster dsm = src.createCompatibleWritableRaster();
-        dsm.setRect(src);
+        TiledImage land = new TiledImage(project.getDefaultScaleData().getLand(), false);
+        TiledImage dsm = new TiledImage(project.getDefaultScaleData().getDsm(), false);
         
         TreeSet<Integer> codes = new TreeSet<>(project.getCodes());
         AffineTransformation trans = project.getDefaultScaleData().getWorld2Grid();

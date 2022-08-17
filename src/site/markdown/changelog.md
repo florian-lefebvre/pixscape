@@ -1,5 +1,10 @@
 ## Changelog
 
+##### version 1.3 (17/08/2022)
+- Manage raster bigger than 2 giga pixels in multi resolution only. All features are not yet implemented, for test only
+- GUI : visual saturation in Visibility menu
+- GUI : set log scale style for multiviewhed in angular area
+
 ##### version 1.2.7 (03/05/2022)
 - GUI : Geometries to point doesn't work with lineal geometries
 - Correct an error in geopackage saving while layer has several id fields

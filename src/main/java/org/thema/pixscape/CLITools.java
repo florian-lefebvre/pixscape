@@ -20,6 +20,7 @@ package org.thema.pixscape;
 
 import au.com.bytecode.opencsv.CSVWriter;
 import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.FileWriter;
@@ -482,7 +483,7 @@ public class CLITools {
         String objId = params.get("id");
 
         Point2PointViewTask task = new Point2PointViewTask(pointFile, idField, zEye, objFile, objId, zDest, 
-                outValue, agreg, bounds, project, Config.getProgressBar("ToObject"));
+                outValue, agreg, Point2PointViewTask.AgregOp.SUM, bounds, project, Config.getProgressBar("ToObject"));
         ExecutorService.execute(task);
         
         Map result = task.getResult();
@@ -568,12 +569,12 @@ public class CLITools {
         File dtm = new File(args.remove(0));
         Map<String, String> params = extractAndCheckParams(args, Collections.EMPTY_LIST, Arrays.asList("landuse", "dsm"));
         GridCoverage2D dtmCov = IOImage.loadCoverage(dtm);
-        Raster land = null, dsm = null;
+        RenderedImage land = null, dsm = null;
         if(params.containsKey("dsm")) {
-            dsm = IOImage.loadCoverage(new File(params.get("dsm"))).getRenderedImage().getData();
+            dsm = IOImage.loadCoverage(new File(params.get("dsm"))).getRenderedImage();
         }
         if(params.containsKey("landuse")) {
-            land = IOImage.loadCoverage(new File(params.get("landuse"))).getRenderedImage().getData();
+            land = IOImage.loadCoverage(new File(params.get("landuse"))).getRenderedImage();
         }
         
         project.addScaleData(new ScaleData(dtmCov, land, dsm));

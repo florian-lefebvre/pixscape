@@ -41,7 +41,7 @@ import org.thema.pixscape.ScaleData;
 public abstract class MultiViewResult extends AbstractViewResult {
 
     private final TreeMap<Double, GridEnvelope2D> zones;
-    protected final MultiComputeViewJava compute;
+    private final TreeMap<Double, ScaleData> datas;
     
     private final TreeMap<Double, Point2D> coords;
     
@@ -54,13 +54,13 @@ public abstract class MultiViewResult extends AbstractViewResult {
      * @param zones the zone where viewshed has been calculated for each scale
      * @param compute the compute view used
      */
-    public MultiViewResult(GridCoordinates2D cg, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
+    public MultiViewResult(GridCoordinates2D cg, TreeMap<Double, GridEnvelope2D> zones, TreeMap<Double, ScaleData> datas) {
         super(cg);
-        this.compute = compute;
+        this.datas = datas;
         this.zones = zones;
         this.coords = new TreeMap<>();
         try {    
-            Point2D p = getDatas().firstEntry().getValue().getGridGeometry().getGridToCRS2D().transform(cg, new Point2D.Double());
+            Point2D p = getData().getGridGeometry().getGridToCRS2D().transform(cg, new Point2D.Double());
             for(ScaleData data : getDatas().values()) {
                 coords.put(data.getResolution(), data.getGridGeometry().getCRSToGrid2D().transform(p, new Point2D.Double()));
             }
@@ -80,7 +80,7 @@ public abstract class MultiViewResult extends AbstractViewResult {
      * @return the data for each scale
      */
     public final TreeMap<Double, ScaleData> getDatas() {
-        return compute.getDatas();
+        return datas;
     }
 
     /**
@@ -119,7 +119,7 @@ public abstract class MultiViewResult extends AbstractViewResult {
 
     @Override
     public final ScaleData getData() {
-        return compute.getDatas().firstEntry().getValue();
+        return getDatas().firstEntry().getValue();
     }
 
     @Override
@@ -129,13 +129,13 @@ public abstract class MultiViewResult extends AbstractViewResult {
 
     @Override
     public final double getRes2D() {
-        return compute.getDatas().firstKey();
+        return getDatas().firstKey();
     }
 
     @Override
     public final SortedSet<Integer> getCodes() {
         TreeSet<Integer> codes = new TreeSet<>();
-        for(ScaleData data : compute.getDatas().values()) {
+        for(ScaleData data : getDatas().values()) {
             codes.addAll(data.getCodes());
         }
         return codes;

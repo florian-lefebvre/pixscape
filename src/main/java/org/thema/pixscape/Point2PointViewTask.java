@@ -40,6 +40,8 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     
     public enum Agreg { EYE, OBJECT }
     
+    public enum AgregOp { SUM, MIN, MAX }
+    
     /** project file for loading project for MPI mode only */
     private File prjFile;
 
@@ -58,6 +60,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     private RasterValue outValue;
     
     private Agreg agreg; 
+    private AgregOp agregOp;
     
     private transient Project project;
     private transient List<? extends Feature> eyePoints;
@@ -69,9 +72,26 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
      * The default 3D limits of the sight. This limits are overriden by shapefile attributes if present
      */
     private Bounds bounds;
-
+  
     public Point2PointViewTask(File pointEyeFile, String idEyeField, double zEye, File pointObjFile, String idObjField, double zDest, 
-            RasterValue outValue, Agreg agreg, Bounds bounds, Project project, ProgressBar monitor) {
+            RasterValue outValue, Bounds bounds, Project project, ProgressBar monitor) {
+        super(monitor);
+        this.project = project;
+        this.prjFile = project.getProjectFile();
+        this.pointEyeFile = pointEyeFile;
+        this.idEyeField = idEyeField;
+        this.zEye = zEye;
+        this.pointObjFile = pointObjFile;
+        this.idObjField = idObjField;
+        this.zDest = zDest;
+        this.outValue = outValue;
+        this.agreg = null;
+        this.agregOp = null;
+        this.bounds = bounds;
+    }
+    
+    public Point2PointViewTask(File pointEyeFile, String idEyeField, double zEye, File pointObjFile, String idObjField, double zDest, 
+            RasterValue outValue, Agreg agreg, AgregOp agregOp, Bounds bounds, Project project, ProgressBar monitor) {
         super(monitor);
         this.project = project;
         this.prjFile = project.getProjectFile();
@@ -83,6 +103,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
         this.zDest = zDest;
         this.outValue = outValue;
         this.agreg = agreg;
+        this.agregOp = agregOp;
         this.bounds = bounds;
     }
     
@@ -120,7 +141,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
             }
             GridCoordinates2D orig = compute.getData().getWorld2Grid(new DirectPosition2D(p.getX(), p.getY()));
             Map<Object, Double> objs = agreg == null ? new HashMap<>() : map;
-            double sum = 0; // for agreg == eye
+            double agregValue = 0; // for agreg == eye
             for(Feature obj : objPoints) {
                 double zDest = this.zDest;
                 if(obj.getAttributeNames().contains("height")) {
@@ -138,18 +159,18 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
                         objs.put(obj.getId(), val);
                     }
                 } else if(agreg == Agreg.EYE) {
-                    sum += val;
+                    agregValue = agreg(agregValue, val);
                 } else {
                     Double prec = objs.putIfAbsent(obj.getId(), val);
                     if(prec != null) {
-                        objs.put(obj.getId(), prec+val);
+                        objs.put(obj.getId(), agreg(prec, val));
                     }
                 }
             }
             if(agreg == null) {
                 map.put(point.getId(), objs);
             } else if(agreg == Agreg.EYE) {
-                map.put(point.getId(), sum);
+                map.put(point.getId(), agregValue);
             } else {
                 // does nothing cause map = objs
             }
@@ -167,7 +188,7 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
                 Double val = (Double)m.get(objId);
                 Double prec = (Double) result.putIfAbsent(objId, val);
                 if(prec != null) {
-                    result.put(objId, prec+val);
+                    result.put(objId, agreg(prec, val));
                 }
             }
         } else {
@@ -183,5 +204,18 @@ public class Point2PointViewTask extends AbstractParallelTask<Map, Map> implemen
     @Override
     public Map getResult() {
         return result;
+    }
+    
+    private double agreg(double v1, double v2) {
+        switch(agregOp) {
+            case SUM:
+                return v1 + v2;
+            case MIN:
+                return Math.min(v1, v2);
+            case MAX:
+                return Math.max(v1, v2);
+            default:
+                throw new IllegalStateException();
+        }
     }
 }

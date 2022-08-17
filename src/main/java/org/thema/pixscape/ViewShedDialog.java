@@ -35,6 +35,7 @@ import org.geotools.geometry.DirectPosition2D;
 import org.opengis.referencing.operation.TransformException;
 import org.thema.data.feature.DefaultFeature;
 import org.thema.drawshape.PanelMap;
+import static org.thema.drawshape.PanelMap.INPUT_CURSOR_MODE;
 import org.thema.drawshape.PointShape;
 import org.thema.drawshape.SelectableShape;
 import org.thema.drawshape.image.RasterShape;
@@ -315,6 +316,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     }//GEN-LAST:event_okButtonActionPerformed
 
     private void cancelButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelButtonActionPerformed
+        isOk = false;
         doClose();
     }//GEN-LAST:event_cancelButtonActionPerformed
 
@@ -329,7 +331,7 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
     private void updateButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateButtonActionPerformed
         String[] coords = pointTextField.getText().split(",");
         Point2D p = new Point2D.Double(Double.parseDouble(coords[0]), Double.parseDouble(coords[1]));
-        mouseClicked(p, null, null, 0);
+        mouseClicked(p, null, null, INPUT_CURSOR_MODE);
     }//GEN-LAST:event_updateButtonActionPerformed
 
     private void metricsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metricsButtonActionPerformed
@@ -361,6 +363,9 @@ public class ViewShedDialog extends javax.swing.JDialog implements PanelMap.Shap
 
     @Override
     public void mouseClicked(Point2D p, List<SelectableShape> shapes, MouseEvent sourceEvent, int cursorMode) {
+        if(cursorMode != INPUT_CURSOR_MODE) {
+            return;
+        }
         pointTextField.setText(p.getX() + "," + p.getY());
         centreShape.setPoint2D(p);
         for(Layer l : new ArrayList<>(layers.getLayers())) {

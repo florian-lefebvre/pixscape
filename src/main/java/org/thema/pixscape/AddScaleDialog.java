@@ -22,7 +22,7 @@ package org.thema.pixscape;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
-import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.io.IOException;
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
@@ -188,13 +188,13 @@ public class AddScaleDialog extends javax.swing.JDialog {
     private void okButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_okButtonActionPerformed
         try {
             GridCoverage2D dtmCov = IOImage.loadCoverage(dtmSelectFilePanel.getSelectedFile());
-            Raster dsm = null;
+            RenderedImage dsm = null;
             if(dsmSelectFilePanel.getSelectedFile() != null) {
-                dsm = IOImage.loadCoverage(dsmSelectFilePanel.getSelectedFile()).getRenderedImage().getData();
+                dsm = IOImage.loadCoverage(dsmSelectFilePanel.getSelectedFile()).getRenderedImage();
             }
-            Raster land = null;
+            RenderedImage land = null;
             if(project.hasLandUse()) {
-                land = IOImage.loadCoverage(landSelectFilePanel.getSelectedFile()).getRenderedImage().getData();
+                land = IOImage.loadCoverage(landSelectFilePanel.getSelectedFile()).getRenderedImage();
             }
             ScaleData data = new ScaleData(dtmCov, land, dsm, Double.parseDouble(resZTextField.getText()));
             project.addScaleData(data);

@@ -25,10 +25,18 @@ import org.locationtech.jts.geom.Point;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
+import java.awt.Rectangle;
 import java.awt.SplashScreen;
 import java.awt.Toolkit;
+import java.awt.color.ColorSpace;
 import java.awt.event.ActionEvent;
+import java.awt.image.BandedSampleModel;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
+import java.awt.image.ComponentSampleModel;
+import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
+import java.awt.image.RenderedImage;
 import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +50,9 @@ import java.util.NavigableSet;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.media.jai.TiledImage;
+import javax.media.jai.iterator.RandomIter;
+import javax.media.jai.iterator.RandomIterFactory;
 import javax.swing.AbstractAction;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
@@ -90,6 +101,7 @@ public class MainFrame extends javax.swing.JFrame {
     
     private ViewShedDialog viewshedDlg;
     private ViewTanDialog viewtanDlg;
+    private SaturationDialog saturationDlg;
     
     private final LoggingDialog logFrame;
     
@@ -132,6 +144,7 @@ public class MainFrame extends javax.swing.JFrame {
         visMenu = new javax.swing.JMenu();
         viewShedMenuItem = new javax.swing.JMenuItem();
         viewTanMenuItem = new javax.swing.JMenuItem();
+        saturationMenuItem = new javax.swing.JMenuItem();
         multiViewshedMenuItem = new javax.swing.JMenuItem();
         metricMenu = new javax.swing.JMenu();
         viewshedMetricMenuItem = new javax.swing.JMenuItem();
@@ -258,6 +271,14 @@ public class MainFrame extends javax.swing.JFrame {
             }
         });
         visMenu.add(viewTanMenuItem);
+
+        saturationMenuItem.setText(bundle.getString("MainFrame.saturationMenuItem.text")); // NOI18N
+        saturationMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saturationMenuItemActionPerformed(evt);
+            }
+        });
+        visMenu.add(saturationMenuItem);
 
         multiViewshedMenuItem.setText(bundle.getString("MainFrame.multiViewshedMenuItem.text")); // NOI18N
         multiViewshedMenuItem.addActionListener(new java.awt.event.ActionListener() {
@@ -452,8 +473,12 @@ public class MainFrame extends javax.swing.JFrame {
                     if(dlg.vectorOutput) {
                         l = new FeatureLayer("Multi viewshed - " + name, (List)task.getResult(), new FeatureStyle(new Color(0, 0, 255, 20), null), project.getCRS());        
                     } else {
+                        ColorRamp colorRamp = new ColorRamp(ColorRamp.RAMP_GRAY);
+                        if(dlg.outValue == MultiViewshedTask.RasterValue.AREA) {
+                            colorRamp.setScale(ColorRamp.SCALE_LOG);
+                        }
                         l = new RasterLayer("Multi viewshed - " + name, new RasterShape((Raster)task.getResult(), 
-                                project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(), true), project.getCRS());
+                                project.getDefaultScaleData().getGridGeometry().getEnvelope2D(), new RasterStyle(colorRamp), true), project.getCRS());
                     }
                     l.setRemovable(true);
                     rootLayer.addLayerFirst(l);
@@ -517,12 +542,12 @@ public class MainFrame extends javax.swing.JFrame {
         try {
             project.removeMultiScaleData();
             
-            Raster dtm = project.getDefaultScaleData().getDtm();
-            Raster dsm = project.getDefaultScaleData().getDsm();
-            Raster land = project.getDefaultScaleData().getLand();
+            RenderedImage dtm = project.getDefaultScaleData().getDtm();
+            RenderedImage dsm = project.getDefaultScaleData().getDsm();
+            RenderedImage land = project.getDefaultScaleData().getLand();
             for(Double resol : resolutions) {
                 int scale = (int)(resol/r);
-                WritableRaster dtmSamp = samplingDEM(dtm, scale);
+                RenderedImage dtmSamp = samplingDEM(dtm, scale);
                 Envelope2D env = project.getDtmCov().getEnvelope2D();
                 env = new Envelope2D(env.getCoordinateReferenceSystem(), 
                         env.x, env.y-r*(dtmSamp.getHeight()*scale-dtm.getHeight()), dtmSamp.getWidth() * scale*r, dtmSamp.getHeight() * scale*r);
@@ -727,16 +752,38 @@ public class MainFrame extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_interpGeomMenuItemActionPerformed
 
-    private WritableRaster samplingDEM(Raster dtm, int scale) {
-        WritableRaster raster = dtm.createCompatibleWritableRaster(
+    private void saturationMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saturationMenuItemActionPerformed
+        if(saturationDlg == null) {
+            saturationDlg = new SaturationDialog(this, project, mapViewer);
+            
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            double screenWidth = screenSize.getWidth(); 
+            int x = getX()+getWidth();
+            int y = getY();
+            //Vérification de la position de la fenêtre créée
+            if(screenWidth < x + saturationDlg.getWidth()) {
+            	x = (int)(screenWidth-saturationDlg.getWidth());
+            }
+            if(y < 0) {
+            	y = 0;
+            }
+            saturationDlg.setLocation(x, y);
+        }
+        saturationDlg.setVisible(true);
+    }//GEN-LAST:event_saturationMenuItemActionPerformed
+
+    private RenderedImage samplingDEM(RenderedImage dtm, int scale) {
+        TiledImage img = new TiledImage(0, 0, 
                 (int)Math.ceil(dtm.getWidth()/(double)scale), 
-                (int)Math.ceil(dtm.getHeight()/(double)scale));
+                (int)Math.ceil(dtm.getHeight()/(double)scale), 0, 0, 
+                new BandedSampleModel(DataBuffer.TYPE_FLOAT, 1000, 1000, 1), 
+                new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, ColorModel.OPAQUE, DataBuffer.TYPE_FLOAT));
         double [] tab = new double[scale*scale];
-        for(int y = 0; y < raster.getHeight(); y++) {
-            for(int x = 0; x < raster.getWidth(); x++) {
+        for(int y = 0; y < img.getHeight(); y++) {
+            for(int x = 0; x < img.getWidth(); x++) {
                 final int w = Math.min(scale, dtm.getWidth()-x*scale);
                 final int h = Math.min(scale, dtm.getHeight()-y*scale);
-                dtm.getSamples(x*scale, y*scale, w, h, 0, tab);
+                dtm.getData(new Rectangle(x*scale, y*scale, w, h)).getSamples(x*scale, y*scale, w, h , 0, tab);
                 int nbNaN = scale*scale - w*h;
                 SummaryStatistics stats = new SummaryStatistics();
                 for(int i = 0; i < w*h; i++) {
@@ -748,25 +795,27 @@ public class MainFrame extends javax.swing.JFrame {
                     }
                 }          
                 if(nbNaN < stats.getN()) {
-                    raster.setSample(x, y, 0, stats.getMean());
+                    img.setSample(x, y, 0, stats.getMean());
                 } else {
-                    raster.setSample(x, y, 0, Double.NaN);
+                    img.setSample(x, y, 0, Double.NaN);
                 }
             }
         }
-        return raster;
+        return img;
     }
     
-    private WritableRaster samplingLanduse(Raster land, int scale) {
-        WritableRaster raster = land.createCompatibleWritableRaster(
+    private RenderedImage samplingLanduse(RenderedImage land, int scale) {
+        TiledImage img = new TiledImage(0, 0, 
                 (int)Math.ceil(land.getWidth()/(double)scale), 
-                (int)Math.ceil(land.getHeight()/(double)scale));
+                (int)Math.ceil(land.getHeight()/(double)scale), 0, 0, 
+                new BandedSampleModel(DataBuffer.TYPE_BYTE, 1000, 1000, 1), 
+                new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, ColorModel.OPAQUE, DataBuffer.TYPE_BYTE));
         int [] tab = new int[scale*scale];
-        for(int y = 0; y < raster.getHeight(); y++) {
-            for(int x = 0; x < raster.getWidth(); x++) {
+        for(int y = 0; y < img.getHeight(); y++) {
+            for(int x = 0; x < img.getWidth(); x++) {
                 int w = Math.min(scale, land.getWidth()-x*scale);
                 int h = Math.min(scale, land.getHeight()-y*scale);
-                land.getSamples(x*scale, y*scale, w, h, 0, tab);
+                land.getData(new Rectangle(x*scale, y*scale, w, h)).getSamples(x*scale, y*scale, w, h , 0, tab);
                 int [] nb = new int[256];
                 for(int i = 0; i < w*h; i++) {
                     nb[tab[i]]++;
@@ -779,10 +828,10 @@ public class MainFrame extends javax.swing.JFrame {
                         landMax = i;
                     }
                 }
-                raster.setSample(x, y, 0, landMax);
+                img.setSample(x, y, 0, landMax);
             }
         }
-        return raster;
+        return img;
     }
 
     private void closeProject() {
@@ -799,8 +848,9 @@ public class MainFrame extends javax.swing.JFrame {
         DefaultGroupLayer layers = createScaleDataLayers(project.getDefaultScaleData());
         layers.setName(project.getName());
         layers.setExpanded(true);
-        
-        layers.getLayerFirst().setVisible(true);
+        if(project.getDefaultScaleData().isLoadable()) {
+            layers.getLayerFirst().setVisible(true);
+        }
         
         if(project.hasMultiScale()) {
             DefaultGroupLayer gl = new DefaultGroupLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("OTHER SCALES"), false);
@@ -848,7 +898,7 @@ public class MainFrame extends javax.swing.JFrame {
         gl.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DTM"), new CoverageShape(data.getDtmCov(), new RasterStyle(ColorRamp.RAMP_DEM))));
         if(data.getDsm() != null) {
             gl.addLayerFirst(new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("DSM"), new RasterShape(data.getDsm(), data.getDtmCov().getEnvelope2D(), 
-                    new RasterStyle(ColorRamp.RAMP_TEMP), true)));
+                    new RasterStyle(ColorRamp.RAMP_TEMP))));
         }
         if(project.hasLandUse()) {
             gl.addLayerFirst(getLandUseLayer(data));
@@ -861,7 +911,7 @@ public class MainFrame extends javax.swing.JFrame {
         final UniqueColorTable colorTable = new UniqueColorTable((Map)project.getLandColors());
         RasterLayer l = new RasterLayer(java.util.ResourceBundle.getBundle("org/thema/pixscape/Bundle").getString("LAND USE"), 
                 new RasterShape(data.getLand(), data.getDtmCov().getEnvelope2D(), 
-                new RasterStyle(colorTable, false), true));
+                new RasterStyle(colorTable, false)));
         l.addLayerListener(new LayerListener() {
             @Override
             public void layerVisibilityChanged(EventObject e) {                    
@@ -927,6 +977,7 @@ public class MainFrame extends javax.swing.JFrame {
     private javax.swing.JMenuItem optionsMenuItem;
     private javax.swing.JMenuItem pathOrienMenuItem;
     private javax.swing.JMenuItem prefMenuItem;
+    private javax.swing.JMenuItem saturationMenuItem;
     private javax.swing.JMenuItem tanMetricMenuItem;
     private javax.swing.JMenu toolMenu;
     private javax.swing.JMenuItem viewShedMenuItem;

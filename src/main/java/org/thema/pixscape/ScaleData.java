@@ -20,17 +20,20 @@
 package org.thema.pixscape;
 
 import it.geosolutions.jaiext.range.NoDataContainer;
+import java.awt.Rectangle;
+import java.awt.color.ColorSpace;
 import org.locationtech.jts.geom.util.AffineTransformation;
 import java.awt.image.BandedSampleModel;
-import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.ComponentColorModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
 import java.awt.image.RenderedImage;
-import java.awt.image.WritableRaster;
 import java.io.File;
 import java.io.IOException;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import javax.media.jai.TiledImage;
 import javax.media.jai.iterator.RandomIter;
 import javax.media.jai.iterator.RandomIterFactory;
 import org.geotools.coverage.grid.GridCoordinates2D;
@@ -42,7 +45,6 @@ import org.geotools.coverage.util.CoverageUtilities;
 import org.geotools.geometry.DirectPosition2D;
 import org.geotools.geometry.Envelope2D;
 import org.opengis.referencing.operation.TransformException;
-import org.thema.common.RasterImage;
 import org.thema.data.IOImage;
 
 /**
@@ -57,8 +59,8 @@ import org.thema.data.IOImage;
 public final class ScaleData {
     private double resolution;
     private transient GridCoverage2D dtmCov;
-    private transient Raster dtm;
-    private transient Raster land, dsm;
+    private transient RenderedImage dtm, land, dsm;
+    private transient Raster dtmRaster, landRaster, dsmRaster;
     private transient Double maxZ;
     
     private transient GridGeometry2D gridGeom;
@@ -68,7 +70,7 @@ public final class ScaleData {
 
     /**
      * Creates a new ScaleData.
-     * The unit of the coordinate system ind dtmCov must be metric
+     * The unit of the coordinate system in dtmCov must be metric
      * The coordinate system for the land and dsm is supposed to be the same
      * The elevation resolution of the DSM must be metric.
      * @param dtmCov the DTM coverage
@@ -78,7 +80,7 @@ public final class ScaleData {
      * @throws IllegalArgumentException if land or dsm have not the same size than the dtmCov
      * @throws IllegalArgumentException if land has float number type or if values are outside of [0-255]
      */
-    public ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm, double resZ) {
+    public ScaleData(GridCoverage2D dtmCov, RenderedImage land, RenderedImage dsm, double resZ) {
         double noData = Double.NaN;
         NoDataContainer noDataProp = CoverageUtilities.getNoDataProperty(dtmCov);
         if(noDataProp != null) {
@@ -88,7 +90,9 @@ public final class ScaleData {
         RenderedImage img = dtmCov.getRenderedImage();
         if(img.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT || resZ != 1 || !Double.isNaN(noData)) {
             RandomIter r = RandomIterFactory.create(img, null);
-            WritableRaster dtmFloat = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, img.getWidth(), img.getHeight(), 1), null);
+            TiledImage dtmFloat = new TiledImage(0, 0, img.getWidth(), img.getHeight(), 0, 0, 
+                        new BandedSampleModel(DataBuffer.TYPE_FLOAT, 1000, 1000, 1), 
+                        new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, ColorModel.OPAQUE, DataBuffer.TYPE_FLOAT));
             for(int y = 0; y < img.getHeight(); y++) {
                 for(int x = 0; x < img.getWidth(); x++) {
                     final double val = r.getSampleDouble(x, y, 0);
@@ -117,11 +121,23 @@ public final class ScaleData {
      * @throws IllegalArgumentException if land or dsm have not the same size than the dtmCov
      * @throws IllegalArgumentException if land has float number type or if values are outside of [0-255]
      */
-    ScaleData(GridCoverage2D dtmCov, Raster land, Raster dsm) {
+    ScaleData(GridCoverage2D dtmCov, RenderedImage land, RenderedImage dsm) {
         this(dtmCov, land, dsm, 1);
     }
     
-    private void init(GridCoverage2D dtmCov, Raster land, Raster dsm) {
+    private ScaleData(ScaleData data, Rectangle rect) {
+        resolution = data.getResolution();
+        dtmCov = data.getDtmCov();
+        dtm = data.getDtm();
+        dsm = data.getDsm();
+        land = data.getLand();
+        dtmRaster = data.getDtmRaster(rect);
+        dsmRaster = data.getDsmRaster(rect);
+        landRaster = data.getLandRaster(rect);
+        codes = data.getCodes();
+    }
+    
+    private void init(GridCoverage2D dtmCov, RenderedImage land, RenderedImage dsm) {
         this.dtmCov = dtmCov;
         
         GridEnvelope2D r = dtmCov.getGridGeometry().getGridRange2D();
@@ -131,19 +147,40 @@ public final class ScaleData {
             if(land.getWidth() != r.getWidth() || land.getHeight() != r.getHeight()) {
                 throw new IllegalArgumentException("Land use raster size does not correspond to DTM raster size");
             }
-           
-            this.land = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_BYTE, land.getWidth(), land.getHeight(), 1), null);
-            codes = new TreeSet<>();
-            for(int yi = 0; yi < land.getHeight(); yi++) {
-                for(int xi = 0; xi < land.getWidth(); xi++) {
-                    int val = land.getSample(xi, yi, 0);
-                    if(val < 0 || val > 255) {
-                        throw new IllegalArgumentException("Land codes must be integer between 0 and 255");
+            boolean recode = land.getSampleModel().getDataType() != DataBuffer.TYPE_BYTE;
+            if(recode) {
+                this.land = new TiledImage(0, 0, land.getWidth(), land.getHeight(), 0, 0, 
+                        new BandedSampleModel(DataBuffer.TYPE_BYTE, 1000, 1000, 1),  
+                        new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, ColorModel.OPAQUE, DataBuffer.TYPE_BYTE));
+            } else {
+                this.land = land;
+            }
+            
+            boolean [] boolCodes = new boolean[256];
+            for(int yt = 0; yt < land.getNumYTiles(); yt++) {
+                for(int xt = 0; xt < land.getNumXTiles(); xt++) {
+                    Raster tile = land.getTile(xt+land.getMinTileX(), yt+land.getMinTileY());
+                    for(int yi = 0; yi < tile.getHeight(); yi++) {
+                        for(int xi = 0; xi < tile.getWidth(); xi++) {
+                            int val = tile.getSample(xi+tile.getMinX(), yi+tile.getMinY(), 0);
+                            if(val < 0 || val > 255) {
+                                throw new IllegalArgumentException("Land codes must be integer between 0 and 255");
+                            }
+                            boolCodes[val] = true;
+                            if(recode) {
+                                ((TiledImage)this.land).setSample(xi+tile.getMinX(), yi+tile.getMinY(), 0, val);
+                            }
+                        }
                     }
-                    codes.add(val);
-                    ((WritableRaster)this.land).setSample(xi, yi, 0, val);
                 }
             }
+            codes = new TreeSet<>();
+            for(int i = 0; i < boolCodes.length; i++) {
+                if(boolCodes[i]) {
+                    codes.add(i);
+                }
+            }
+            
         }
         
         if(dsm != null) {
@@ -151,11 +188,14 @@ public final class ScaleData {
                 throw new IllegalArgumentException("DSM raster size does not correspond to DTM raster size");
             }
             if(dsm.getSampleModel().getDataType() != DataBuffer.TYPE_FLOAT) {
-                this.dsm = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, dsm.getWidth(), dsm.getHeight(), 1), null);
+                RandomIter rDsm = RandomIterFactory.create(dsm, null);
+                this.dsm = new TiledImage(0, 0, dsm.getWidth(), dsm.getHeight(), 0, 0, 
+                        new BandedSampleModel(DataBuffer.TYPE_FLOAT, 1000, 1000, 1), 
+                        new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, ColorModel.OPAQUE, DataBuffer.TYPE_FLOAT));
                 for(int y = 0; y < dsm.getHeight(); y++) {
                     for(int x = 0; x < dsm.getWidth(); x++) {
-                        final double val = dsm.getSampleDouble(x, y, 0);
-                        ((WritableRaster)this.dsm).setSample(x, y, 0, val);
+                        final double val = rDsm.getSampleDouble(x, y, 0);
+                        ((TiledImage)this.dsm).setSample(x, y, 0, val);
                     }
                 }
             } else {
@@ -163,10 +203,15 @@ public final class ScaleData {
             }
         }
         
-        if(dtmCov.getRenderedImage() instanceof BufferedImage) {
-            this.dtm = ((BufferedImage)dtmCov.getRenderedImage()).getRaster();
-        } else {
-            this.dtm = dtmCov.getRenderedImage().getData();
+        this.dtm = dtmCov.getRenderedImage();
+        if(isLoadable()) {
+            dtmRaster = this.dtm.getData();
+            if(this.dsm != null) {
+                dsmRaster = this.dsm.getData();
+            }
+            if(this.land != null) {
+                landRaster = this.land.getData();
+            }
         }
     }
     
@@ -187,26 +232,79 @@ public final class ScaleData {
 
     /**
      * DTM values are always in meter.
-     * @return the DTM raster
+     * @return the DTM RenderedImage
      */
-    public Raster getDtm() {
+    public RenderedImage getDtm() {
         return dtm;
     }
     
     /**
-     * Returns a raster of type float and meter unit
-     * @return the land use raster or null if none
+     * Returns a RenderedImage of type float and meter unit
+     * @return the land use RenderedImage or null if none
      */
-    public Raster getLand() {
+    public RenderedImage getLand() {
         return land;
     }
 
     /**
-     * Returns a raster of type float and meter unit
-     * @return the DSM raster or null if none
+     * Returns a RenderedImage of type float and meter unit
+     * @return the DSM RenderedImage or null if none
      */
-    public Raster getDsm() {
+    public RenderedImage getDsm() {
         return dsm;
+    }
+
+    public Raster getDtmRaster() {
+        if(dtmRaster == null) {
+            throw new OutOfMemoryError("Not enough memory, try to increase the memory allocated to Pixscape");
+        }
+        return dtmRaster;
+    }
+    
+    public Raster getDtmRaster(Rectangle env) {
+        if(dtmRaster != null) {
+            return dtmRaster;
+        } else {
+            return dtm.getData(env);
+        }
+    }
+
+    public Raster getLandRaster() {
+        if(land != null && landRaster == null) {
+            throw new OutOfMemoryError("Not enough memory, try to increase the memory allocated to Pixscape");
+        }
+        return landRaster;
+    }
+    
+    public Raster getLandRaster(Rectangle env) {
+        if(land != null) {
+            if(landRaster != null) {
+                return landRaster;
+            } else {
+                return land.getData(env);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public Raster getDsmRaster() {
+        if(dsm != null && dsmRaster == null) {
+            throw new OutOfMemoryError("Not enough memory, try to increase the memory allocated to Pixscape");
+        }
+        return dsmRaster;
+    }
+    
+    public Raster getDsmRaster(Rectangle env) {
+        if(dsm != null) {
+            if(dsmRaster != null) {
+                return dsmRaster;
+            } else {
+                return dsm.getData(env);
+            }
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -280,11 +378,14 @@ public final class ScaleData {
      * @return the elevation at (x,y) position
      */
     public double getZ(int x, int y) {
-        double z = dtm.getSample(x, y, 0);
-        if(dsm != null) {
-            z += dsm.getSample(x, y, 0);
+        if(dtmRaster != null) {
+            double z = dtmRaster.getSampleDouble(x, y, 0);
+            if(dsm != null) {
+                z += dsmRaster.getSampleDouble(x, y, 0);
+            }
+            return z;
         }
-        return z;
+        throw new UnsupportedOperationException();
     }
     
     /**
@@ -294,12 +395,14 @@ public final class ScaleData {
      */
     public synchronized double getMaxZ() {
         if(maxZ == null) {
+            RandomIter rDtm = RandomIterFactory.create(dtm, null);
+            RandomIter rDsm = dsm != null ? RandomIterFactory.create(dsm, null) : null;
             double max = Double.NEGATIVE_INFINITY;
             final int w = getDtm().getWidth();
             final int h = getDtm().getHeight();
             for(int y = 0; y < h; y++) {
                 for(int x = 0; x < w; x++) {
-                    final double z = getZ(x, y);
+                    final double z = rDtm.getSampleDouble(x, y, 0) + (rDsm != null ? rDsm.getSampleDouble(x, y, 0) : 0);
                     if(z > max) {
                         max = z;
                     }
@@ -311,25 +414,46 @@ public final class ScaleData {
     }
     
     /**
+     * Check if DTM DSM and landuse can be loaded completely in memory
+     * @return 
+     */
+    public boolean isLoadable() {
+        double coef = dsm == null ? 5 : 10;
+        return Runtime.getRuntime().maxMemory() > coef*dtm.getWidth()*dtm.getHeight() && dtm.getWidth()*(long)dtm.getHeight() < Integer.MAX_VALUE;
+    }
+    
+    /**
      * Loads the 1, 2 or 3 rasters from a directory.
      * @param dir the directory containing the rasters of this scale data
      * @throws IOException 
      */
     void load(File dir) throws IOException {
         dtmCov = IOImage.loadTiffWithoutCRS(new File(dir, "dtm-" + resolution + ".tif"));
-        this.dtm = dtmCov.getRenderedImage().getData();
         
+        this.dtm = dtmCov.getRenderedImage();
+
         File dsmFile = new File(dir, "dsm-" + resolution + ".tif");
         if(dsmFile.exists()) {
             GridCoverage2D dsmCov = IOImage.loadTiffWithoutCRS(dsmFile);
-            dsm = dsmCov.getRenderedImage().getData();
+            dsm = dsmCov.getRenderedImage();
         }
-        
+
         File luFile = new File(dir, "land-" + resolution + ".tif");
         if(luFile.exists()) {
             GridCoverage2D landCov = IOImage.loadTiffWithoutCRS(luFile);
-            land = landCov.getRenderedImage().getData();
+            land = landCov.getRenderedImage();
         }
+        
+        if(isLoadable()) {
+            dtmRaster = dtm.getData();
+            if(this.dsm != null) {
+                dsmRaster = dsm.getData();
+            }
+            if(this.land != null) {
+                landRaster = land.getData();
+            }
+        }
+        
     }
     
     /**
@@ -340,12 +464,16 @@ public final class ScaleData {
     void save(File dir) throws IOException {
         IOImage.saveTiffCoverage(new File(dir, "dtm-" + getResolution() + ".tif"), dtmCov);
         if(dsm != null) {
-            GridCoverage2D dsmCov = new GridCoverageFactory().create("", new RasterImage(dsm), dtmCov.getEnvelope2D());
+            GridCoverage2D dsmCov = new GridCoverageFactory().create("", dsm, dtmCov.getEnvelope2D());
             IOImage.saveTiffCoverage(new File(dir, "dsm-" + getResolution() + ".tif"), dsmCov);
         }
         if(hasLandUse()) {
-            GridCoverage2D landCov = new GridCoverageFactory().create("", new RasterImage(land), dtmCov.getEnvelope2D());
+            GridCoverage2D landCov = new GridCoverageFactory().create("", land, dtmCov.getEnvelope2D());
             IOImage.saveTiffCoverage(new File(dir, "land-" + getResolution() + ".tif"), landCov);
         }
+    }
+    
+    public ScaleData getSubData(Rectangle env) {
+        return new ScaleData(this, env);
     }
 }

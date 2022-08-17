@@ -210,5 +210,12 @@ public abstract class ComputeView {
     public void setCoefRefraction(double coefRefraction) {
         this.coefRefraction = coefRefraction;
     }
+
+    public final static double rad2deg2(double rad2) {
+        return rad2*Math.pow(180/Math.PI, 2);
+    }
     
+    public final static double rad2deg(double rad) {
+        return rad*180/Math.PI;
+    }
 }

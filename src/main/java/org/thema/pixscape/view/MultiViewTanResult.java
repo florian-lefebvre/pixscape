@@ -19,6 +19,7 @@
 
 package org.thema.pixscape.view;
 
+import java.awt.Rectangle;
 import java.awt.image.BandedSampleModel;
 import java.awt.image.DataBuffer;
 import java.awt.image.Raster;
@@ -53,12 +54,13 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
      * @param zones the zone where viewshed has been calculated for each scale
      * @param compute the compute view used
      */
-    MultiViewTanResult(GridCoordinates2D cg, Raster multiView, Raster scale, TreeMap<Double, GridEnvelope2D> zones, MultiComputeViewJava compute) {
-        super(cg, zones, compute);
+    MultiViewTanResult(GridCoordinates2D cg, Raster multiView, Raster scale, TreeMap<Double, GridEnvelope2D> zones, 
+            TreeMap<Double, ScaleData> datas, MultiComputeView compute) {
+        super(cg, zones, datas);
         this.multiView = multiView;
         this.scale = scale;
         calcViewLand();
-        resultDelegate = new SimpleViewTanResult(cg, view, landuse, new ComputeViewJava(getDatas().firstEntry().getValue(), 
+        resultDelegate = new SimpleViewTanResult(cg, view, landuse, new ComputeViewJava(getData(), 
                     compute.getaPrec(), compute.isEarthCurv(), compute.getCoefRefraction()));
     }
 
@@ -149,20 +151,20 @@ public final class MultiViewTanResult extends MultiViewResult implements ViewTan
                     continue;
                 }
                 ScaleData data = datas[scale.getSample(theta1, theta2, 0)];
-                final int w = data.getDtm().getWidth();
-                final int x = ind % w;
-                final int y = ind / w;
+                final Rectangle r = data.getDtmRaster().getBounds();
+                final int x = ind % r.width + r.x;
+                final int y = ind / r.width + r.y;
                 if(data == first) {
                     view.setSample(theta1, theta2, 0, ind);
                     if(data.hasLandUse()) {
-                        land.setSample(theta1, theta2, 0, data.getLand().getSample(x, y, 0));
+                        land.setSample(theta1, theta2, 0, data.getLandRaster().getSample(x, y, 0));
                     }
                 } else {
                     try {
                         final GridCoordinates2D p = firstGrid.worldToGrid(data.getGridGeometry().gridToWorld(new GridCoordinates2D(x, y)));
                         view.setSample(theta1, theta2, 0, p.y*firstW+p.x);
                         if(land != null) {
-                            land.setSample(theta1, theta2, 0, data.getLand().getSample(x, y, 0));
+                            land.setSample(theta1, theta2, 0, data.getLandRaster().getSample(x, y, 0));
                         }
 
                     } catch (TransformException ex) {

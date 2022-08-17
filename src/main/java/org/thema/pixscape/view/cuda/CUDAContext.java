@@ -119,13 +119,13 @@ class CUDAContext {
         funClearViewTan = new CUfunction();
         JCudaDriver.cuModuleGetFunction(funClearViewTan, module, "clearViewTan");
         ScaleData data = compute.getData();
-        dtm = data.getDtm();
+        dtm = data.getDtmRaster();
         dtmBuf = ((DataBufferFloat) dtm.getDataBuffer()).getData();
         if (data.hasLandUse()) {
-            landBuf = ((DataBufferByte) data.getLand().getDataBuffer()).getData();
+            landBuf = ((DataBufferByte) data.getLandRaster().getDataBuffer()).getData();
         }
         if (data.getDsm() != null) {
-            dsmBuf = ((DataBufferFloat) data.getDsm().getDataBuffer()).getData();
+            dsmBuf = ((DataBufferFloat) data.getDsmRaster().getDataBuffer()).getData();
         }
         w = dtm.getWidth();
         h = dtm.getHeight();

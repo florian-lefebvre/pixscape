@@ -30,6 +30,7 @@ import java.util.List;
 import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.coverage.grid.GridCoverageFactory;
 import org.geotools.geometry.Envelope2D;
+import org.thema.common.RasterImage;
 import org.thema.pixscape.metric.Metric;
 
 /**
@@ -57,7 +58,7 @@ public class TestTools {
         GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, size, size));
         land.setSample(5, 5, 0, 1);
         
-        return new ScaleData(mntCov, land, mne, 1);
+        return new ScaleData(mntCov, new RasterImage(land), new RasterImage(mne), 1);
     }
     
     public static ScaleData createFlatDataWithLand(int size, int nLand) {
@@ -70,14 +71,14 @@ public class TestTools {
                 land.setSample(x, y, 0, y*nLand/size);
             }
         }
-        return new ScaleData(mntCov, land, mne, 1);
+        return new ScaleData(mntCov, new RasterImage(land), new RasterImage(mne), 1);
     }
     
     public static ScaleData createFlatData(int w, int h) {
         WritableRaster mnt = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
         WritableRaster mne = Raster.createWritableRaster(new BandedSampleModel(DataBuffer.TYPE_FLOAT, w, h, 1), null);
         GridCoverage2D mntCov = new GridCoverageFactory().create("", mnt, new Envelope2D(null, 0, 0, w, h));
-        return new ScaleData(mntCov, null, mne, 1);
+        return new ScaleData(mntCov, null, new RasterImage(mne), 1);
     }
     
     public static ScaleData createFlatDataWithDsm(int w, int h, int dsmHeight) {
@@ -89,7 +90,7 @@ public class TestTools {
                 mne.setSample(x, y, 0, dsmHeight);
             }
         }
-        return new ScaleData(mntCov, null, mne, 1);
+        return new ScaleData(mntCov, null, new RasterImage(mne), 1);
     }
     
     public static ScaleData createRandomData(int size) {
@@ -108,7 +109,7 @@ public class TestTools {
         printArray(((DataBufferFloat)mnt.getDataBuffer()).getData());
         System.out.println("mne");
         printArray(((DataBufferFloat)mne.getDataBuffer()).getData());
-        return new ScaleData(mntCov, land, mne, 1);
+        return new ScaleData(mntCov, new RasterImage(land), new RasterImage(mne), 1);
     }
     
     
